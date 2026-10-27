@@ -12,6 +12,7 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
+  sendPasswordResetEmail,
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { 
@@ -21,6 +22,7 @@ import {
   getDocs, 
   onSnapshot, 
   query, 
+  where,
   orderBy, 
   doc, 
   deleteDoc, 
@@ -34,7 +36,7 @@ import {
   getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js";
 
-// Your exact Firebase configuration
+// Exact Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAVogcGOhsv2UgEAOEsCICkfMRrfD8dd_4",
   authDomain: "meetmind-ai-74519.firebaseapp.com",
@@ -52,7 +54,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
-// Initialize Analytics if supported in this environment
+// Initialize Analytics if supported
 let analytics = null;
 isAnalyticsSupported().then(supported => {
   if (supported) {
@@ -77,6 +79,7 @@ window.MeetMindFirebase = {
   loginWithGoogle: async () => {
     try {
       const res = await signInWithPopup(auth, googleProvider);
+      window.MeetMindFirebase.currentUser = res.user;
       return { success: true, user: res.user };
     } catch (err) {
       console.warn("Google sign-in error:", err);
@@ -84,9 +87,40 @@ window.MeetMindFirebase = {
     }
   },
 
+  loginWithEmail: async (email, password) => {
+    try {
+      const res = await signInWithEmailAndPassword(auth, email, password);
+      window.MeetMindFirebase.currentUser = res.user;
+      return { success: true, user: res.user };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  },
+
+  registerWithEmail: async (email, password) => {
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      window.MeetMindFirebase.currentUser = res.user;
+      return { success: true, user: res.user };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  },
+
+  resetPassword: async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  },
+
   logout: async () => {
     try {
       await signOut(auth);
+      window.MeetMindFirebase.currentUser = null;
+      localStorage.removeItem('meetmind_user');
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -100,30 +134,45 @@ window.MeetMindFirebase = {
     });
   },
 
-  // 2. Firestore Meetings
+  // 2. Firestore Meetings (Strictly isolated by userId)
   saveMeeting: async (meetingData) => {
+    const user = window.MeetMindFirebase.currentUser;
+    if (!user) {
+      return { success: false, error: "Must be signed in to sync to cloud" };
+    }
     try {
       const col = collection(db, "meetings");
       const docRef = await addDoc(col, {
         ...meetingData,
-        userId: window.MeetMindFirebase.currentUser?.uid || "guest",
+        userId: user.uid,
         createdAt: serverTimestamp()
       });
       return { success: true, id: docRef.id };
     } catch (err) {
-      console.warn("Firestore save meeting fallback:", err);
+      console.warn("Firestore save meeting error:", err);
       return { success: false, error: err.message };
     }
   },
 
-  subscribeMeetings: (callback) => {
+  subscribeMeetings: (userId, callback) => {
+    if (!userId) {
+      callback([]);
+      return () => {};
+    }
     try {
       const col = collection(db, "meetings");
-      const q = query(col, orderBy("createdAt", "desc"));
+      // Query restricted strictly to this authenticated user
+      const q = query(col, where("userId", "==", userId));
       return onSnapshot(q, (snapshot) => {
         const list = [];
-        snapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() });
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        // Sort newest first client-side to prevent missing index errors
+        list.sort((a, b) => {
+          const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.timestamp || 0);
+          const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.timestamp || 0);
+          return tB - tA;
         });
         callback(list);
       }, (err) => {
@@ -143,13 +192,17 @@ window.MeetMindFirebase = {
     }
   },
 
-  // 3. Firestore Tasks
+  // 3. Firestore Tasks (Strictly isolated by userId)
   saveTask: async (taskData) => {
+    const user = window.MeetMindFirebase.currentUser;
+    if (!user) {
+      return { success: false, error: "Must be signed in to sync to cloud" };
+    }
     try {
       const col = collection(db, "tasks");
       const docRef = await addDoc(col, {
         ...taskData,
-        userId: window.MeetMindFirebase.currentUser?.uid || "guest",
+        userId: user.uid,
         createdAt: serverTimestamp()
       });
       return { success: true, id: docRef.id };
@@ -158,15 +211,20 @@ window.MeetMindFirebase = {
     }
   },
 
-  subscribeTasks: (callback) => {
+  subscribeTasks: (userId, callback) => {
+    if (!userId) {
+      callback([]);
+      return () => {};
+    }
     try {
       const col = collection(db, "tasks");
-      const q = query(col, orderBy("createdAt", "desc"));
+      const q = query(col, where("userId", "==", userId));
       return onSnapshot(q, (snapshot) => {
         const list = [];
-        snapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() });
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() });
         });
+        list.sort((a, b) => (b.id || 0) - (a.id || 0));
         callback(list);
       }, (err) => {
         console.warn("Firestore tasks subscription notice:", err);
@@ -176,18 +234,42 @@ window.MeetMindFirebase = {
     }
   },
 
-  // 4. Cloud Storage (Audio Upload)
-  uploadAudioBlob: async (audioBlob, fileName) => {
+  deleteTask: async (docId) => {
     try {
-      const fileRef = storageRef(storage, `recordings/${Date.now()}_${fileName || 'meeting.webm'}`);
+      await deleteDoc(doc(db, "tasks", docId));
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  },
+
+  // 4. Cloud Storage (Audio Upload Scoped by User ID)
+  uploadAudioBlob: async (audioBlob, fileName) => {
+    const user = window.MeetMindFirebase.currentUser;
+    const uid = user ? user.uid : "unauthenticated";
+    try {
+      const fileRef = storageRef(storage, `recordings/${uid}/${Date.now()}_${fileName || 'meeting.webm'}`);
       const uploadRes = await uploadBytes(fileRef, audioBlob);
       const downloadUrl = await getDownloadURL(uploadRes.ref);
       return { success: true, downloadUrl };
     } catch (err) {
-      console.warn("Firebase audio upload fallback:", err);
+      console.warn("Firebase audio upload error:", err);
       return { success: false, error: err.message };
     }
   }
 };
 
-console.log("🔥 MeetMind AI Firebase Cloud Services Initialized for project: meetmind-ai-74519");
+export { 
+  app, 
+  auth, 
+  db, 
+  storage, 
+  googleProvider, 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signOut 
+};
+
+console.log("🔥 MeetMind AI Firebase Cloud Services Initialized (User-Scoped Isolation)");

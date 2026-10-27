@@ -1,10 +1,15 @@
-// Smart Noter AI - Service Worker
-const CACHE_NAME = 'smart-noter-cache-v1';
+// MeetMind AI - Service Worker
+const CACHE_NAME = 'meetmind-ai-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './app.html',
+  './login.html',
+  './privacy.html',
+  './terms.html',
   './style.css',
   './app.js',
+  './firebase-service.js',
   './manifest.json',
   './assets/orb.jpg',
   './assets/emily.jpg',
@@ -41,9 +46,9 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
       return fetch(event.request).catch(() => {
-        // Fallback
         return caches.match('./index.html');
       });
     })
   );
 });
+

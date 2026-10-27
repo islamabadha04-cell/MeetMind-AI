@@ -2,9 +2,10 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="MeetMind AI — Your Intelligent Meeting Assistant (2026). AI transcription, structured summaries, smart action items, and conversational meeting search.">
-  <meta name="theme-color" content="#6D5AE5">
+  <meta name="theme-color" content="#6366F1">
   <title>MeetMind AI — App Dashboard</title>
 
   <!-- PWA Manifest & Mobile Meta -->
@@ -33,7 +34,7 @@
         <i class="ri-voiceprint-fill"></i>
       </div>
       <div>
-        <div class="u-tag"><span class="live-pulse-dot"></span> Cloud Synchronized</div>
+        <div class="u-tag" id="topCloudStatus"><span class="live-pulse-dot"></span> <span id="topCloudStatusText">Cloud Synchronized</span></div>
         <h1 class="u-title">MeetMind AI</h1>
       </div>
     </div>
@@ -45,9 +46,6 @@
       </button>
       <button class="u-btn" data-view="mobile-showcase" id="btnViewMobileShowcase" title="5-Screen Flow">
         <i class="ri-smartphone-line"></i> Mobile Showcase
-      </button>
-      <button class="u-btn" data-view="mobile-phone" id="btnViewMobilePhone" title="Device Simulator">
-        <i class="ri-device-line"></i> Device Sim
       </button>
       <a href="/" class="u-btn" style="text-decoration: none;" title="Back to Public Landing Page">
         <i class="ri-arrow-left-line"></i> Website
@@ -65,6 +63,11 @@
       <button class="pwa-install-btn" id="installMobileBtn">
         <i class="ri-download-cloud-2-line"></i> Install App
       </button>
+
+      <!-- Sign Out Button -->
+      <button class="btn-secondary" id="btnSignOutTop" style="padding: 7px 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;" title="Sign out of account">
+        <i class="ri-logout-box-r-line"></i> <span>Sign Out</span>
+      </button>
     </div>
   </header>
 
@@ -80,7 +83,7 @@
         </div>
         <div class="sidebar-title-wrap">
           <h2 class="sidebar-title">MeetMind AI</h2>
-          <span class="sidebar-sub">Enterprise Workspace</span>
+          <span class="sidebar-sub">Private Workspace</span>
         </div>
       </div>
 
@@ -98,7 +101,7 @@
         </button>
         <button class="menu-item" data-nav="tasks">
           <i class="ri-checkbox-circle-line"></i> <span>Action Items</span>
-          <span class="badge-count" id="navTaskCountBadge">8</span>
+          <span class="badge-count" id="navTaskCountBadge">0</span>
         </button>
 
         <span class="sidebar-category-header">AI INTELLIGENCE</span>
@@ -123,16 +126,20 @@
 
       <div class="sidebar-bottom">
         <button class="menu-item" data-nav="settings">
-          <i class="ri-settings-3-line"></i> <span>Settings & API</span>
+          <i class="ri-settings-3-line"></i> <span>Settings & Cloud</span>
         </button>
         
-        <div class="sidebar-user-card" id="deskUserCard">
-          <img src="assets/emily.jpg" alt="Ali Raza" class="user-avatar-sm" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
-          <div class="user-info">
-            <span class="user-name">Ali Raza</span>
-            <span class="user-plan-badge">Enterprise Tier</span>
+        <div class="sidebar-user-card" id="deskUserCard" title="User Account (Click to Sign Out)">
+          <div class="user-avatar-sm" id="userAvatarWrap" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">
+            <span id="userAvatarLetter">U</span>
           </div>
-          <i class="ri-more-2-fill user-more-dots"></i>
+          <div class="user-info">
+            <span class="user-name" id="deskUserName">User</span>
+            <span class="user-plan-badge" id="deskUserPlan">Free Account</span>
+          </div>
+          <button id="btnSidebarLogout" title="Sign out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; margin-left: auto; padding: 4px;">
+            <i class="ri-logout-box-r-line"></i>
+          </button>
         </div>
       </div>
     </aside>
@@ -151,11 +158,13 @@
           <button class="top-icon-btn" id="deskThemeBtn" title="Toggle Theme">
             <i class="ri-sun-line"></i>
           </button>
-          <button class="top-icon-btn" id="deskQuickNotifBtn" title="Notifications">
+          <button class="top-icon-btn" id="deskQuickNotifBtn" title="Action Item Notifications">
             <i class="ri-notification-line"></i>
-            <span class="badge-dot"></span>
+            <span class="badge-dot" id="notifDot" style="display: none;"></span>
           </button>
-          <img src="assets/emily.jpg" alt="Profile" class="user-avatar-top" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
+          <div class="user-avatar-top" id="topAvatarWrap" style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; cursor: pointer;">
+            <span id="topAvatarLetter">U</span>
+          </div>
         </div>
       </div>
 
@@ -165,7 +174,7 @@
           <!-- Welcome Hero & Stats Row -->
           <div class="welcome-stats-row">
             <div class="welcome-banner">
-              <h2 class="welcome-title">Good morning, Ali 👋</h2>
+              <h2 class="welcome-title" id="dashWelcomeTitle">Good morning 👋</h2>
               <p class="welcome-sub">Turn your conversations into structured decisions and automated action items.</p>
             </div>
 
@@ -176,10 +185,10 @@
                   <div class="stat-icon-mini purple-tint"><i class="ri-voiceprint-line"></i></div>
                 </div>
                 <div class="stat-number-row">
-                  <span class="stat-value" id="statTotalMeetings">24</span>
-                  <span class="stat-change positive"><i class="ri-arrow-up-line"></i> +12%</span>
+                  <span class="stat-value" id="statTotalMeetings">0</span>
+                  <span class="stat-change positive" id="statMeetingGrowth"><i class="ri-checkbox-circle-line"></i> Live</span>
                 </div>
-                <span class="stat-sub-caption">Indexed in cloud</span>
+                <span class="stat-sub-caption" id="statCloudCaption">Cloud Indexed</span>
               </div>
 
               <div class="stat-card">
@@ -188,10 +197,10 @@
                   <div class="stat-icon-mini blue-tint"><i class="ri-time-line"></i></div>
                 </div>
                 <div class="stat-number-row">
-                  <span class="stat-value">18h 45m</span>
-                  <span class="stat-change positive"><i class="ri-arrow-up-line"></i> +8%</span>
+                  <span class="stat-value" id="statTotalAudio">0m</span>
+                  <span class="stat-change positive"><i class="ri-sound-module-line"></i> Total</span>
                 </div>
-                <span class="stat-sub-caption">Across 14 projects</span>
+                <span class="stat-sub-caption" id="statProjectCount">0 tags</span>
               </div>
 
               <div class="stat-card">
@@ -200,10 +209,10 @@
                   <div class="stat-icon-mini emerald-tint"><i class="ri-checkbox-circle-line"></i></div>
                 </div>
                 <div class="stat-number-row">
-                  <span class="stat-value" id="statOpenTasks">8</span>
-                  <span class="stat-change neutral">Active</span>
+                  <span class="stat-value" id="statOpenTasks">0</span>
+                  <span class="stat-change neutral">Pending</span>
                 </div>
-                <span class="stat-sub-caption">Pending completion</span>
+                <span class="stat-sub-caption">Action Items</span>
               </div>
             </div>
           </div>
@@ -354,16 +363,13 @@
             </div>
             
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <!-- Bilingual Speech Selector -->
+              <!-- Language Selector -->
               <div class="lang-selector-group" id="studioLangGroup">
                 <button class="lang-chip active" data-lang="en-US" id="btnLangEn" title="English Speech Recognition">
-                  <i class="ri-global-line"></i> English
+                  <i class="ri-global-line"></i> English (US)
                 </button>
                 <button class="lang-chip" data-lang="ur-PK" id="btnLangUr" title="Urdu Speech Recognition">
                   <i class="ri-translate-2"></i> اردو (Urdu)
-                </button>
-                <button class="lang-chip" data-lang="bilingual" id="btnLangBi" title="Bilingual Mix (English & Urdu)">
-                  <i class="ri-sparkling-fill"></i> Bilingual
                 </button>
               </div>
 
@@ -377,14 +383,29 @@
               <i class="ri-mic-line"></i> Live Microphone Studio
             </button>
             <button class="studio-mode-tab" id="tabModeUpload">
-              <i class="ri-upload-cloud-line"></i> Upload Audio File / Zoom Recording
+              <i class="ri-upload-cloud-line"></i> Upload Audio File / Meeting Recording
             </button>
           </div>
 
           <!-- TAB 1: Live Mic Main Card -->
           <div class="studio-main-card" id="studioMicCard">
+            <!-- Consent Notice -->
+            <div class="studio-consent-notice" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 14px; font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+              <i class="ri-shield-check-fill" style="color: var(--primary); font-size: 16px;"></i>
+              <span><strong>Participant Consent Notice:</strong> Please ensure all participants in the conversation are aware that audio is being recorded for transcription and summaries.</span>
+            </div>
+
+            <!-- Loud Active REC Banner -->
+            <div class="studio-rec-banner" id="studioRecBanner" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 8px 14px; margin-bottom: 12px; font-size: 13px; color: #ef4444; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="live-pulse-dot" style="background: #ef4444;"></span>
+                <strong>RECORDING IN PROGRESS</strong>
+              </div>
+              <span id="studioElapsedNotice" style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">00:00:00</span>
+            </div>
+
             <div class="studio-timer" id="studioTimerDisplay">00:00:00</div>
-            <p class="studio-status" id="studioStatusText">Microphone ready. Tap Start Recording below.</p>
+            <p class="studio-status" id="studioStatusText">Microphone ready. Tap the purple microphone to start recording.</p>
 
             <!-- Real Canvas Waveform Visualizer -->
             <div class="canvas-visualizer-wrap">
@@ -415,8 +436,8 @@
               <div class="live-trans-header">
                 <span><i class="ri-voiceprint-line"></i> Live Speech-to-Text Stream</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <button class="diarize-toggle-btn active" id="btnToggleDiarization" title="Toggle Multi-Speaker Separation">
-                    <i class="ri-team-line"></i> <span id="diarizeStatusText">Diarization: ON</span>
+                  <button class="diarize-toggle-btn active" id="btnToggleDiarization" title="Toggle Turn-by-Turn Sentence View">
+                    <i class="ri-team-line"></i> <span id="diarizeStatusText">Sentence View: ON</span>
                   </button>
                   <span class="live-rec-badge pulse" id="liveRecBadge" style="display: none;"><span class="dot"></span> Listening to Mic</span>
                 </div>
@@ -502,6 +523,25 @@
               <tbody id="meetingsTableBody"></tbody>
             </table>
           </div>
+
+          <!-- Empty State (When no meetings recorded) -->
+          <div class="empty-state-card" id="emptyLibraryState" style="display: none; text-align: center; padding: 48px 24px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color); margin-top: 16px;">
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(99, 102, 241, 0.12); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px;">
+              <i class="ri-folder-open-line"></i>
+            </div>
+            <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 6px;">No meetings in your library yet</h3>
+            <p style="font-size: 13.5px; color: var(--text-muted); max-width: 440px; margin: 0 auto 18px;">
+              Record a live conversation in the Studio, upload an audio file, or load a sample meeting to test AI executive briefs and action items.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <button class="btn-primary-purple" onclick="navigateToPage('record')">
+                <i class="ri-mic-line"></i> Record First Meeting
+              </button>
+              <button class="btn-secondary" id="btnLoadDemoMeeting">
+                <i class="ri-sparkling-fill"></i> Load Sample Meeting (Demo)
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -527,8 +567,20 @@
 
           <!-- Tasks List Grid -->
           <div class="tasks-board-grid" id="tasksBoardGrid"></div>
-        </div>
-      </div>
+
+          <!-- Empty Tasks State -->
+          <div class="empty-state-card" id="emptyTasksState" style="display: none; text-align: center; padding: 48px 24px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color); margin-top: 16px;">
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: var(--success); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px;">
+              <i class="ri-checkbox-circle-line"></i>
+            </div>
+            <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 6px;">No action items pending</h3>
+            <p style="font-size: 13.5px; color: var(--text-muted); max-width: 440px; margin: 0 auto 18px;">
+              Action items are automatically extracted from your meetings and recordings. You can also create manual tasks anytime.
+            </p>
+            <button class="btn-primary-purple" id="btnEmptyCreateTask">
+              <i class="ri-add-line"></i> Create Action Item
+            </button>
+          </div>
 
       <!-- ==================== PAGE 5: ASK AI CHAT ==================== -->
       <div class="page-view hidden" id="page-chat">
@@ -586,13 +638,14 @@
               <div class="import-panel-header">
                 <div class="import-icon red-icon"><i class="ri-youtube-fill"></i></div>
                 <div>
-                  <h4>Paste YouTube URL</h4>
-                  <p>Extract chapters, transcript & key insights</p>
+                  <h4>YouTube Video Transcription</h4>
+                  <p>Process public meeting video URL or recorded webinar</p>
                 </div>
               </div>
               <input type="url" id="importYoutubeUrlInput" placeholder="https://youtube.com/watch?v=..." class="panel-input">
-              <button class="btn-primary-purple" id="btnSubmitYoutubeImport">
-                <i class="ri-magic-line"></i> Generate Video Summary
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Validates public video and imports audio track for summarization.</p>
+              <button class="btn-primary-purple" id="btnSubmitYoutubeImport" style="margin-top: 10px;">
+                <i class="ri-magic-line"></i> Import & Summarize Video
               </button>
             </div>
 
@@ -601,28 +654,30 @@
               <div class="import-panel-header">
                 <div class="import-icon blue-icon"><i class="ri-video-chat-fill"></i></div>
                 <div>
-                  <h4>Meeting Link (Zoom / Meet)</h4>
-                  <p>AI bot joins and provides multi-speaker diarization</p>
+                  <h4>Live Meeting (Google Meet / Zoom)</h4>
+                  <p>Open meeting in browser and record with Studio</p>
                 </div>
               </div>
               <input type="url" id="importMeetingUrlInput" placeholder="https://meet.google.com/abc-def-ghi" class="panel-input">
-              <button class="btn-primary-purple" id="btnSubmitMeetingUrlImport">
-                <i class="ri-robot-2-line"></i> Connect AI Bot
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Opens the call and activates MeetMind's Recording Studio side-by-side.</p>
+              <button class="btn-primary-purple" id="btnSubmitMeetingUrlImport" style="margin-top: 10px;">
+                <i class="ri-external-link-line"></i> Open Call & Launch Studio
               </button>
             </div>
 
             <!-- Document Upload Card -->
             <div class="import-panel-card">
               <div class="import-panel-header">
-                <div class="import-icon green-icon"><i class="ri-file-pdf-fill"></i></div>
+                <div class="import-icon green-icon"><i class="ri-file-text-fill"></i></div>
                 <div>
-                  <h4>Document Import (PDF / DOCX)</h4>
-                  <p>Upload document for instant AI question-answering</p>
+                  <h4>Document & Notes Import (.txt, .md, .json)</h4>
+                  <p>Upload discussion minutes or notes for instant AI analysis</p>
                 </div>
               </div>
-              <input type="file" id="importDocFileInput" class="panel-file-input">
-              <button class="btn-primary-purple" id="btnSubmitDocImport">
-                <i class="ri-upload-cloud-line"></i> Upload & Index
+              <input type="file" id="importDocFileInput" accept=".txt,.md,.json,.csv" class="panel-file-input">
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Extracts decisions and action items directly from note files.</p>
+              <button class="btn-primary-purple" id="btnSubmitDocImport" style="margin-top: 10px;">
+                <i class="ri-upload-cloud-line"></i> Parse Notes & Summarize
               </button>
             </div>
           </div>
@@ -634,32 +689,32 @@
         <div class="desktop-content-body">
           <div class="welcome-stats-row">
             <div>
-              <h2 class="welcome-title">Meeting Calendar & Preparation</h2>
+              <h2 class="welcome-title">Meeting Agendas & Calendar</h2>
               <p class="welcome-sub">Upcoming schedule, pre-meeting briefs, and agenda suggestions.</p>
             </div>
             <button class="btn-secondary" id="btnSyncCalendar">
-              <i class="ri-refresh-line"></i> Sync Google / Outlook
+              <i class="ri-calendar-line"></i> Add Schedule to Google Calendar
             </button>
           </div>
 
           <div class="calendar-agenda-grid">
             <div class="agenda-day-card">
-              <span class="agenda-day-title">Today • Oct 27, 2026</span>
+              <span class="agenda-day-title">Upcoming Agenda & Sessions</span>
               <div class="agenda-event">
                 <div class="event-time">10:00 AM</div>
                 <div class="event-content">
-                  <h5>Client Review Meeting (Acme Corp)</h5>
-                  <p>Agenda: Review Q4 delivery, security certifications, and sign-off.</p>
+                  <h5>Sprint Review & Product Demonstration</h5>
+                  <p>Agenda: Review weekly deliverables, live demo, and team sign-offs.</p>
                 </div>
-                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Join</button>
+                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Open Meet</button>
               </div>
               <div class="agenda-event">
                 <div class="event-time">02:00 PM</div>
                 <div class="event-content">
-                  <h5>Team Sync (Engineering & Design)</h5>
-                  <p>Agenda: Review mobile PWA standalone deployment.</p>
+                  <h5>Engineering & Infrastructure Architecture Sync</h5>
+                  <p>Agenda: Review multi-tenant cloud storage, PWA caching, and performance metrics.</p>
                 </div>
-                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Join</button>
+                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Open Meet</button>
               </div>
             </div>
           </div>
@@ -672,7 +727,7 @@
           <div class="welcome-stats-row">
             <div>
               <h2 class="welcome-title">Team Workspace & Collaboration</h2>
-              <p class="welcome-sub">Manage workspace members, assign role permissions, and share folders.</p>
+              <p class="welcome-sub">Manage workspace members, assign role permissions, and access shared meetings.</p>
             </div>
             <button class="btn-primary-purple" id="btnInviteMember">
               <i class="ri-user-add-line"></i> Invite Member
@@ -689,28 +744,14 @@
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><strong>Ali Raza</strong></td>
-                  <td>ali@cowlar.com</td>
-                  <td><span class="badge-tag tag-work">Owner / Admin</span></td>
-                  <td><span class="badge-summary-ready">Active</span></td>
-                </tr>
-                <tr>
-                  <td><strong>Sarah Jenkins</strong></td>
-                  <td>sarah@design.io</td>
-                  <td><span class="badge-tag tag-team">Editor</span></td>
-                  <td><span class="badge-summary-ready">Active</span></td>
-                </tr>
-                <tr>
-                  <td><strong>John Miller</strong></td>
-                  <td>john@product.org</td>
-                  <td><span class="badge-tag tag-product">Viewer</span></td>
-                  <td><span class="badge-summary-ready">Active</span></td>
-                </tr>
+              <tbody id="workspaceMembersTableBody">
+                <!-- Dynamically populated with authenticated user -->
               </tbody>
             </table>
           </div>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 14px;">
+            <i class="ri-shield-user-line" style="color: var(--primary);"></i> <strong>Data Isolation:</strong> All meetings, audio, and tasks in this workspace are strictly scoped to your authenticated account.
+          </p>
         </div>
       </div>
 
@@ -746,27 +787,34 @@
           </div>
 
           <div class="settings-grid">
-            <!-- Card 1: Real AI Engine & API Keys -->
+            <!-- Card 1: Real AI Engine & Secure Cloud Processing -->
             <div class="settings-card">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h4><i class="ri-sparkling-fill" style="color: var(--primary);"></i> AI Engine & API Keys</h4>
-                <span class="badge-summary-ready" id="aiStatusBadge"><i class="ri-checkbox-circle-fill"></i> AI Active</span>
+                <h4><i class="ri-shield-check-fill" style="color: var(--primary);"></i> AI Intelligence & Security</h4>
+                <span class="badge-summary-ready" id="aiStatusBadge"><i class="ri-checkbox-circle-fill"></i> Server AI Active</span>
               </div>
               
-              <label>Google Gemini API Key (Optional BYOK):</label>
-              <input type="password" id="settingGeminiKey" placeholder="AIzaSy... (Get free from aistudio.google.com)" class="panel-input">
-              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Leaves empty to use built-in neural heuristics.</p>
+              <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
+                Transcription analysis, executive summaries, and action item detection are processed securely via MeetMind AI Cloud Engine.
+              </p>
 
-              <label style="margin-top: 10px;">Backend API Endpoint:</label>
-              <input type="text" id="settingBackendUrl" value="http://127.0.0.1:8000/api/v1" placeholder="https://your-api.onrender.com/api/v1" class="panel-input">
-              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Point to your Render/Railway live Python backend.</p>
+              <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-md); padding: 12px; margin-bottom: 14px;">
+                <div style="font-weight: 700; font-size: 13px; color: var(--primary); display: flex; align-items: center; gap: 6px;">
+                  <i class="ri-lock-password-line"></i> Zero Client-Side Exposure
+                </div>
+                <p style="font-size: 11.5px; color: var(--text-dim); margin-top: 4px; line-height: 1.4;">
+                  AI credentials and keys live strictly in our secure production backend and are never stored in your browser or exposed over client networks.
+                </p>
+              </div>
 
-              <label style="margin-top: 10px;">OpenAI API Key (Optional):</label>
-              <input type="password" id="settingOpenAiKey" placeholder="sk-..." class="panel-input">
-
-              <button class="btn-primary-purple" id="btnSaveApiKeys" style="margin-top: 14px; width: 100%;">
-                <i class="ri-save-line"></i> Save API Configuration
-              </button>
+              <div style="font-size: 12.5px; border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Transcription Models:</span>
+                <span style="font-weight: 600;">Web Speech API &bull; Gemini 1.5 Flash</span>
+              </div>
+              <div style="font-size: 12.5px; padding-top: 8px; display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Data Storage:</span>
+                <span style="font-weight: 600; color: var(--success);" id="settingCloudStatusText"><i class="ri-cloud-line"></i> Firebase Cloud Firestore</span>
+              </div>
             </div>
 
             <!-- Card 2: AI Preferences -->
@@ -779,7 +827,7 @@
                 <option value="action_oriented">Action Items Focused</option>
               </select>
 
-              <label style="margin-top: 10px;">Bilingual Speech Diarization:</label>
+              <label style="margin-top: 10px;">Bilingual Speech Mode:</label>
               <select id="settingDiarization" class="panel-input">
                 <option value="en_ur">English & Urdu (Automatic)</option>
                 <option value="en_only">English Only</option>
@@ -800,18 +848,18 @@
 
             <!-- Card 3: Data Export -->
             <div class="settings-card">
-              <h4>Data Export & Account Management</h4>
+              <h4>Data Export & Reset</h4>
               <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                Download all your meetings, transcripts, and action items in JSON or Markdown.
+                Download your meetings, transcripts, and action items in JSON or Markdown format.
               </p>
               <button class="btn-secondary" id="btnExportAllData" style="width: 100%; margin-bottom: 8px;">
-                <i class="ri-download-2-line"></i> Export Full Library (JSON)
+                <i class="ri-download-2-line"></i> Export Meetings & Tasks (JSON)
               </button>
               <button class="btn-secondary" id="btnExportMarkdownSummary" style="width: 100%; margin-bottom: 8px;">
                 <i class="ri-markdown-line"></i> Export All Summaries (Markdown)
               </button>
               <button class="btn-danger-outline" id="btnDeleteAccount" style="width: 100%;">
-                <i class="ri-delete-bin-line"></i> Clear Local Cache & Reset Data
+                <i class="ri-refresh-line"></i> Reset Local Browser Data
               </button>
             </div>
           </div>
@@ -1139,8 +1187,8 @@
           </div>
         </div>
 
-        <label style="margin-top: 10px;">Deadline:</label>
-        <input type="text" id="taskDeadlineInput" placeholder="e.g. Friday, 5:00 PM" class="panel-input">
+        <label style="margin-top: 10px;">Deadline Date:</label>
+        <input type="date" id="taskDeadlineInput" class="panel-input">
       </div>
       <div class="dialog-footer">
         <button class="btn-secondary" id="cancelTaskModalBtn">Cancel</button>
@@ -1287,6 +1335,55 @@
       </div>
       <div class="cmd-palette-results" id="cmdPaletteResults">
         <!-- Results dynamically filtered -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: UPGRADE TO PRO -->
+  <div class="app-dialog-overlay hidden" id="modalUpgradePro">
+    <div class="app-dialog-card modal-large">
+      <div class="dialog-header">
+        <div class="dialog-icon-badge purple-badge"><i class="ri-vip-crown-fill"></i></div>
+        <div>
+          <h3>Upgrade to MeetMind AI Pro</h3>
+          <p>Unlimited minutes, team collaboration, and bilingual speech AI</p>
+        </div>
+        <button class="close-dialog-btn" id="closeUpgradeModal">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 16px;">
+          <!-- Plan 1 -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; text-align: center;">
+            <div style="font-weight: 700; font-size: 13px; color: var(--text-muted);">STARTER FREE</div>
+            <div style="font-size: 26px; font-weight: 800; margin: 8px 0 4px;">Rs 0 <span style="font-size: 12px; font-weight: 400; color: var(--text-dim);">/mo</span></div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">120 mins/mo &bull; Basic summaries</p>
+            <span style="font-size: 12px; color: var(--success); font-weight: 600;"><i class="ri-check-line"></i> Active Plan</span>
+          </div>
+
+          <!-- Plan 2 -->
+          <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08)); border: 2px solid var(--primary); border-radius: var(--radius-md); padding: 18px; text-align: center; position: relative;">
+            <span style="position: absolute; top: -10px; right: 12px; background: var(--primary); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">POPULAR</span>
+            <div style="font-weight: 700; font-size: 13px; color: var(--primary);">PRO PROFESSIONAL</div>
+            <div style="font-size: 26px; font-weight: 800; margin: 8px 0 4px;">Rs 2,499 <span style="font-size: 12px; font-weight: 400; color: var(--text-dim);">/mo</span></div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">1,200 mins/mo &bull; Urdu + English Diarization &bull; Cloud sync</p>
+            <a href="mailto:islamabad.ha04@gmail.com?subject=MeetMind%20AI%20Pro%20Upgrade" class="btn-primary-purple" style="display: block; text-decoration: none; font-size: 13px; padding: 8px;">
+              Upgrade to Pro &rarr;
+            </a>
+          </div>
+
+          <!-- Plan 3 -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; text-align: center;">
+            <div style="font-weight: 700; font-size: 13px; color: var(--text-muted);">TEAM ENTERPRISE</div>
+            <div style="font-size: 26px; font-weight: 800; margin: 8px 0 4px;">Rs 6,999 <span style="font-size: 12px; font-weight: 400; color: var(--text-dim);">/mo</span></div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Unlimited mins &bull; Shared workspaces &bull; Team roles &bull; 24/7 Priority</p>
+            <a href="mailto:islamabad.ha04@gmail.com?subject=MeetMind%20AI%20Team%20Plan" class="btn-secondary" style="display: block; text-decoration: none; font-size: 13px; padding: 8px;">
+              Contact Sales &rarr;
+            </a>
+          </div>
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted); text-align: center;">
+          <i class="ri-secure-payment-line" style="color: var(--primary);"></i> Payments via JazzCash, Easypaisa, Bank Transfer, or Card. Direct owner contact: <strong>islamabad.ha04@gmail.com</strong>
+        </p>
       </div>
     </div>
   </div>

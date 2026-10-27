@@ -1,13 +1,13 @@
 {
-  "name": "Smart Noter AI — Meeting Assistant",
-  "short_name": "Smart Noter",
-  "description": "Next-Generation AI Meeting Assistant & Smart Productivity Platform",
+  "name": "MeetMind AI — Intelligent Meeting Assistant",
+  "short_name": "MeetMind AI",
+  "description": "Next-Generation AI Meeting Assistant & Smart Productivity Platform for English & Urdu",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#eceaf3",
-  "theme_color": "#7c3aed",
+  "background_color": "#0B0F19",
+  "theme_color": "#6366F1",
   "categories": ["productivity", "business", "utilities"],
   "icons": [
     {

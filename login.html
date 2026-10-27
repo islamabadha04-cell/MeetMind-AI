@@ -353,16 +353,22 @@
     if (btnGoogleAuth) {
       btnGoogleAuth.addEventListener('click', async () => {
         try {
-          if (auth && googleProvider && signInWithPopup) {
-            btnGoogleAuth.textContent = 'Signing in...';
-            await signInWithPopup(auth, googleProvider);
+          btnGoogleAuth.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Connecting Google...';
+          const res = await signInWithPopup(auth, googleProvider);
+          if (res && res.user) {
+            const userObj = {
+              name: res.user.displayName || res.user.email.split('@')[0],
+              email: res.user.email,
+              uid: res.user.uid,
+              photo: res.user.photoURL || ''
+            };
+            localStorage.setItem('meetmind_user', JSON.stringify(userObj));
+            window.location.href = '/app';
           }
-          localStorage.setItem('meetmind_user', JSON.stringify({ name: 'Ali Raza', email: 'user@meetmind.ai' }));
-          window.location.href = '/app';
         } catch (err) {
-          console.warn('Google Auth popup note:', err);
-          localStorage.setItem('meetmind_user', JSON.stringify({ name: 'Ali Raza', email: 'guest@meetmind.ai' }));
-          window.location.href = '/app';
+          console.warn('Google Auth note:', err);
+          btnGoogleAuth.innerHTML = '<i class="ri-google-fill"></i> Continue with Google';
+          alert('Google Sign-In notice: ' + (err.message || 'Please check your connection or continue with email/demo.'));
         }
       });
     }
@@ -370,28 +376,45 @@
     // Email / Password Submit
     window.handleAuthSubmit = async function(e) {
       e.preventDefault();
-      const email = document.getElementById('authEmail').value;
+      const email = document.getElementById('authEmail').value.trim();
       const pass = document.getElementById('authPassword').value;
+      const submitBtn = document.getElementById('btnSubmitForm');
+      const originalText = submitBtn.textContent;
 
       try {
-        if (isSignUp && auth && createUserWithEmailAndPassword) {
-          await createUserWithEmailAndPassword(auth, email, pass);
-        } else if (auth && signInWithEmailAndPassword) {
-          await signInWithEmailAndPassword(auth, email, pass);
+        submitBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Authenticating...';
+        let userCredential;
+        if (isSignUp) {
+          userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        } else {
+          userCredential = await signInWithEmailAndPassword(auth, email, pass);
         }
+        
+        const user = userCredential.user;
+        const userObj = {
+          name: email.split('@')[0],
+          email: user.email,
+          uid: user.uid
+        };
+        localStorage.setItem('meetmind_user', JSON.stringify(userObj));
+        window.location.href = '/app';
       } catch (err) {
-        console.warn('Auth state notice:', err.message);
+        console.warn('Auth notice:', err.message);
+        submitBtn.textContent = originalText;
+        alert((isSignUp ? 'Registration note: ' : 'Sign in note: ') + err.message);
       }
-
-      localStorage.setItem('meetmind_user', JSON.stringify({ name: email.split('@')[0], email }));
-      window.location.href = '/app';
     };
 
-    // Guest demo access
+    // Guest demo access (Instant evaluation for reviewers)
     const btnGuestAccess = document.getElementById('btnGuestAccess');
     if (btnGuestAccess) {
       btnGuestAccess.addEventListener('click', () => {
-        localStorage.setItem('meetmind_user', JSON.stringify({ name: 'Ali Raza', email: 'demo@meetmind.ai', isGuest: true }));
+        localStorage.setItem('meetmind_user', JSON.stringify({ 
+          name: 'Demo Reviewer', 
+          email: 'demo@meetmind.ai', 
+          uid: 'demo_guest_evaluator',
+          isGuest: true 
+        }));
         window.location.href = '/app';
       });
     }

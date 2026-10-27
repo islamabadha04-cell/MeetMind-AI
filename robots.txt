@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /app
+Disallow: /login
+Disallow: /signup
+Allow: /
+Allow: /privacy
+Allow: /terms
+
+Sitemap: https://meetmind-ai-74519.web.app/sitemap.xml
