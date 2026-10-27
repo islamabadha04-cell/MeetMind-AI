@@ -1,5 +1,6 @@
 import json
 import re
+import httpx
 from typing import Dict, List, Any
 from app.core.config import settings
 
@@ -8,9 +9,35 @@ class AIService:
     def generate_meeting_summary(title: str, transcript: str) -> Dict[str, Any]:
         """
         Pluggable AI meeting summary generator.
-        Uses OpenAI/Gemini if API keys are set, otherwise uses high-fidelity heuristic semantic extractor.
+        Uses Gemini if API key is set, otherwise falls back to high-fidelity heuristic semantic extractor.
         """
-        # Structured 2027 Meeting Summary Format
+        if settings.GEMINI_API_KEY:
+            try:
+                prompt = (
+                    f"You are MeetMind AI, an elite enterprise meeting intelligence assistant. Analyze this meeting:\n"
+                    f"Title: {title}\n"
+                    f"Transcript: {transcript}\n\n"
+                    f"Return ONLY a clean JSON object with keys: 'executive_summary' (string), 'key_points' (list of strings), "
+                    f"'decisions' (list of strings), 'action_items' (list of strings with assignees and deadlines), 'risks' (list of strings)."
+                )
+                headers = {"Content-Type": "application/json"}
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"responseMimeType": "application/json"}
+                }
+                with httpx.Client(timeout=12.0) as client:
+                    resp = client.post(url, json=payload, headers=headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                        parsed = json.loads(raw_text)
+                        if "executive_summary" in parsed:
+                            return parsed
+            except Exception as err:
+                print(f"[AIService] Gemini summary fallback notice: {err}")
+
+        # Structured 2027 Meeting Summary Format (Resilient Fallback)
         executive_summary = (
             f"The session focused on '{title}'. The participants aligned on core system deliverables, "
             f"agreed to shorten deployment cycles, and committed to weekly reviews."
@@ -51,8 +78,40 @@ class AIService:
     def answer_meeting_question(query: str, meetings: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Conversational RAG (Retrieval-Augmented Generation) query engine.
-        Searches across user's authorized meetings and provides timestamped citations.
+        Uses Gemini if API key is set, otherwise uses semantic matching heuristics.
         """
+        if settings.GEMINI_API_KEY:
+            try:
+                context = "\n\n".join([
+                    f"Meeting: '{m.get('title')}' ({m.get('date')})\nSummary: {m.get('summary')}"
+                    for m in meetings
+                ])
+                prompt = (
+                    f"You are MeetMind AI. Answer this user query using only the meeting context below:\n\n"
+                    f"Context:\n{context}\n\n"
+                    f"User Query: {query}\n\n"
+                    f"Provide a helpful, professional, structured answer with bullet points."
+                )
+                headers = {"Content-Type": "application/json"}
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+                payload = {"contents": [{"parts": [{"text": prompt}]}]}
+                with httpx.Client(timeout=12.0) as client:
+                    resp = client.post(url, json=payload, headers=headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        text = data["candidates"][0]["content"]["parts"][0]["text"]
+                        return {
+                            "content": text,
+                            "citations": [{
+                                "meeting_id": meetings[0].get("id") if meetings else 1,
+                                "meeting_title": meetings[0].get("title") if meetings else "Meeting Archive",
+                                "timestamp": "Real-time AI",
+                                "quote": "Generated via Gemini 1.5 Flash"
+                            }]
+                        }
+            except Exception as err:
+                print(f"[AIService] Gemini query fallback notice: {err}")
+
         q = query.lower()
         citations = []
         matched_notes = []

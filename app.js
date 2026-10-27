@@ -1003,16 +1003,22 @@ async function handleDeskAiChat(promptText) {
   deskChatArea.appendChild(aiBubble);
   deskChatArea.scrollTop = deskChatArea.scrollHeight;
 
-  // Check if user has saved a Gemini API Key in Settings
+  // Retrieve Gemini API Key from secure local storage or settings
   const geminiApiKey = localStorage.getItem('meetmind_gemini_key');
 
   if (geminiApiKey) {
     try {
       // Build context from meetings
       const context = meetings.map(m => `Meeting: "${m.title}" (${m.date}). Summary: ${m.summary}. Decisions: ${(m.decisions || []).join('; ')}. Actions: ${(m.actionItems || []).join('; ')}`).join('\n\n');
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+      const headers = { 'Content-Type': 'application/json' };
+      if (geminiApiKey.startsWith('AQ.')) {
+        headers['Authorization'] = `Bearer ${geminiApiKey}`;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify({
           contents: [{
             parts: [{
