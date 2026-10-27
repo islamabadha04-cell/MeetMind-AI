@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="MeetMind AI — Your Intelligent Meeting Assistant (2026). AI transcription, structured summaries, smart action items, and conversational meeting search.">
+  <meta name="theme-color" content="#6D5AE5">
+  <title>MeetMind AI — App Dashboard</title>
+
+  <!-- PWA Manifest & Mobile Meta -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MeetMind AI">
+
+  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Remix Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Universal Header -->
+  <header class="universal-header">
+    <div class="u-brand">
+      <div class="u-logo">
+        <i class="ri-voiceprint-fill"></i>
+      </div>
+      <div>
+        <div class="u-tag"><span class="live-pulse-dot"></span> Cloud Synchronized</div>
+        <h1 class="u-title">MeetMind AI</h1>
+      </div>
+    </div>
+
+    <!-- Mode Selector -->
+    <div class="u-switcher">
+      <button class="u-btn active" data-view="desktop" id="btnViewDesktop" title="Full Desktop Application">
+        <i class="ri-macbook-line"></i> Desktop
+      </button>
+      <button class="u-btn" data-view="mobile-showcase" id="btnViewMobileShowcase" title="5-Screen Flow">
+        <i class="ri-smartphone-line"></i> Mobile Showcase
+      </button>
+      <button class="u-btn" data-view="mobile-phone" id="btnViewMobilePhone" title="Device Simulator">
+        <i class="ri-device-line"></i> Device Sim
+      </button>
+      <a href="/" class="u-btn" style="text-decoration: none;" title="Back to Public Landing Page">
+        <i class="ri-arrow-left-line"></i> Website
+      </a>
+    </div>
+
+    <!-- Controls -->
+    <div class="u-controls">
+      <!-- Dark/Light Mode Toggle -->
+      <button class="icon-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode">
+        <i class="ri-moon-line" id="themeIcon"></i>
+      </button>
+
+      <!-- Install on Mobile Phone (PWA QR) -->
+      <button class="pwa-install-btn" id="installMobileBtn">
+        <i class="ri-download-cloud-2-line"></i> Install App
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       VIEWPORT 1: FULL DESKTOP APPLICATION VIEW (ALL PAGES WORKING)
+       ========================================================================= -->
+  <section class="desktop-app-layout" id="desktopAppView">
+    <!-- Sidebar Navigation -->
+    <aside class="desktop-sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo">
+          <i class="ri-voiceprint-fill"></i>
+        </div>
+        <div class="sidebar-title-wrap">
+          <h2 class="sidebar-title">MeetMind AI</h2>
+          <span class="sidebar-sub">Enterprise Workspace</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <span class="sidebar-category-header">WORKSPACE</span>
+        <button class="menu-item active" data-nav="dashboard">
+          <i class="ri-dashboard-2-line"></i> <span>Dashboard</span>
+        </button>
+        <button class="menu-item" data-nav="record">
+          <i class="ri-mic-2-line"></i> <span>Record Studio</span>
+          <span class="studio-live-pill"><span class="dot"></span> LIVE</span>
+        </button>
+        <button class="menu-item" data-nav="meetings">
+          <i class="ri-folders-line"></i> <span>Meeting Library</span>
+        </button>
+        <button class="menu-item" data-nav="tasks">
+          <i class="ri-checkbox-circle-line"></i> <span>Action Items</span>
+          <span class="badge-count" id="navTaskCountBadge">8</span>
+        </button>
+
+        <span class="sidebar-category-header">AI INTELLIGENCE</span>
+        <button class="menu-item" data-nav="chat">
+          <i class="ri-sparkling-2-line"></i> <span>Ask AI Chat</span>
+        </button>
+        <button class="menu-item" data-nav="knowledge">
+          <i class="ri-links-line"></i> <span>Source Import</span>
+        </button>
+        <button class="menu-item" data-nav="documents">
+          <i class="ri-file-text-line"></i> <span>Documents Vault</span>
+        </button>
+
+        <span class="sidebar-category-header">COLLABORATION</span>
+        <button class="menu-item" data-nav="calendar">
+          <i class="ri-calendar-event-line"></i> <span>Calendar</span>
+        </button>
+        <button class="menu-item" data-nav="workspaces">
+          <i class="ri-team-line"></i> <span>Team Workspaces</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="menu-item" data-nav="settings">
+          <i class="ri-settings-3-line"></i> <span>Settings & API</span>
+        </button>
+        
+        <div class="sidebar-user-card" id="deskUserCard">
+          <img src="assets/emily.jpg" alt="Ali Raza" class="user-avatar-sm" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
+          <div class="user-info">
+            <span class="user-name">Ali Raza</span>
+            <span class="user-plan-badge">Enterprise Tier</span>
+          </div>
+          <i class="ri-more-2-fill user-more-dots"></i>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main class="desktop-main-panel">
+      <!-- Top Search & Global Bar -->
+      <div class="desktop-top-bar">
+        <div class="desktop-search-box">
+          <i class="ri-search-line search-icon"></i>
+          <input type="text" id="desktopSearchInput" placeholder="Search meetings, notes, or ask AI...">
+          <kbd class="search-kbd">⌘K</kbd>
+        </div>
+
+        <div class="desktop-top-actions">
+          <button class="top-icon-btn" id="deskThemeBtn" title="Toggle Theme">
+            <i class="ri-sun-line"></i>
+          </button>
+          <button class="top-icon-btn" id="deskQuickNotifBtn" title="Notifications">
+            <i class="ri-notification-line"></i>
+            <span class="badge-dot"></span>
+          </button>
+          <img src="assets/emily.jpg" alt="Profile" class="user-avatar-top" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 1: DASHBOARD ==================== -->
+      <div class="page-view" id="page-dashboard">
+        <div class="desktop-content-body">
+          <!-- Welcome Hero & Stats Row -->
+          <div class="welcome-stats-row">
+            <div class="welcome-banner">
+              <h2 class="welcome-title">Good morning, Ali 👋</h2>
+              <p class="welcome-sub">Turn your conversations into structured decisions and automated action items.</p>
+            </div>
+
+            <div class="stats-cards-group">
+              <div class="stat-card">
+                <div class="stat-card-header">
+                  <span class="stat-label">Total Meetings</span>
+                  <div class="stat-icon-mini purple-tint"><i class="ri-voiceprint-line"></i></div>
+                </div>
+                <div class="stat-number-row">
+                  <span class="stat-value" id="statTotalMeetings">24</span>
+                  <span class="stat-change positive"><i class="ri-arrow-up-line"></i> +12%</span>
+                </div>
+                <span class="stat-sub-caption">Indexed in cloud</span>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-card-header">
+                  <span class="stat-label">Audio Captured</span>
+                  <div class="stat-icon-mini blue-tint"><i class="ri-time-line"></i></div>
+                </div>
+                <div class="stat-number-row">
+                  <span class="stat-value">18h 45m</span>
+                  <span class="stat-change positive"><i class="ri-arrow-up-line"></i> +8%</span>
+                </div>
+                <span class="stat-sub-caption">Across 14 projects</span>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-card-header">
+                  <span class="stat-label">Open Tasks</span>
+                  <div class="stat-icon-mini emerald-tint"><i class="ri-checkbox-circle-line"></i></div>
+                </div>
+                <div class="stat-number-row">
+                  <span class="stat-value" id="statOpenTasks">8</span>
+                  <span class="stat-change neutral">Active</span>
+                </div>
+                <span class="stat-sub-caption">Pending completion</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Hero Grid -->
+          <div class="desktop-action-grid">
+            <div class="hero-recording-card" id="deskStartRecordCard">
+              <div class="hero-recording-content">
+                <div class="mic-glow-icon">
+                  <i class="ri-mic-fill"></i>
+                </div>
+                <div>
+                  <div class="hero-badge-pill"><span class="pulse-emerald-dot"></span> Next-Gen Speech Engine</div>
+                  <h3 class="hero-card-title">Start AI Voice Recording</h3>
+                  <p class="hero-card-desc">Real-time bilingual transcription, speaker separation & instant executive briefs.</p>
+                </div>
+              </div>
+              <button class="hero-record-btn" id="deskRecordBtn">
+                <i class="ri-play-fill"></i> <span>Launch Studio</span>
+              </button>
+            </div>
+
+            <div class="mini-action-card" id="deskUploadAudioCard">
+              <div class="mini-icon-circle purple-soft">
+                <i class="ri-upload-cloud-2-line"></i>
+              </div>
+              <h4 class="mini-card-title">Upload Audio</h4>
+              <span class="mini-card-sub">MP3, WAV, M4A, Zoom</span>
+            </div>
+
+            <div class="mini-action-card" id="deskImportLinkCard">
+              <div class="mini-icon-circle blue-soft">
+                <i class="ri-links-line"></i>
+              </div>
+              <h4 class="mini-card-title">Import Link</h4>
+              <span class="mini-card-sub">Zoom, Meet, YouTube</span>
+            </div>
+
+            <div class="mini-action-card" id="deskUploadDocCard">
+              <div class="mini-icon-circle green-soft">
+                <i class="ri-file-text-line"></i>
+              </div>
+              <h4 class="mini-card-title">Upload Document</h4>
+              <span class="mini-card-sub">PDF, DOCX, TXT notes</span>
+            </div>
+          </div>
+
+          <!-- 3-Column Split -->
+          <div class="desktop-three-columns">
+            <div class="dashboard-col col-recent-meetings">
+              <div class="col-header">
+                <h3 class="col-title">Recent Meetings</h3>
+                <button class="link-view-all" id="deskViewAllMeetings">View all &rarr;</button>
+              </div>
+              <div class="recent-meetings-list" id="desktopMeetingsList"></div>
+            </div>
+
+            <div class="dashboard-col col-quick-actions">
+              <div class="col-header">
+                <h3 class="col-title">Quick Actions</h3>
+              </div>
+              <div class="quick-action-links">
+                <div class="qa-item" id="qaAskMeetings">
+                  <div class="qa-icon-box purple-bg"><i class="ri-chat-voice-line"></i></div>
+                  <div class="qa-info">
+                    <h4>Ask Your Meetings</h4>
+                    <p>Get answers from your past meetings</p>
+                  </div>
+                  <i class="ri-arrow-right-s-line"></i>
+                </div>
+                <div class="qa-item" id="qaCreateTask">
+                  <div class="qa-icon-box blue-bg"><i class="ri-checkbox-circle-line"></i></div>
+                  <div class="qa-info">
+                    <h4>Create Task</h4>
+                    <p>Turn insights into action items</p>
+                  </div>
+                  <i class="ri-arrow-right-s-line"></i>
+                </div>
+                <div class="qa-item" id="qaViewCalendar">
+                  <div class="qa-icon-box orange-bg"><i class="ri-calendar-line"></i></div>
+                  <div class="qa-info">
+                    <h4>View Calendar</h4>
+                    <p>See upcoming meetings</p>
+                  </div>
+                  <i class="ri-arrow-right-s-line"></i>
+                </div>
+                <div class="qa-item" id="qaManageWorkspace">
+                  <div class="qa-icon-box green-bg"><i class="ri-team-line"></i></div>
+                  <div class="qa-info">
+                    <h4>Manage Workspace</h4>
+                    <p>Collaborate with your team</p>
+                  </div>
+                  <i class="ri-arrow-right-s-line"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="dashboard-col col-upcoming-upgrade">
+              <div class="col-header">
+                <h3 class="col-title">Upcoming Meetings</h3>
+                <button class="link-view-all" id="btnViewAllUpcoming">View all &rarr;</button>
+              </div>
+              <div class="upcoming-list">
+                <div class="upcoming-item">
+                  <div class="upcoming-dot green-dot"></div>
+                  <div class="upcoming-info">
+                    <h4>Client Review Meeting</h4>
+                    <span class="upcoming-time">10:00 AM - 11:00 AM</span>
+                  </div>
+                  <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Join</button>
+                </div>
+                <div class="upcoming-item">
+                  <div class="upcoming-dot blue-dot"></div>
+                  <div class="upcoming-info">
+                    <h4>Team Sync</h4>
+                    <span class="upcoming-time">2:00 PM - 2:30 PM</span>
+                  </div>
+                  <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Join</button>
+                </div>
+                <div class="upcoming-item">
+                  <div class="upcoming-dot purple-dot"></div>
+                  <div class="upcoming-info">
+                    <h4>Product Demo</h4>
+                    <span class="upcoming-time">4:00 PM - 5:00 PM</span>
+                  </div>
+                  <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Join</button>
+                </div>
+              </div>
+
+              <div class="upgrade-card-banner">
+                <div class="upgrade-icon-star"><i class="ri-vip-crown-fill"></i></div>
+                <h4 class="upgrade-title">Upgrade to Pro</h4>
+                <p class="upgrade-desc">Get more transcription minutes, advanced AI and team features.</p>
+                <button class="btn-upgrade-now" id="btnUpgradePro">Upgrade Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 2: RECORD STUDIO ==================== -->
+      <div class="page-view hidden" id="page-record">
+        <div class="desktop-content-body">
+          <div class="studio-header">
+            <div>
+              <h2 class="welcome-title">AI Voice Recording Studio</h2>
+              <p class="welcome-sub">Live speech-to-text, real-time waveform, and instant AI summary extraction.</p>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <!-- Bilingual Speech Selector -->
+              <div class="lang-selector-group" id="studioLangGroup">
+                <button class="lang-chip active" data-lang="en-US" id="btnLangEn" title="English Speech Recognition">
+                  <i class="ri-global-line"></i> English
+                </button>
+                <button class="lang-chip" data-lang="ur-PK" id="btnLangUr" title="Urdu Speech Recognition">
+                  <i class="ri-translate-2"></i> اردو (Urdu)
+                </button>
+                <button class="lang-chip" data-lang="bilingual" id="btnLangBi" title="Bilingual Mix (English & Urdu)">
+                  <i class="ri-sparkling-fill"></i> Bilingual
+                </button>
+              </div>
+
+              <div class="studio-tag-badge"><i class="ri-radio-button-line"></i> Studio Ready</div>
+            </div>
+          </div>
+
+          <!-- Studio Mode Switcher: Live Mic vs Upload Audio File -->
+          <div class="studio-mode-switcher">
+            <button class="studio-mode-tab active" id="tabModeMic">
+              <i class="ri-mic-line"></i> Live Microphone Studio
+            </button>
+            <button class="studio-mode-tab" id="tabModeUpload">
+              <i class="ri-upload-cloud-line"></i> Upload Audio File / Zoom Recording
+            </button>
+          </div>
+
+          <!-- TAB 1: Live Mic Main Card -->
+          <div class="studio-main-card" id="studioMicCard">
+            <div class="studio-timer" id="studioTimerDisplay">00:00:00</div>
+            <p class="studio-status" id="studioStatusText">Microphone ready. Tap Start Recording below.</p>
+
+            <!-- Real Canvas Waveform Visualizer -->
+            <div class="canvas-visualizer-wrap">
+              <canvas id="studioVisualizerCanvas" width="800" height="140"></canvas>
+            </div>
+
+            <!-- Controls -->
+            <div class="studio-controls-bar">
+              <button class="btn-control-secondary" id="studioBtnBookmark">
+                <i class="ri-bookmark-line"></i> Bookmark
+              </button>
+              <button class="btn-studio-record-main" id="studioBtnToggleRecord">
+                <i class="ri-mic-fill" id="studioRecordIcon"></i>
+              </button>
+              <button class="btn-control-secondary" id="studioBtnSaveMeeting">
+                <i class="ri-save-3-line"></i> Finish & Save
+              </button>
+            </div>
+
+            <!-- Bookmarks List -->
+            <div class="bookmarks-log-box" id="bookmarksLogBox">
+              <span class="bm-title">Audio Bookmarks & Markers:</span>
+              <div id="bookmarksList" class="bm-list">No bookmarks yet. Tap Bookmark while recording.</div>
+            </div>
+
+            <!-- Live Speech-to-Text Transcription Box with Diarization Toggle -->
+            <div class="studio-live-transcript-box">
+              <div class="live-trans-header">
+                <span><i class="ri-voiceprint-line"></i> Live Speech-to-Text Stream</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button class="diarize-toggle-btn active" id="btnToggleDiarization" title="Toggle Multi-Speaker Separation">
+                    <i class="ri-team-line"></i> <span id="diarizeStatusText">Diarization: ON</span>
+                  </button>
+                  <span class="live-rec-badge pulse" id="liveRecBadge" style="display: none;"><span class="dot"></span> Listening to Mic</span>
+                </div>
+              </div>
+              <div class="live-trans-body" id="studioLiveTranscript">
+                Microphone idle. Click the purple button to start real audio recording and live speech transcription...
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Upload Audio Drag & Drop Card -->
+          <div class="studio-main-card hidden" id="studioUploadCard">
+            <div class="audio-dropzone" id="audioDropZone">
+              <input type="file" id="audioFileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm" style="display: none;">
+              <div class="dropzone-icon"><i class="ri-upload-cloud-2-line"></i></div>
+              <h3 style="font-size: 18px; font-weight: 700; margin: 8px 0 4px;">Drag & Drop Meeting Audio File Here</h3>
+              <p style="font-size: 13px; color: var(--text-muted); max-width: 480px; margin: 0 auto 16px;">
+                Supports MP3, WAV, M4A, AAC, Zoom & Google Meet Recordings. Instant neural transcription with Gemini 1.5 Flash.
+              </p>
+              <button class="btn-secondary" id="btnBrowseAudioFile" type="button">
+                <i class="ri-folder-open-line"></i> Browse File from Computer
+              </button>
+            </div>
+
+            <div class="uploaded-audio-preview hidden" id="uploadedAudioPreview">
+              <div class="audio-file-info-row">
+                <div class="file-name-meta">
+                  <div class="audio-file-icon"><i class="ri-file-music-line"></i></div>
+                  <div>
+                    <h4 id="uploadedFileName" style="font-size: 15px; font-weight: 700;">audio-sample.mp3</h4>
+                    <span id="uploadedFileSize" style="font-size: 12px; color: var(--text-dim);">14.2 MB • Ready for AI Transcription</span>
+                  </div>
+                </div>
+                <button class="btn-icon-danger" id="btnRemoveAudioFile" title="Remove File"><i class="ri-close-line"></i></button>
+              </div>
+
+              <!-- Audio Player -->
+              <audio id="studioAudioPlayer" controls style="width: 100%; margin: 16px 0; border-radius: var(--radius-md);"></audio>
+
+              <button class="btn-primary-purple" id="btnTranscribeUploadedAudio" style="width: 100%; padding: 13px;">
+                <i class="ri-sparkling-fill"></i> AI Transcribe & Extract Action Items
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 3: MEETINGS LIBRARY ==================== -->
+      <div class="page-view hidden" id="page-meetings">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Meeting Library</h2>
+              <p class="welcome-sub">Browse, search, and export your transcriptions and executive summaries.</p>
+            </div>
+            <button class="btn-primary-purple" id="btnNewMeetingModal">
+              <i class="ri-add-line"></i> New Meeting Note
+            </button>
+          </div>
+
+          <!-- Filter Tabs -->
+          <div class="library-filter-row" id="libraryFilterRow">
+            <button class="lib-tab active" data-filter="all">All</button>
+            <button class="lib-tab" data-filter="Work">Work</button>
+            <button class="lib-tab" data-filter="Client">Client</button>
+            <button class="lib-tab" data-filter="Team">Team</button>
+            <button class="lib-tab" data-filter="Product">Product</button>
+          </div>
+
+          <!-- Detailed Meetings Table -->
+          <div class="meetings-full-table-wrap">
+            <table class="meetings-table">
+              <thead>
+                <tr>
+                  <th>Title & Topic</th>
+                  <th>Date & Time</th>
+                  <th>Duration</th>
+                  <th>Tag</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="meetingsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 4: TASKS MANAGER ==================== -->
+      <div class="page-view hidden" id="page-tasks">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Action Items & Task Manager</h2>
+              <p class="welcome-sub">Turn meeting discussions into assigned tasks with due dates and priorities.</p>
+            </div>
+            <button class="btn-primary-purple" id="btnAddTaskModal">
+              <i class="ri-add-line"></i> Create New Task
+            </button>
+          </div>
+
+          <!-- Tasks Filter -->
+          <div class="library-filter-row" id="taskFilterRow">
+            <button class="lib-tab active" data-task-filter="all">All Tasks</button>
+            <button class="lib-tab" data-task-filter="pending">Pending</button>
+            <button class="lib-tab" data-task-filter="completed">Completed</button>
+          </div>
+
+          <!-- Tasks List Grid -->
+          <div class="tasks-board-grid" id="tasksBoardGrid"></div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 5: ASK AI CHAT ==================== -->
+      <div class="page-view hidden" id="page-chat">
+        <div class="desktop-content-body">
+          <div class="chat-full-layout">
+            <div class="chat-header-bar">
+              <div class="ai-avatar-glow"><i class="ri-sparkling-fill"></i></div>
+              <div>
+                <h3 class="chat-title">Ask Your Meetings — AI Chat</h3>
+                <p class="chat-sub">Conversational search with grounded timestamp citations.</p>
+              </div>
+              <button class="btn-secondary" id="btnClearChatHistory" style="margin-left: auto;">
+                <i class="ri-delete-bin-line"></i> Clear Chat
+              </button>
+            </div>
+
+            <div class="chat-conversation-area" id="deskChatArea">
+              <div class="chat-bubble ai-bubble">
+                <div class="ai-header-badge"><i class="ri-sparkling-fill"></i> MeetMind AI Assistant</div>
+                <p>Hello Ali! I am your AI Meeting Assistant. You can ask me anything about your past meetings, decisions made, action items, or upcoming deadlines.</p>
+              </div>
+            </div>
+
+            <!-- Follow-up suggestion prompts -->
+            <div class="desktop-suggestion-chips" id="deskChatSuggestions">
+              <button class="s-chip">What were the key decisions made in Project Alpha?</button>
+              <button class="s-chip">Who has tasks due this week?</button>
+              <button class="s-chip">Summarize client call with Acme Corp</button>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-row">
+              <input type="text" id="deskChatQueryInput" placeholder="Ask anything about your meetings...">
+              <button class="btn-primary-purple" id="deskChatSendBtn">
+                <i class="ri-send-plane-2-fill"></i> Ask AI
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 6: KNOWLEDGE & DOCUMENTS ==================== -->
+      <div class="page-view hidden" id="page-knowledge">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Knowledge Base & Multi-Source Import</h2>
+              <p class="welcome-sub">Import YouTube URLs, Zoom/Meet links, and upload documents (PDF/DOCX) for AI summarization.</p>
+            </div>
+          </div>
+
+          <div class="import-cards-grid">
+            <!-- YouTube Card -->
+            <div class="import-panel-card">
+              <div class="import-panel-header">
+                <div class="import-icon red-icon"><i class="ri-youtube-fill"></i></div>
+                <div>
+                  <h4>Paste YouTube URL</h4>
+                  <p>Extract chapters, transcript & key insights</p>
+                </div>
+              </div>
+              <input type="url" id="importYoutubeUrlInput" placeholder="https://youtube.com/watch?v=..." class="panel-input">
+              <button class="btn-primary-purple" id="btnSubmitYoutubeImport">
+                <i class="ri-magic-line"></i> Generate Video Summary
+              </button>
+            </div>
+
+            <!-- Meeting Link Card -->
+            <div class="import-panel-card">
+              <div class="import-panel-header">
+                <div class="import-icon blue-icon"><i class="ri-video-chat-fill"></i></div>
+                <div>
+                  <h4>Meeting Link (Zoom / Meet)</h4>
+                  <p>AI bot joins and provides multi-speaker diarization</p>
+                </div>
+              </div>
+              <input type="url" id="importMeetingUrlInput" placeholder="https://meet.google.com/abc-def-ghi" class="panel-input">
+              <button class="btn-primary-purple" id="btnSubmitMeetingUrlImport">
+                <i class="ri-robot-2-line"></i> Connect AI Bot
+              </button>
+            </div>
+
+            <!-- Document Upload Card -->
+            <div class="import-panel-card">
+              <div class="import-panel-header">
+                <div class="import-icon green-icon"><i class="ri-file-pdf-fill"></i></div>
+                <div>
+                  <h4>Document Import (PDF / DOCX)</h4>
+                  <p>Upload document for instant AI question-answering</p>
+                </div>
+              </div>
+              <input type="file" id="importDocFileInput" class="panel-file-input">
+              <button class="btn-primary-purple" id="btnSubmitDocImport">
+                <i class="ri-upload-cloud-line"></i> Upload & Index
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 7: CALENDAR ==================== -->
+      <div class="page-view hidden" id="page-calendar">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Meeting Calendar & Preparation</h2>
+              <p class="welcome-sub">Upcoming schedule, pre-meeting briefs, and agenda suggestions.</p>
+            </div>
+            <button class="btn-secondary" id="btnSyncCalendar">
+              <i class="ri-refresh-line"></i> Sync Google / Outlook
+            </button>
+          </div>
+
+          <div class="calendar-agenda-grid">
+            <div class="agenda-day-card">
+              <span class="agenda-day-title">Today • Oct 27, 2026</span>
+              <div class="agenda-event">
+                <div class="event-time">10:00 AM</div>
+                <div class="event-content">
+                  <h5>Client Review Meeting (Acme Corp)</h5>
+                  <p>Agenda: Review Q4 delivery, security certifications, and sign-off.</p>
+                </div>
+                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Join</button>
+              </div>
+              <div class="agenda-event">
+                <div class="event-time">02:00 PM</div>
+                <div class="event-content">
+                  <h5>Team Sync (Engineering & Design)</h5>
+                  <p>Agenda: Review mobile PWA standalone deployment.</p>
+                </div>
+                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Join</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 8: WORKSPACES ==================== -->
+      <div class="page-view hidden" id="page-workspaces">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Team Workspace & Collaboration</h2>
+              <p class="welcome-sub">Manage workspace members, assign role permissions, and share folders.</p>
+            </div>
+            <button class="btn-primary-purple" id="btnInviteMember">
+              <i class="ri-user-add-line"></i> Invite Member
+            </button>
+          </div>
+
+          <div class="workspace-members-table-wrap">
+            <table class="meetings-table">
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Ali Raza</strong></td>
+                  <td>ali@cowlar.com</td>
+                  <td><span class="badge-tag tag-work">Owner / Admin</span></td>
+                  <td><span class="badge-summary-ready">Active</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Sarah Jenkins</strong></td>
+                  <td>sarah@design.io</td>
+                  <td><span class="badge-tag tag-team">Editor</span></td>
+                  <td><span class="badge-summary-ready">Active</span></td>
+                </tr>
+                <tr>
+                  <td><strong>John Miller</strong></td>
+                  <td>john@product.org</td>
+                  <td><span class="badge-tag tag-product">Viewer</span></td>
+                  <td><span class="badge-summary-ready">Active</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 8.5: DOCUMENTS & EXPORTS ==================== -->
+      <div class="page-view hidden" id="page-documents">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Documents, Minutes & Reports</h2>
+              <p class="welcome-sub">Structured meeting minutes, executive briefs, and one-click PDF downloads.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-secondary" id="btnExportAllDocs"><i class="ri-file-download-line"></i> Export All (JSON)</button>
+              <button class="btn-primary-purple" id="btnCreateNewDoc"><i class="ri-add-line"></i> New Meeting Note</button>
+            </div>
+          </div>
+
+          <!-- Documents List Grid -->
+          <div class="documents-cards-grid" id="documentsCardsGrid">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PAGE 9: SETTINGS & EXPORT ==================== -->
+      <div class="page-view hidden" id="page-settings">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Settings & Cloud Configurations</h2>
+              <p class="welcome-sub">AI configuration, custom API keys, and GDPR-compliant data export.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- Card 1: Real AI Engine & API Keys -->
+            <div class="settings-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4><i class="ri-sparkling-fill" style="color: var(--primary);"></i> AI Engine & API Keys</h4>
+                <span class="badge-summary-ready" id="aiStatusBadge"><i class="ri-checkbox-circle-fill"></i> AI Active</span>
+              </div>
+              
+              <label>Google Gemini API Key (Optional BYOK):</label>
+              <input type="password" id="settingGeminiKey" placeholder="AIzaSy... (Get free from aistudio.google.com)" class="panel-input">
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Leaves empty to use built-in neural heuristics.</p>
+
+              <label style="margin-top: 10px;">Backend API Endpoint:</label>
+              <input type="text" id="settingBackendUrl" value="http://127.0.0.1:8000/api/v1" placeholder="https://your-api.onrender.com/api/v1" class="panel-input">
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Point to your Render/Railway live Python backend.</p>
+
+              <label style="margin-top: 10px;">OpenAI API Key (Optional):</label>
+              <input type="password" id="settingOpenAiKey" placeholder="sk-..." class="panel-input">
+
+              <button class="btn-primary-purple" id="btnSaveApiKeys" style="margin-top: 14px; width: 100%;">
+                <i class="ri-save-line"></i> Save API Configuration
+              </button>
+            </div>
+
+            <!-- Card 2: AI Preferences -->
+            <div class="settings-card">
+              <h4>AI Custom Preferences</h4>
+              <label>Custom Summary Tone:</label>
+              <select id="settingAiTone" class="panel-input">
+                <option value="executive">Executive & Concise</option>
+                <option value="detailed">Detailed & Technical</option>
+                <option value="action_oriented">Action Items Focused</option>
+              </select>
+
+              <label style="margin-top: 10px;">Bilingual Speech Diarization:</label>
+              <select id="settingDiarization" class="panel-input">
+                <option value="en_ur">English & Urdu (Automatic)</option>
+                <option value="en_only">English Only</option>
+              </select>
+
+              <label style="margin-top: 10px;">Default Meeting Tag:</label>
+              <select id="settingDefaultTag" class="panel-input">
+                <option value="Work">Work</option>
+                <option value="Client">Client</option>
+                <option value="Team">Team</option>
+                <option value="Product">Product</option>
+              </select>
+
+              <button class="btn-secondary" id="btnSaveAiSettings" style="margin-top: 14px; width: 100%;">
+                Save Preferences
+              </button>
+            </div>
+
+            <!-- Card 3: Data Export -->
+            <div class="settings-card">
+              <h4>Data Export & Account Management</h4>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                Download all your meetings, transcripts, and action items in JSON or Markdown.
+              </p>
+              <button class="btn-secondary" id="btnExportAllData" style="width: 100%; margin-bottom: 8px;">
+                <i class="ri-download-2-line"></i> Export Full Library (JSON)
+              </button>
+              <button class="btn-secondary" id="btnExportMarkdownSummary" style="width: 100%; margin-bottom: 8px;">
+                <i class="ri-markdown-line"></i> Export All Summaries (Markdown)
+              </button>
+              <button class="btn-danger-outline" id="btnDeleteAccount" style="width: 100%;">
+                <i class="ri-delete-bin-line"></i> Clear Local Cache & Reset Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </section>
+
+  <!-- =========================================================================
+       VIEWPORT 2: MOBILE APP SHOWCASE (5 SCREENS AS IN SPECIFICATION)
+       ========================================================================= -->
+  <section class="mobile-showcase-layout hidden" id="mobileShowcaseView">
+    <div class="showcase-scroll-track">
+      
+      <!-- SCREEN 1: SPLASH / ONBOARDING -->
+      <div class="mockup-phone">
+        <div class="phone-shell">
+          <div class="m-status-bar">
+            <span>9:41</span>
+            <div class="m-island"></div>
+            <div class="m-icons"><i class="ri-signal-tower-fill"></i> <i class="ri-wifi-line"></i> <i class="ri-battery-fill"></i></div>
+          </div>
+          <div class="m-screen splash-screen">
+            <div class="splash-center">
+              <div class="splash-logo-circle">
+                <i class="ri-voiceprint-fill"></i>
+              </div>
+              <h2 class="splash-title">MeetMind AI</h2>
+              <span class="splash-sub">Your AI Meeting Assistant</span>
+              <p class="splash-bullets">Record • Transcribe • Summarize<br>Get more done</p>
+            </div>
+            <button class="btn-get-started" id="btnSplashStart">Get Started</button>
+          </div>
+          <div class="m-home-bar"></div>
+        </div>
+        <span class="screen-label">1. Onboarding</span>
+      </div>
+
+      <!-- SCREEN 2: MOBILE DASHBOARD -->
+      <div class="mockup-phone">
+        <div class="phone-shell">
+          <div class="m-status-bar">
+            <span>9:41</span>
+            <div class="m-island"></div>
+            <div class="m-icons"><i class="ri-signal-tower-fill"></i> <i class="ri-wifi-line"></i> <i class="ri-battery-fill"></i></div>
+          </div>
+          <div class="m-screen mobile-dash-screen">
+            <div class="m-dash-header">
+              <div>
+                <h3 class="m-greet">Good morning, Ali 👋</h3>
+                <p class="m-sub">Your meetings, organized intelligently.</p>
+              </div>
+              <img src="assets/emily.jpg" alt="Profile" class="m-avatar">
+            </div>
+
+            <!-- Start Recording Card -->
+            <div class="m-hero-card" id="mHeroStartRecord">
+              <div class="m-hero-mic"><i class="ri-mic-fill"></i></div>
+              <h4>Start Recording</h4>
+            </div>
+
+            <!-- Mini 3 actions -->
+            <div class="m-mini-actions">
+              <div class="m-action-btn" id="mActUploadAudio">
+                <i class="ri-upload-cloud-2-line"></i>
+                <span>Upload Audio</span>
+              </div>
+              <div class="m-action-btn" id="mActImportLink">
+                <i class="ri-links-line"></i>
+                <span>Import Link</span>
+              </div>
+              <div class="m-action-btn" id="mActUploadDoc">
+                <i class="ri-file-text-line"></i>
+                <span>Upload Doc</span>
+              </div>
+            </div>
+
+            <!-- Recent Meetings -->
+            <div class="m-section-head">
+              <h4>Recent Meetings</h4>
+              <span>View all &rarr;</span>
+            </div>
+
+            <div class="m-recent-list" id="mRecentMeetingsList"></div>
+
+            <!-- Mobile Bottom Nav -->
+            <nav class="m-bottom-nav">
+              <div class="m-nav-tab active" data-m-tab="home"><i class="ri-home-fill"></i><span>Home</span></div>
+              <div class="m-nav-tab" data-m-tab="meetings"><i class="ri-folders-line"></i><span>Meetings</span></div>
+              <div class="m-nav-mic-btn" id="mBottomMicBtn"><i class="ri-mic-fill"></i></div>
+              <div class="m-nav-tab" data-m-tab="tasks"><i class="ri-checkbox-circle-line"></i><span>Tasks</span></div>
+              <div class="m-nav-tab" data-m-tab="chat"><i class="ri-chat-voice-line"></i><span>Ask AI</span></div>
+            </nav>
+          </div>
+          <div class="m-home-bar"></div>
+        </div>
+        <span class="screen-label">2. Home Dashboard</span>
+      </div>
+
+      <!-- SCREEN 3: LIVE RECORDING -->
+      <div class="mockup-phone">
+        <div class="phone-shell">
+          <div class="m-status-bar">
+            <span>9:41</span>
+            <div class="m-island"></div>
+            <div class="m-icons"><i class="ri-signal-tower-fill"></i> <i class="ri-wifi-line"></i> <i class="ri-battery-fill"></i></div>
+          </div>
+          <div class="m-screen record-screen-alt">
+            <span class="m-rec-header">Recording...</span>
+            <div class="m-rec-timer" id="mRecTimer">00:12:34</div>
+
+            <!-- Real-time Animated Waveform -->
+            <div class="m-wave-container" id="mWaveContainer"></div>
+
+            <!-- Recording Action Controls -->
+            <div class="m-rec-actions-row">
+              <button class="m-circle-act-btn" id="mBtnBookmark" title="Add Bookmark">
+                <i class="ri-bookmark-line"></i>
+                <span>Bookmark</span>
+              </button>
+              <button class="m-large-pause-btn" id="mBtnPauseRecord" title="Pause / Resume">
+                <i class="ri-pause-line" id="mPauseIcon"></i>
+              </button>
+              <button class="m-circle-act-btn" id="mBtnTrim" title="Trim Audio">
+                <i class="ri-scissors-line"></i>
+                <span>Trim</span>
+              </button>
+            </div>
+
+            <button class="m-end-record-btn" id="mBtnEndRecording">End Recording</button>
+          </div>
+          <div class="m-home-bar"></div>
+        </div>
+        <span class="screen-label">3. Live Recording</span>
+      </div>
+
+      <!-- SCREEN 4: AI SUMMARY SCREEN -->
+      <div class="mockup-phone">
+        <div class="phone-shell">
+          <div class="m-status-bar">
+            <span>9:41</span>
+            <div class="m-island"></div>
+            <div class="m-icons"><i class="ri-signal-tower-fill"></i> <i class="ri-wifi-line"></i> <i class="ri-battery-fill"></i></div>
+          </div>
+          <div class="m-screen summary-screen">
+            <div class="m-header-nav">
+              <i class="ri-arrow-left-line"></i>
+              <h4>AI Summary</h4>
+              <i class="ri-share-line"></i>
+            </div>
+
+            <!-- Tabs: Summary, Transcript, Tasks -->
+            <div class="m-summary-tabs">
+              <button class="m-sum-tab active" data-tab="summary">Summary</button>
+              <button class="m-sum-tab" data-tab="transcript">Transcript</button>
+              <button class="m-sum-tab" data-tab="tasks">Tasks</button>
+            </div>
+
+            <div class="m-summary-content" id="mSummaryTabContent">
+              <div class="m-summary-section">
+                <h5>Executive Summary</h5>
+                <p>The meeting focused on the Project Alpha timeline, finalized new low-latency audio capture specs, and agreed to launch sprint beta.</p>
+              </div>
+
+              <div class="m-summary-section">
+                <h5>Key Decisions</h5>
+                <ul class="m-decisions-list">
+                  <li>Approved the new design direction.</li>
+                  <li>Set Q2 launch target.</li>
+                  <li>Allocated budget for marketing.</li>
+                </ul>
+              </div>
+
+              <div class="m-summary-section">
+                <h5>Action Items</h5>
+                <div class="m-action-check-list">
+                  <label class="m-check-item">
+                    <input type="checkbox" checked>
+                    <span>Design mockups - Sarah (Apr 30)</span>
+                  </label>
+                  <label class="m-check-item">
+                    <input type="checkbox">
+                    <span>API integration - Ali (May 5)</span>
+                  </label>
+                  <label class="m-check-item">
+                    <input type="checkbox">
+                    <span>Marketing plan - John (May 10)</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <button class="m-export-btn" id="mBtnExportSummary">
+              <i class="ri-download-2-line"></i> Export
+            </button>
+          </div>
+          <div class="m-home-bar"></div>
+        </div>
+        <span class="screen-label">4. AI Summary</span>
+      </div>
+
+      <!-- SCREEN 5: ASK AI / RAG CHAT -->
+      <div class="mockup-phone">
+        <div class="phone-shell">
+          <div class="m-status-bar">
+            <span>9:41</span>
+            <div class="m-island"></div>
+            <div class="m-icons"><i class="ri-signal-tower-fill"></i> <i class="ri-wifi-line"></i> <i class="ri-battery-fill"></i></div>
+          </div>
+          <div class="m-screen chat-screen">
+            <div class="m-header-nav">
+              <i class="ri-arrow-left-line"></i>
+              <h4>Ask AI</h4>
+              <i class="ri-more-2-line"></i>
+            </div>
+
+            <div class="m-chat-messages" id="mChatMessagesList">
+              <div class="chat-bubble user-bubble">
+                <p>What were the main decisions in this meeting?</p>
+              </div>
+
+              <div class="chat-bubble ai-bubble">
+                <div class="ai-header-badge"><i class="ri-sparkling-fill"></i> MeetMind AI</div>
+                <p>Here are the key decisions from this meeting:</p>
+                <ol>
+                  <li>Approved the new design direction.</li>
+                  <li>Set Q2 launch target.</li>
+                  <li>Allocated budget for marketing.</li>
+                </ol>
+                <div class="chat-citation">
+                  <i class="ri-file-text-line"></i> Source: Project Alpha Discussion • 10:32 AM
+                </div>
+              </div>
+            </div>
+
+            <div class="m-followup-chips" id="mFollowupChips">
+              <span class="chip-label">Follow-up:</span>
+              <button class="f-chip">What are the next steps?</button>
+              <button class="f-chip">Who is responsible?</button>
+              <button class="f-chip">What are the deadlines?</button>
+            </div>
+
+            <div class="m-chat-input-bar">
+              <input type="text" id="mChatInput" placeholder="Ask a question...">
+              <button class="m-chat-send-btn" id="mChatSendBtn"><i class="ri-send-plane-2-fill"></i></button>
+            </div>
+          </div>
+          <div class="m-home-bar"></div>
+        </div>
+        <span class="screen-label">5. Ask AI (RAG Chat)</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       MODAL 1: INSTALL APP ON MOBILE (QR CODE + PWA INSTRUCTIONS)
+       ========================================================================= -->
+  <div class="app-dialog-overlay hidden" id="modalInstallPWA">
+    <div class="app-dialog-card modal-qr-card">
+      <div class="dialog-header">
+        <div class="dialog-icon-badge purple-badge"><i class="ri-smartphone-line"></i></div>
+        <div>
+          <h3>Install on Your Mobile Phone</h3>
+          <p>Scan with your phone's camera to install as a native app</p>
+        </div>
+        <button class="close-dialog-btn" id="closeInstallModal">&times;</button>
+      </div>
+
+      <div class="dialog-body" style="text-align: center;">
+        <div class="qr-container">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://meetmind-ai-74519.web.app/app" alt="Mobile QR Code" class="qr-image">
+        </div>
+        <div class="network-url-pill">
+          <span>URL: </span><strong id="localNetworkUrl">https://meetmind-ai-74519.web.app/app</strong>
+          <button class="copy-url-btn" id="copyUrlBtn" title="Copy URL"><i class="ri-file-copy-line"></i></button>
+        </div>
+
+        <div class="install-guide-box">
+          <div class="guide-step">
+            <strong>🤖 Android (Chrome):</strong> Open the link, tap the 3-dots menu &rarr; tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.
+          </div>
+          <div class="guide-step">
+            <strong>🍏 iPhone (Safari):</strong> Open the link, tap the <strong>Share</strong> button &rarr; tap <strong>"Add to Home Screen"</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <button class="btn-primary-purple" id="btnInstallSelf" style="width: 100%;">
+          <i class="ri-download-cloud-line"></i> Install on This Device
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CREATE NEW TASK -->
+  <div class="app-dialog-overlay hidden" id="modalCreateTask">
+    <div class="app-dialog-card">
+      <div class="dialog-header">
+        <div class="dialog-icon-badge purple-badge"><i class="ri-checkbox-circle-line"></i></div>
+        <div>
+          <h3>Create Action Item / Task</h3>
+          <p>Assign tasks with priority and deadlines</p>
+        </div>
+        <button class="close-dialog-btn" id="closeTaskModal">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <label>Task Title:</label>
+        <input type="text" id="taskTitleInput" placeholder="e.g. Deploy PWA service worker cache" class="panel-input">
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <div style="flex: 1;">
+            <label>Assignee:</label>
+            <input type="text" id="taskAssigneeInput" placeholder="e.g. Sarah" class="panel-input">
+          </div>
+          <div style="flex: 1;">
+            <label>Priority:</label>
+            <select id="taskPrioritySelect" class="panel-input">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <label style="margin-top: 10px;">Deadline:</label>
+        <input type="text" id="taskDeadlineInput" placeholder="e.g. Friday, 5:00 PM" class="panel-input">
+      </div>
+      <div class="dialog-footer">
+        <button class="btn-secondary" id="cancelTaskModalBtn">Cancel</button>
+        <button class="btn-primary-purple" id="btnSaveNewTask">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CREATE NEW MEETING NOTE -->
+  <div class="app-dialog-overlay hidden" id="modalNewMeeting">
+    <div class="app-dialog-card">
+      <div class="dialog-header">
+        <div class="dialog-icon-badge purple-badge"><i class="ri-voiceprint-line"></i></div>
+        <div>
+          <h3>Create Meeting Note</h3>
+          <p>Add manual meeting notes or past call summary</p>
+        </div>
+        <button class="close-dialog-btn" id="closeNewMeetingModal">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <label>Meeting Title & Topic:</label>
+        <input type="text" id="newMeetingTitleInput" placeholder="e.g. Q4 Growth Sprint Strategy" class="panel-input">
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <div style="flex: 1;">
+            <label>Tag / Category:</label>
+            <select id="newMeetingTagSelect" class="panel-input">
+              <option value="Work" selected>Work</option>
+              <option value="Client">Client</option>
+              <option value="Team">Team</option>
+              <option value="Product">Product</option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label>Duration:</label>
+            <input type="text" id="newMeetingDurationInput" placeholder="e.g. 35 min" class="panel-input">
+          </div>
+        </div>
+
+        <label style="margin-top: 10px;">Meeting Notes / Discussion Points:</label>
+        <textarea id="newMeetingNotesInput" rows="4" placeholder="Paste discussion notes, agenda, or key takeaways..." class="panel-input" style="resize: vertical; font-family: inherit;"></textarea>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn-secondary" id="cancelNewMeetingBtn">Cancel</button>
+        <button class="btn-primary-purple" id="btnSaveNewMeeting">
+          <i class="ri-sparkling-fill"></i> Save & Auto-Summarize
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: MEETING DETAILS & 1-CLICK PDF EXPORT -->
+  <div class="app-dialog-overlay hidden" id="modalMeetingDetails">
+    <div class="app-dialog-card modal-large" id="printableMeetingCard">
+      <div class="dialog-header">
+        <div class="dialog-icon-badge purple-badge"><i class="ri-file-text-line"></i></div>
+        <div>
+          <h3 id="mdDetailTitle">Project Alpha Discussion</h3>
+          <p id="mdDetailMeta" style="color: var(--text-dim); font-size: 12px;">Today, 10:30 AM • 22 min</p>
+        </div>
+        <button class="close-dialog-btn" id="closeDetailModal">&times;</button>
+      </div>
+      
+      <!-- Modal Internal Tabs -->
+      <div class="modal-tab-bar" id="mdDetailTabs">
+        <button class="m-detail-tab active" data-tab="brief">
+          <i class="ri-file-text-line"></i> Executive Brief
+        </button>
+        <button class="m-detail-tab" data-tab="transcript">
+          <i class="ri-team-line"></i> Diarized Transcript
+        </button>
+        <button class="m-detail-tab" data-tab="actions">
+          <i class="ri-checkbox-circle-line"></i> Action Items <span class="tab-count-pill" id="mdActionsCountBadge">3</span>
+        </button>
+      </div>
+
+      <div class="dialog-body" style="max-height: 60vh; overflow-y: auto;">
+        <!-- TAB A: Executive Brief & Decisions -->
+        <div class="md-tab-pane" id="mdPaneBrief">
+          <!-- Executive Summary Section -->
+          <div class="detail-section">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--primary);">
+              <i class="ri-sparkling-fill"></i> Executive AI Summary
+            </h4>
+            <p id="mdDetailSummary" style="font-size: 13.5px; line-height: 1.6; color: var(--text-main);"></p>
+          </div>
+
+          <!-- Key Decisions Section -->
+          <div class="detail-section" style="margin-top: 14px;">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
+              <i class="ri-check-double-line" style="color: var(--success);"></i> Key Decisions
+            </h4>
+            <ul id="mdDetailDecisions" class="decisions-bullet-list"></ul>
+          </div>
+        </div>
+
+        <!-- TAB B: Multi-Speaker Diarized Transcript -->
+        <div class="md-tab-pane hidden" id="mdPaneTranscript">
+          <div class="diarized-transcript-container" id="mdDetailTranscript">
+            <!-- Rendered dynamically with speaker badges -->
+          </div>
+        </div>
+
+        <!-- TAB C: Action Items & Deadlines -->
+        <div class="md-tab-pane hidden" id="mdPaneActions">
+          <div class="detail-section">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
+              <i class="ri-checkbox-circle-line" style="color: var(--warning);"></i> Extracted Action Items
+            </h4>
+            <ul id="mdDetailActions" class="actions-checklist-ul"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <button class="btn-danger-outline" id="btnDeleteMeetingItem">
+          <i class="ri-delete-bin-line"></i> Delete
+        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-secondary" id="btnExportNotion" title="Copy formatted Markdown for Notion">
+            <i class="ri-book-open-line"></i> Notion
+          </button>
+          <button class="btn-secondary" id="btnExportSlack" title="Copy formatted message for Slack">
+            <i class="ri-slack-line"></i> Slack
+          </button>
+          <button class="btn-secondary" id="btnCopyMeetingText" title="Copy Plain Text">
+            <i class="ri-file-copy-line"></i> Copy
+          </button>
+          <button class="btn-primary-purple" id="btnPrintPdfBtn">
+            <i class="ri-printer-line"></i> PDF / Print
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: COMMAND PALETTE (CTRL+K / CMD+K) -->
+  <div class="app-dialog-overlay hidden" id="modalCommandPalette">
+    <div class="cmd-palette-box">
+      <div class="cmd-palette-search">
+        <i class="ri-search-line"></i>
+        <input type="text" id="cmdPaletteInput" placeholder="Type a command or jump to page...">
+        <kbd>ESC</kbd>
+      </div>
+      <div class="cmd-palette-results" id="cmdPaletteResults">
+        <!-- Results dynamically filtered -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Universal Toast -->
+  <div class="smart-toast hidden" id="universalToast">
+    <i class="ri-checkbox-circle-fill toast-icon"></i>
+    <span id="uToastMsg">Success</span>
+  </div>
+
+  <script type="module" src="firebase-service.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

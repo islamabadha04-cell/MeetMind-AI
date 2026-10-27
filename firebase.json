@@ -1,6 +1,7 @@
 {
   "hosting": {
     "public": ".",
+    "cleanUrls": true,
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -9,6 +10,26 @@
       "mobile_flutter/**"
     ],
     "rewrites": [
+      {
+        "source": "/app",
+        "destination": "/app.html"
+      },
+      {
+        "source": "/login",
+        "destination": "/login.html"
+      },
+      {
+        "source": "/signup",
+        "destination": "/login.html"
+      },
+      {
+        "source": "/privacy",
+        "destination": "/privacy.html"
+      },
+      {
+        "source": "/terms",
+        "destination": "/terms.html"
+      },
       {
         "source": "**",
         "destination": "/index.html"
