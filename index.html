@@ -349,10 +349,37 @@
               <h2 class="welcome-title">AI Voice Recording Studio</h2>
               <p class="welcome-sub">Live speech-to-text, real-time waveform, and instant AI summary extraction.</p>
             </div>
-            <div class="studio-tag-badge"><i class="ri-radio-button-line"></i> Studio Ready</div>
+            
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <!-- Bilingual Speech Selector -->
+              <div class="lang-selector-group" id="studioLangGroup">
+                <button class="lang-chip active" data-lang="en-US" id="btnLangEn" title="English Speech Recognition">
+                  <i class="ri-global-line"></i> English
+                </button>
+                <button class="lang-chip" data-lang="ur-PK" id="btnLangUr" title="Urdu Speech Recognition">
+                  <i class="ri-translate-2"></i> اردو (Urdu)
+                </button>
+                <button class="lang-chip" data-lang="bilingual" id="btnLangBi" title="Bilingual Mix (English & Urdu)">
+                  <i class="ri-sparkling-fill"></i> Bilingual
+                </button>
+              </div>
+
+              <div class="studio-tag-badge"><i class="ri-radio-button-line"></i> Studio Ready</div>
+            </div>
           </div>
 
-          <div class="studio-main-card">
+          <!-- Studio Mode Switcher: Live Mic vs Upload Audio File -->
+          <div class="studio-mode-switcher">
+            <button class="studio-mode-tab active" id="tabModeMic">
+              <i class="ri-mic-line"></i> Live Microphone Studio
+            </button>
+            <button class="studio-mode-tab" id="tabModeUpload">
+              <i class="ri-upload-cloud-line"></i> Upload Audio File / Zoom Recording
+            </button>
+          </div>
+
+          <!-- TAB 1: Live Mic Main Card -->
+          <div class="studio-main-card" id="studioMicCard">
             <div class="studio-timer" id="studioTimerDisplay">00:00:00</div>
             <p class="studio-status" id="studioStatusText">Microphone ready. Tap Start Recording below.</p>
 
@@ -380,15 +407,55 @@
               <div id="bookmarksList" class="bm-list">No bookmarks yet. Tap Bookmark while recording.</div>
             </div>
 
-            <!-- Live Speech-to-Text Transcription Box -->
+            <!-- Live Speech-to-Text Transcription Box with Diarization Toggle -->
             <div class="studio-live-transcript-box">
               <div class="live-trans-header">
                 <span><i class="ri-voiceprint-line"></i> Live Speech-to-Text Stream</span>
-                <span class="live-rec-badge pulse" id="liveRecBadge" style="display: none;"><span class="dot"></span> Listening to Mic</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button class="diarize-toggle-btn active" id="btnToggleDiarization" title="Toggle Multi-Speaker Separation">
+                    <i class="ri-team-line"></i> <span id="diarizeStatusText">Diarization: ON</span>
+                  </button>
+                  <span class="live-rec-badge pulse" id="liveRecBadge" style="display: none;"><span class="dot"></span> Listening to Mic</span>
+                </div>
               </div>
               <div class="live-trans-body" id="studioLiveTranscript">
                 Microphone idle. Click the purple button to start real audio recording and live speech transcription...
               </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Upload Audio Drag & Drop Card -->
+          <div class="studio-main-card hidden" id="studioUploadCard">
+            <div class="audio-dropzone" id="audioDropZone">
+              <input type="file" id="audioFileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm" style="display: none;">
+              <div class="dropzone-icon"><i class="ri-upload-cloud-2-line"></i></div>
+              <h3 style="font-size: 18px; font-weight: 700; margin: 8px 0 4px;">Drag & Drop Meeting Audio File Here</h3>
+              <p style="font-size: 13px; color: var(--text-muted); max-width: 480px; margin: 0 auto 16px;">
+                Supports MP3, WAV, M4A, AAC, Zoom & Google Meet Recordings. Instant neural transcription with Gemini 1.5 Flash.
+              </p>
+              <button class="btn-secondary" id="btnBrowseAudioFile" type="button">
+                <i class="ri-folder-open-line"></i> Browse File from Computer
+              </button>
+            </div>
+
+            <div class="uploaded-audio-preview hidden" id="uploadedAudioPreview">
+              <div class="audio-file-info-row">
+                <div class="file-name-meta">
+                  <div class="audio-file-icon"><i class="ri-file-music-line"></i></div>
+                  <div>
+                    <h4 id="uploadedFileName" style="font-size: 15px; font-weight: 700;">audio-sample.mp3</h4>
+                    <span id="uploadedFileSize" style="font-size: 12px; color: var(--text-dim);">14.2 MB • Ready for AI Transcription</span>
+                  </div>
+                </div>
+                <button class="btn-icon-danger" id="btnRemoveAudioFile" title="Remove File"><i class="ri-close-line"></i></button>
+              </div>
+
+              <!-- Audio Player -->
+              <audio id="studioAudioPlayer" controls style="width: 100%; margin: 16px 0; border-radius: var(--radius-md);"></audio>
+
+              <button class="btn-primary-purple" id="btnTranscribeUploadedAudio" style="width: 100%; padding: 13px;">
+                <i class="ri-sparkling-fill"></i> AI Transcribe & Extract Action Items
+              </button>
             </div>
           </div>
         </div>
@@ -1134,42 +1201,73 @@
         <button class="close-dialog-btn" id="closeDetailModal">&times;</button>
       </div>
       
-      <div class="dialog-body" style="max-height: 65vh; overflow-y: auto;">
-        <!-- Executive Summary Section -->
-        <div class="detail-section">
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--primary);">
-            <i class="ri-sparkling-fill"></i> Executive AI Summary
-          </h4>
-          <p id="mdDetailSummary" style="font-size: 13.5px; line-height: 1.6; color: var(--text-main);"></p>
+      <!-- Modal Internal Tabs -->
+      <div class="modal-tab-bar" id="mdDetailTabs">
+        <button class="m-detail-tab active" data-tab="brief">
+          <i class="ri-file-text-line"></i> Executive Brief
+        </button>
+        <button class="m-detail-tab" data-tab="transcript">
+          <i class="ri-team-line"></i> Diarized Transcript
+        </button>
+        <button class="m-detail-tab" data-tab="actions">
+          <i class="ri-checkbox-circle-line"></i> Action Items (<span id="mdActionsCountBadge">3</span>)
+        </button>
+      </div>
+
+      <div class="dialog-body" style="max-height: 60vh; overflow-y: auto;">
+        <!-- TAB A: Executive Brief & Decisions -->
+        <div class="md-tab-pane" id="mdPaneBrief">
+          <!-- Executive Summary Section -->
+          <div class="detail-section">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--primary);">
+              <i class="ri-sparkling-fill"></i> Executive AI Summary
+            </h4>
+            <p id="mdDetailSummary" style="font-size: 13.5px; line-height: 1.6; color: var(--text-main);"></p>
+          </div>
+
+          <!-- Key Decisions Section -->
+          <div class="detail-section" style="margin-top: 14px;">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
+              <i class="ri-check-double-line" style="color: var(--success);"></i> Key Decisions
+            </h4>
+            <ul id="mdDetailDecisions" class="decisions-bullet-list"></ul>
+          </div>
         </div>
 
-        <!-- Key Decisions Section -->
-        <div class="detail-section" style="margin-top: 14px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
-            <i class="ri-check-double-line" style="color: var(--success);"></i> Key Decisions
-          </h4>
-          <ul id="mdDetailDecisions" class="decisions-bullet-list"></ul>
+        <!-- TAB B: Multi-Speaker Diarized Transcript -->
+        <div class="md-tab-pane hidden" id="mdPaneTranscript">
+          <div class="diarized-transcript-container" id="mdDetailTranscript">
+            <!-- Rendered dynamically with speaker badges -->
+          </div>
         </div>
 
-        <!-- Action Items Table -->
-        <div class="detail-section" style="margin-top: 14px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
-            <i class="ri-checkbox-circle-line" style="color: var(--warning);"></i> Extracted Action Items
-          </h4>
-          <ul id="mdDetailActions" class="actions-checklist-ul"></ul>
+        <!-- TAB C: Action Items & Deadlines -->
+        <div class="md-tab-pane hidden" id="mdPaneActions">
+          <div class="detail-section">
+            <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
+              <i class="ri-checkbox-circle-line" style="color: var(--warning);"></i> Extracted Action Items
+            </h4>
+            <ul id="mdDetailActions" class="actions-checklist-ul"></ul>
+          </div>
         </div>
       </div>
 
-      <div class="dialog-footer" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="dialog-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <button class="btn-danger-outline" id="btnDeleteMeetingItem">
           <i class="ri-delete-bin-line"></i> Delete
         </button>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-secondary" id="btnCopyMeetingText">
-            <i class="ri-file-copy-line"></i> Copy Text
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn-secondary" id="btnExportNotion" title="Copy formatted Markdown for Notion">
+            <i class="ri-book-open-line"></i> Notion
+          </button>
+          <button class="btn-secondary" id="btnExportSlack" title="Copy formatted message for Slack">
+            <i class="ri-slack-line"></i> Slack
+          </button>
+          <button class="btn-secondary" id="btnCopyMeetingText" title="Copy Plain Text">
+            <i class="ri-file-copy-line"></i> Copy
           </button>
           <button class="btn-primary-purple" id="btnPrintPdfBtn">
-            <i class="ri-printer-line"></i> Print / Export PDF
+            <i class="ri-printer-line"></i> PDF / Print
           </button>
         </div>
       </div>

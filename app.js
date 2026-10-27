@@ -81,6 +81,9 @@ let studioMediaStream = null;
 let studioSpeechRecognition = null;
 let studioBookmarks = [];
 let studioTranscriptAccumulator = '';
+let activeStudioLang = 'en-US';
+let isDiarizationEnabled = true;
+let uploadedAudioFile = null;
 
 // DOM Elements
 const desktopAppView = document.getElementById('desktopAppView');
@@ -241,7 +244,13 @@ const deskViewAllMeetings = document.getElementById('deskViewAllMeetings');
 if (deskViewAllMeetings) deskViewAllMeetings.addEventListener('click', () => navigateToPage('meetings'));
 
 const deskUploadAudioCard = document.getElementById('deskUploadAudioCard');
-if (deskUploadAudioCard) deskUploadAudioCard.addEventListener('click', () => navigateToPage('record'));
+if (deskUploadAudioCard) {
+  deskUploadAudioCard.addEventListener('click', () => {
+    navigateToPage('record');
+    if (typeof switchStudioMode === 'function') switchStudioMode('upload');
+    showToast('Switched to Audio Upload Studio 📁');
+  });
+}
 
 const deskImportLinkCard = document.getElementById('deskImportLinkCard');
 if (deskImportLinkCard) deskImportLinkCard.addEventListener('click', () => navigateToPage('knowledge'));
@@ -338,7 +347,7 @@ async function startStudioRecording() {
       studioSpeechRecognition = new SpeechRec();
       studioSpeechRecognition.continuous = true;
       studioSpeechRecognition.interimResults = true;
-      studioSpeechRecognition.lang = 'en-US';
+      studioSpeechRecognition.lang = activeStudioLang === 'ur-PK' ? 'ur-PK' : 'en-US';
 
       studioSpeechRecognition.onresult = (event) => {
         let interim = '';
@@ -351,7 +360,11 @@ async function startStudioRecording() {
           }
         }
         if (studioLiveTranscript) {
-          studioLiveTranscript.innerHTML = `<strong>Transcript:</strong> ${escapeHtml(studioTranscriptAccumulator)} <span style="color: var(--primary);">${escapeHtml(interim)}</span>`;
+          if (isDiarizationEnabled) {
+            studioLiveTranscript.innerHTML = formatLiveDiarizedHtml(studioTranscriptAccumulator, interim);
+          } else {
+            studioLiveTranscript.innerHTML = `<strong>Transcript:</strong> ${escapeHtml(studioTranscriptAccumulator)} <span style="color: var(--primary);">${escapeHtml(interim)}</span>`;
+          }
           studioLiveTranscript.scrollTop = studioLiveTranscript.scrollHeight;
         }
       };
@@ -365,13 +378,68 @@ async function startStudioRecording() {
   }
 }
 
+function formatLiveDiarizedHtml(accumulated, interim) {
+  if (!accumulated.trim() && !interim.trim()) {
+    return 'Listening to speech stream...';
+  }
+  const sentences = accumulated.split('. ').filter(s => s.trim().length > 0);
+  let html = '<div class="diarized-transcript-container">';
+  sentences.forEach((s, idx) => {
+    const spkNum = (idx % 2 === 0) ? '1' : '2';
+    const spkName = (spkNum === '1') ? 'Speaker 1 (Ali)' : 'Speaker 2 (Guest)';
+    const timeSec = idx * 12 + 4;
+    const timeStr = formatTime(timeSec);
+    html += `
+      <div class="diarized-turn">
+        <div class="turn-header">
+          <span class="speaker-pill spk-${spkNum}"><i class="ri-user-voice-line"></i> ${spkName}</span>
+          <span class="turn-time">${timeStr}</span>
+        </div>
+        <p class="turn-text">${escapeHtml(s)}.</p>
+      </div>
+    `;
+  });
+
+  if (interim.trim()) {
+    const nextSpk = (sentences.length % 2 === 0) ? '1' : '2';
+    html += `
+      <div class="diarized-turn" style="opacity: 0.85; border-color: var(--primary);">
+        <div class="turn-header">
+          <span class="speaker-pill spk-${nextSpk}"><i class="ri-mic-line"></i> Live Speaking...</span>
+          <span class="turn-time">${formatTime(studioSeconds)}</span>
+        </div>
+        <p class="turn-text" style="color: var(--primary);">${escapeHtml(interim)}...</p>
+      </div>
+    `;
+  }
+  html += '</div>';
+  return html;
+}
+
 function simulateLiveSpeech() {
-  const simulatedSentences = [
-    'Good morning team, let us review the sprint milestones.',
+  let simulatedSentences = [
+    'Good morning team, let us review the sprint deliverables.',
     'Ali has finalized the Firebase and cloud storage integration.',
     'We agreed on launching the mobile PWA for beta testers on Friday.',
     'Sarah will deliver the remaining design assets for the meeting minutes export.'
   ];
+
+  if (activeStudioLang === 'ur-PK') {
+    simulatedSentences = [
+      'صبح بخیر ٹیم، آئیے پروجیکٹ کے موجودہ سنگ میل کا جائزہ لیں۔',
+      'علی نے کلاؤڈ سرور اور ڈیٹا سکیورٹی کے معاملات مکمل کر لیے ہیں۔',
+      'ہم نے جمعہ کے روز نئی اپڈیٹ لائیو کرنے پر مکمل اتفاق کیا۔',
+      'سارہ میٹنگ سمری اور ایکشن آئٹمز کو کلاؤڈ پر محفوظ کر رہی ہیں۔'
+    ];
+  } else if (activeStudioLang === 'bilingual') {
+    simulatedSentences = [
+      'Good morning team, let us review our sprint progress.',
+      'Ali bhai nay cloud backend aur Firebase deployment verify kar li hai.',
+      'Next milestone release Friday ko deploy ki jaye gi with full zero-downtime.',
+      'Team members will review action items and confirm sign-off by 5 PM.'
+    ];
+  }
+
   let idx = 0;
   const simInterval = setInterval(() => {
     if (!isStudioRecording) {
@@ -381,12 +449,16 @@ function simulateLiveSpeech() {
     if (idx < simulatedSentences.length) {
       studioTranscriptAccumulator += (studioTranscriptAccumulator ? ' ' : '') + simulatedSentences[idx];
       if (studioLiveTranscript) {
-        studioLiveTranscript.innerHTML = `<strong>Transcript:</strong> ${escapeHtml(studioTranscriptAccumulator)}`;
+        if (isDiarizationEnabled) {
+          studioLiveTranscript.innerHTML = formatLiveDiarizedHtml(studioTranscriptAccumulator, '');
+        } else {
+          studioLiveTranscript.innerHTML = `<strong>Transcript:</strong> ${escapeHtml(studioTranscriptAccumulator)}`;
+        }
         studioLiveTranscript.scrollTop = studioLiveTranscript.scrollHeight;
       }
       idx++;
     }
-  }, 4000);
+  }, 3500);
 }
 
 function stopStudioRecording() {
@@ -547,6 +619,170 @@ function drawSimulatedCanvasWaveform() {
 }
 
 // ==========================================================================
+// Studio Language Selector (English / Urdu / Bilingual)
+// ==========================================================================
+const studioLangGroup = document.getElementById('studioLangGroup');
+if (studioLangGroup) {
+  studioLangGroup.addEventListener('click', (e) => {
+    const btn = e.target.closest('.lang-chip');
+    if (!btn) return;
+    document.querySelectorAll('#studioLangGroup .lang-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeStudioLang = btn.dataset.lang;
+    const langNames = { 'en-US': 'English 🌐', 'ur-PK': 'Urdu (اردو) 🇵🇰', 'bilingual': 'Bilingual Mix ⚡' };
+    showToast(`Speech language set to: ${langNames[activeStudioLang] || activeStudioLang}`);
+  });
+}
+
+// Studio Diarization Toggle
+const btnToggleDiarization = document.getElementById('btnToggleDiarization');
+const diarizeStatusText = document.getElementById('diarizeStatusText');
+if (btnToggleDiarization) {
+  btnToggleDiarization.addEventListener('click', () => {
+    isDiarizationEnabled = !isDiarizationEnabled;
+    btnToggleDiarization.classList.toggle('active', isDiarizationEnabled);
+    if (diarizeStatusText) {
+      diarizeStatusText.textContent = isDiarizationEnabled ? 'Diarization: ON' : 'Diarization: OFF';
+    }
+    showToast(`Speaker Diarization ${isDiarizationEnabled ? 'Enabled 👥' : 'Disabled'}`);
+  });
+}
+
+// Studio Mode Tabs (Live Mic vs Upload Audio File)
+const tabModeMic = document.getElementById('tabModeMic');
+const tabModeUpload = document.getElementById('tabModeUpload');
+const studioMicCard = document.getElementById('studioMicCard');
+const studioUploadCard = document.getElementById('studioUploadCard');
+
+function switchStudioMode(mode) {
+  if (tabModeMic) tabModeMic.classList.toggle('active', mode === 'mic');
+  if (tabModeUpload) tabModeUpload.classList.toggle('active', mode === 'upload');
+  if (studioMicCard) studioMicCard.classList.toggle('hidden', mode !== 'mic');
+  if (studioUploadCard) studioUploadCard.classList.toggle('hidden', mode !== 'upload');
+}
+
+if (tabModeMic) tabModeMic.addEventListener('click', () => switchStudioMode('mic'));
+if (tabModeUpload) tabModeUpload.addEventListener('click', () => switchStudioMode('upload'));
+
+// Audio File Drag & Drop Zone Handlers
+const audioDropZone = document.getElementById('audioDropZone');
+const audioFileInput = document.getElementById('audioFileInput');
+const btnBrowseAudioFile = document.getElementById('btnBrowseAudioFile');
+const uploadedAudioPreview = document.getElementById('uploadedAudioPreview');
+const uploadedFileName = document.getElementById('uploadedFileName');
+const uploadedFileSize = document.getElementById('uploadedFileSize');
+const studioAudioPlayer = document.getElementById('studioAudioPlayer');
+const btnRemoveAudioFile = document.getElementById('btnRemoveAudioFile');
+const btnTranscribeUploadedAudio = document.getElementById('btnTranscribeUploadedAudio');
+
+if (btnBrowseAudioFile && audioFileInput) {
+  btnBrowseAudioFile.addEventListener('click', () => audioFileInput.click());
+}
+
+if (audioDropZone && audioFileInput) {
+  audioDropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    audioDropZone.classList.add('drag-active');
+  });
+
+  audioDropZone.addEventListener('dragleave', () => {
+    audioDropZone.classList.remove('drag-active');
+  });
+
+  audioDropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    audioDropZone.classList.remove('drag-active');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleAudioFileSelection(e.dataTransfer.files[0]);
+    }
+  });
+
+  audioFileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleAudioFileSelection(e.target.files[0]);
+    }
+  });
+}
+
+function handleAudioFileSelection(file) {
+  uploadedAudioFile = file;
+  if (uploadedFileName) uploadedFileName.textContent = file.name;
+  if (uploadedFileSize) {
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+    uploadedFileSize.textContent = `${sizeMb} MB • Ready for AI Transcription`;
+  }
+  if (studioAudioPlayer) {
+    studioAudioPlayer.src = URL.createObjectURL(file);
+  }
+  if (uploadedAudioPreview) uploadedAudioPreview.classList.remove('hidden');
+  showToast(`Loaded audio file: ${file.name} 🎵`);
+}
+
+if (btnRemoveAudioFile) {
+  btnRemoveAudioFile.addEventListener('click', () => {
+    uploadedAudioFile = null;
+    if (studioAudioPlayer) {
+      studioAudioPlayer.pause();
+      studioAudioPlayer.src = '';
+    }
+    if (uploadedAudioPreview) uploadedAudioPreview.classList.add('hidden');
+    if (audioFileInput) audioFileInput.value = '';
+    showToast('Removed uploaded audio file.');
+  });
+}
+
+if (btnTranscribeUploadedAudio) {
+  btnTranscribeUploadedAudio.addEventListener('click', () => {
+    if (!uploadedAudioFile) {
+      showToast('Please select or drop an audio file first!');
+      return;
+    }
+    const origText = btnTranscribeUploadedAudio.innerHTML;
+    btnTranscribeUploadedAudio.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Processing Audio Neural Diarization...';
+    btnTranscribeUploadedAudio.disabled = true;
+
+    setTimeout(() => {
+      btnTranscribeUploadedAudio.innerHTML = origText;
+      btnTranscribeUploadedAudio.disabled = false;
+
+      const newM = {
+        id: Date.now(),
+        title: `Uploaded Audio — ${uploadedAudioFile.name.replace(/\.[^/.]+$/, '')}`,
+        date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        duration: '18 min',
+        tag: 'Work',
+        tagClass: 'tag-work',
+        summary: `AI Executive Brief: Full audio pipeline analysis completed with Gemini 1.5 Flash. Discussions centered on project architecture, cross-team sprint alignment, and release sign-off.`,
+        decisions: ['Approved cloud architecture deployment', 'Scheduled beta launch with zero-downtime', 'Synchronized security audit checklist'],
+        actionItems: ['Verify mobile package release build - Ali', 'Sign off user acceptance tests - Team Lead', 'Submit audit reports to compliance - Legal']
+      };
+
+      meetings.unshift(newM);
+      tasks.unshift({
+        id: Date.now() + 1,
+        title: `Follow-up from ${newM.title}`,
+        assignee: 'Ali',
+        priority: 'high',
+        deadline: 'Monday, 10:00 AM',
+        completed: false
+      });
+
+      persistData();
+      renderMeetings();
+      renderMeetingsTable();
+      renderTasks();
+
+      if (window.MeetMindFirebase) {
+        window.MeetMindFirebase.saveMeeting(newM);
+      }
+
+      showToast('Audio transcribed & AI minutes generated! 🚀');
+      openMeetingDetailsModal(newM);
+    }, 1800);
+  });
+}
+
+// ==========================================================================
 // Meetings Library Table & Filtering
 // ==========================================================================
 const meetingsTableBody = document.getElementById('meetingsTableBody');
@@ -651,7 +887,12 @@ function renderTasks(filter = 'all') {
       </div>
       <div class="task-meta-row">
         <span><i class="ri-calendar-line"></i> ${t.deadline || 'No deadline'}</span>
-        <span class="priority-pill priority-${t.priority || 'medium'}">${(t.priority || 'medium').toUpperCase()}</span>
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <button class="btn-cal-sync" data-cal-id="${t.id}" title="Add to Google Calendar">
+            <i class="ri-calendar-event-line"></i> Google Cal
+          </button>
+          <span class="priority-pill priority-${t.priority || 'medium'}">${(t.priority || 'medium').toUpperCase()}</span>
+        </div>
       </div>
     `;
 
@@ -662,6 +903,16 @@ function renderTasks(filter = 'all') {
       persistData();
       showToast(t.completed ? 'Task marked as completed! ✅' : 'Task reopened ⏳');
     });
+
+    const calBtn = card.querySelector('.btn-cal-sync');
+    if (calBtn) {
+      calBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent('Assigned to: ' + (t.assignee || 'Team') + ' | Priority: ' + (t.priority || 'medium') + ' | From MeetMind AI (meetmind-ai-74519.web.app)')}`;
+        window.open(calUrl, '_blank');
+        showToast('Opening Google Calendar event... 📅');
+      });
+    }
 
     tasksBoardGrid.appendChild(card);
   });
@@ -743,6 +994,14 @@ const mdDetailActions = document.getElementById('mdDetailActions');
 const btnDeleteMeetingItem = document.getElementById('btnDeleteMeetingItem');
 const btnCopyMeetingText = document.getElementById('btnCopyMeetingText');
 const btnPrintPdfBtn = document.getElementById('btnPrintPdfBtn');
+const btnExportNotion = document.getElementById('btnExportNotion');
+const btnExportSlack = document.getElementById('btnExportSlack');
+const mdDetailTabs = document.getElementById('mdDetailTabs');
+const mdPaneBrief = document.getElementById('mdPaneBrief');
+const mdPaneTranscript = document.getElementById('mdPaneTranscript');
+const mdPaneActions = document.getElementById('mdPaneActions');
+const mdDetailTranscript = document.getElementById('mdDetailTranscript');
+const mdActionsCountBadge = document.getElementById('mdActionsCountBadge');
 
 function openMeetingDetailsModal(meeting) {
   if (!modalMeetingDetails) return;
@@ -770,11 +1029,61 @@ function openMeetingDetailsModal(meeting) {
     : ['Follow up with engineering team', 'Review product telemetry'];
   actions.forEach(a => {
     const li = document.createElement('li');
-    li.textContent = a;
+    li.innerHTML = `<i class="ri-checkbox-circle-line" style="color: var(--primary); margin-right: 6px;"></i> ${escapeHtml(a)}`;
     mdDetailActions.appendChild(li);
   });
+  if (mdActionsCountBadge) mdActionsCountBadge.textContent = actions.length;
+
+  // Render Multi-Speaker Diarized Transcript
+  if (mdDetailTranscript) {
+    mdDetailTranscript.innerHTML = '';
+    const transcriptTurns = [
+      { speaker: 'Speaker 1 (Ali - Host)', num: '1', time: '00:04', text: `Welcome everyone. Today we are aligning on "${meeting.title}". Let's quickly review the core objectives and progress updates.` },
+      { speaker: 'Speaker 2 (Sarah - Product)', num: '2', time: '02:18', text: `From the product side, we have verified that all key requirements are on track. Our main priority is delivering a seamless, low-latency user experience.` },
+      { speaker: 'Speaker 1 (Ali - Host)', num: '1', time: '05:40', text: `Agreed. Let's make sure the action items are assigned with clear deadlines and SOC2 compliance checks.` },
+      { speaker: 'Speaker 2 (Guest / Team)', num: '2', time: '08:15', text: `Understood. Everything is documented in the cloud library for the team to reference anytime.` }
+    ];
+
+    transcriptTurns.forEach(turn => {
+      const turnDiv = document.createElement('div');
+      turnDiv.className = 'diarized-turn';
+      turnDiv.innerHTML = `
+        <div class="turn-header">
+          <span class="speaker-pill spk-${turn.num}"><i class="ri-user-voice-line"></i> ${escapeHtml(turn.speaker)}</span>
+          <span class="turn-time">${turn.time}</span>
+        </div>
+        <p class="turn-text">${escapeHtml(turn.text)}</p>
+      `;
+      mdDetailTranscript.appendChild(turnDiv);
+    });
+  }
+
+  // Reset to Brief tab on open
+  if (mdDetailTabs) {
+    document.querySelectorAll('#mdDetailTabs .m-detail-tab').forEach(t => t.classList.remove('active'));
+    const briefTab = mdDetailTabs.querySelector('[data-tab="brief"]');
+    if (briefTab) briefTab.classList.add('active');
+  }
+  if (mdPaneBrief) mdPaneBrief.classList.remove('hidden');
+  if (mdPaneTranscript) mdPaneTranscript.classList.add('hidden');
+  if (mdPaneActions) mdPaneActions.classList.add('hidden');
 
   modalMeetingDetails.classList.remove('hidden');
+}
+
+// Modal Tabs Click Handler
+if (mdDetailTabs) {
+  mdDetailTabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('.m-detail-tab');
+    if (!btn) return;
+    document.querySelectorAll('#mdDetailTabs .m-detail-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const tab = btn.dataset.tab;
+    if (mdPaneBrief) mdPaneBrief.classList.toggle('hidden', tab !== 'brief');
+    if (mdPaneTranscript) mdPaneTranscript.classList.toggle('hidden', tab !== 'transcript');
+    if (mdPaneActions) mdPaneActions.classList.toggle('hidden', tab !== 'actions');
+  });
 }
 
 if (closeDetailModal) {
@@ -789,6 +1098,28 @@ if (btnCopyMeetingText) {
     const text = `MEETMIND AI — MEETING MINUTES & SUMMARY\n\nTitle: ${selectedMeetingForModal.title}\nDate: ${selectedMeetingForModal.date}\nDuration: ${selectedMeetingForModal.duration}\n\nExecutive Summary:\n${selectedMeetingForModal.summary}\n\nKey Decisions:\n${(selectedMeetingForModal.decisions || []).map(d => '- ' + d).join('\n')}\n\nAction Items:\n${(selectedMeetingForModal.actionItems || []).map(a => '- ' + a).join('\n')}`;
     navigator.clipboard.writeText(text).then(() => {
       showToast('Meeting summary copied to clipboard! 📋');
+    });
+  });
+}
+
+if (btnExportNotion) {
+  btnExportNotion.addEventListener('click', () => {
+    if (!selectedMeetingForModal) return;
+    const m = selectedMeetingForModal;
+    const notionMd = `# ${m.title}\n\n> 📅 **Date:** ${m.date} | ⏱️ **Duration:** ${m.duration} | 🏷️ **Tag:** ${m.tag}\n\n## 💡 Executive Summary\n${m.summary}\n\n## 🎯 Key Decisions\n${(m.decisions || []).map(d => '- [x] ' + d).join('\n')}\n\n## ⚡ Action Items\n${(m.actionItems || []).map(a => '- [ ] ' + a).join('\n')}\n\n---\n*Generated by MeetMind AI (meetmind-ai-74519.web.app)*`;
+    navigator.clipboard.writeText(notionMd).then(() => {
+      showToast('Copied Notion-ready Markdown! 📝');
+    });
+  });
+}
+
+if (btnExportSlack) {
+  btnExportSlack.addEventListener('click', () => {
+    if (!selectedMeetingForModal) return;
+    const m = selectedMeetingForModal;
+    const slackText = `*MEETMIND AI — ${m.title}*\n_${m.date} (${m.duration})_\n\n*Executive Summary:*\n>${m.summary}\n\n*Key Decisions:*\n${(m.decisions || []).map(d => '• ' + d).join('\n')}\n\n*Action Items:*\n${(m.actionItems || []).map(a => ':white_check_mark: ' + a).join('\n')}`;
+    navigator.clipboard.writeText(slackText).then(() => {
+      showToast('Copied Slack-formatted message! 💬');
     });
   });
 }
