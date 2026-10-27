@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./smart_noter.db
+      - SECRET_KEY=smartnoter-super-secret-key-2027
+      - ENVIRONMENT=production
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/storage:/app/storage
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/usr/share/nginx/html
+    restart: unless-stopped

@@ -1,0 +1,26 @@
+{
+  "name": "Smart Noter AI — Meeting Assistant",
+  "short_name": "Smart Noter",
+  "description": "Next-Generation AI Meeting Assistant & Smart Productivity Platform",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eceaf3",
+  "theme_color": "#7c3aed",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
