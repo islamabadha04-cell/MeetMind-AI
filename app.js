@@ -1008,7 +1008,11 @@ function openMeetingDetailsModal(meeting) {
   selectedMeetingForModal = meeting;
 
   mdDetailTitle.textContent = meeting.title;
-  mdDetailMeta.textContent = `${meeting.date} • ${meeting.duration} • Tag: ${meeting.tag}`;
+  if (meeting.sourceUrl) {
+    mdDetailMeta.innerHTML = `<span>${escapeHtml(meeting.date)} • ${escapeHtml(meeting.duration)} • Tag: ${escapeHtml(meeting.tag)}</span><br><a href="${encodeURI(meeting.sourceUrl)}" target="_blank" class="source-link-chip"><i class="ri-youtube-fill"></i> Watch Source Video</a>`;
+  } else {
+    mdDetailMeta.textContent = `${meeting.date} • ${meeting.duration} • Tag: ${meeting.tag}`;
+  }
   mdDetailSummary.textContent = meeting.summary || 'Summary generated from meeting transcript.';
 
   // Decisions
