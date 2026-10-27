@@ -1604,7 +1604,8 @@ if (btnSubmitYoutubeImport) {
         duration: '14 min',
         tag: 'Product',
         tagClass: 'tag-product',
-        summary: `Imported from YouTube (${url}): Key takeaways include best practices for building responsive PWA offline apps and streaming audio transcription.`,
+        sourceUrl: url,
+        summary: `Key takeaways from video: Best practices for building responsive PWA offline web architectures, client-side low-latency audio processing, and automated action item synchronization.`,
         decisions: ['Adopted client-side streaming pattern', 'Saved summary to document vault'],
         actionItems: ['Review source video chapters - Engineering']
       };
