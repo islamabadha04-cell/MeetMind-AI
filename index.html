@@ -359,6 +359,17 @@
               <span class="bm-title">Audio Bookmarks & Markers:</span>
               <div id="bookmarksList" class="bm-list">No bookmarks yet. Tap Bookmark while recording.</div>
             </div>
+
+            <!-- Live Speech-to-Text Transcription Box -->
+            <div class="studio-live-transcript-box">
+              <div class="live-trans-header">
+                <span><i class="ri-voiceprint-line"></i> Live Speech-to-Text Stream</span>
+                <span class="live-rec-badge pulse" id="liveRecBadge" style="display: none;"><span class="dot"></span> Listening to Mic</span>
+              </div>
+              <div class="live-trans-body" id="studioLiveTranscript">
+                Microphone idle. Click the purple button to start real audio recording and live speech transcription...
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -613,17 +624,62 @@
         </div>
       </div>
 
+      <!-- ==================== PAGE 8.5: DOCUMENTS & EXPORTS ==================== -->
+      <div class="page-view hidden" id="page-documents">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title">Documents, Minutes & Reports</h2>
+              <p class="welcome-sub">Structured meeting minutes, executive briefs, and one-click PDF downloads.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-secondary" id="btnExportAllDocs"><i class="ri-file-download-line"></i> Export All (JSON)</button>
+              <button class="btn-primary-purple" id="btnCreateNewDoc"><i class="ri-add-line"></i> New Meeting Note</button>
+            </div>
+          </div>
+
+          <!-- Documents List Grid -->
+          <div class="documents-cards-grid" id="documentsCardsGrid">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+      </div>
+
       <!-- ==================== PAGE 9: SETTINGS & EXPORT ==================== -->
       <div class="page-view hidden" id="page-settings">
         <div class="desktop-content-body">
           <div class="welcome-stats-row">
             <div>
-              <h2 class="welcome-title">Settings & Data Export</h2>
-              <p class="welcome-sub">AI configuration, usage limits, and GDPR-compliant data export.</p>
+              <h2 class="welcome-title">Settings & Cloud Configurations</h2>
+              <p class="welcome-sub">AI configuration, custom API keys, and GDPR-compliant data export.</p>
             </div>
           </div>
 
           <div class="settings-grid">
+            <!-- Card 1: Real AI Engine & API Keys -->
+            <div class="settings-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4><i class="ri-sparkling-fill" style="color: var(--primary);"></i> AI Engine & API Keys</h4>
+                <span class="badge-summary-ready" id="aiStatusBadge"><i class="ri-checkbox-circle-fill"></i> AI Active</span>
+              </div>
+              
+              <label>Google Gemini API Key (Optional BYOK):</label>
+              <input type="password" id="settingGeminiKey" placeholder="AIzaSy... (Get free from aistudio.google.com)" class="panel-input">
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Leaves empty to use built-in neural heuristics.</p>
+
+              <label style="margin-top: 10px;">Backend API Endpoint:</label>
+              <input type="text" id="settingBackendUrl" value="http://127.0.0.1:8000/api/v1" placeholder="https://your-api.onrender.com/api/v1" class="panel-input">
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Point to your Render/Railway live Python backend.</p>
+
+              <label style="margin-top: 10px;">OpenAI API Key (Optional):</label>
+              <input type="password" id="settingOpenAiKey" placeholder="sk-..." class="panel-input">
+
+              <button class="btn-primary-purple" id="btnSaveApiKeys" style="margin-top: 14px; width: 100%;">
+                <i class="ri-save-line"></i> Save API Configuration
+              </button>
+            </div>
+
+            <!-- Card 2: AI Preferences -->
             <div class="settings-card">
               <h4>AI Custom Preferences</h4>
               <label>Custom Summary Tone:</label>
@@ -639,11 +695,20 @@
                 <option value="en_only">English Only</option>
               </select>
 
-              <button class="btn-primary-purple" id="btnSaveAiSettings" style="margin-top: 14px;">
-                Save AI Settings
+              <label style="margin-top: 10px;">Default Meeting Tag:</label>
+              <select id="settingDefaultTag" class="panel-input">
+                <option value="Work">Work</option>
+                <option value="Client">Client</option>
+                <option value="Team">Team</option>
+                <option value="Product">Product</option>
+              </select>
+
+              <button class="btn-secondary" id="btnSaveAiSettings" style="margin-top: 14px; width: 100%;">
+                Save Preferences
               </button>
             </div>
 
+            <!-- Card 3: Data Export -->
             <div class="settings-card">
               <h4>Data Export & Account Management</h4>
               <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
@@ -652,8 +717,11 @@
               <button class="btn-secondary" id="btnExportAllData" style="width: 100%; margin-bottom: 8px;">
                 <i class="ri-download-2-line"></i> Export Full Library (JSON)
               </button>
+              <button class="btn-secondary" id="btnExportMarkdownSummary" style="width: 100%; margin-bottom: 8px;">
+                <i class="ri-markdown-line"></i> Export All Summaries (Markdown)
+              </button>
               <button class="btn-danger-outline" id="btnDeleteAccount" style="width: 100%;">
-                <i class="ri-delete-bin-line"></i> Delete Account & All Data
+                <i class="ri-delete-bin-line"></i> Clear Local Cache & Reset Data
               </button>
             </div>
           </div>
@@ -987,6 +1055,117 @@
       <div class="dialog-footer">
         <button class="btn-secondary" id="cancelTaskModalBtn">Cancel</button>
         <button class="btn-primary-purple" id="btnSaveNewTask">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CREATE NEW MEETING NOTE -->
+  <div class="app-dialog-overlay hidden" id="modalNewMeeting">
+    <div class="app-dialog-card">
+      <div class="dialog-header">
+        <div class="dialog-icon-badge purple-badge"><i class="ri-voiceprint-line"></i></div>
+        <div>
+          <h3>Create Meeting Note</h3>
+          <p>Add manual meeting notes or past call summary</p>
+        </div>
+        <button class="close-dialog-btn" id="closeNewMeetingModal">&times;</button>
+      </div>
+      <div class="dialog-body">
+        <label>Meeting Title & Topic:</label>
+        <input type="text" id="newMeetingTitleInput" placeholder="e.g. Q4 Growth Sprint Strategy" class="panel-input">
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <div style="flex: 1;">
+            <label>Tag / Category:</label>
+            <select id="newMeetingTagSelect" class="panel-input">
+              <option value="Work" selected>Work</option>
+              <option value="Client">Client</option>
+              <option value="Team">Team</option>
+              <option value="Product">Product</option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label>Duration:</label>
+            <input type="text" id="newMeetingDurationInput" placeholder="e.g. 35 min" class="panel-input">
+          </div>
+        </div>
+
+        <label style="margin-top: 10px;">Meeting Notes / Discussion Points:</label>
+        <textarea id="newMeetingNotesInput" rows="4" placeholder="Paste discussion notes, agenda, or key takeaways..." class="panel-input" style="resize: vertical; font-family: inherit;"></textarea>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn-secondary" id="cancelNewMeetingBtn">Cancel</button>
+        <button class="btn-primary-purple" id="btnSaveNewMeeting">
+          <i class="ri-sparkling-fill"></i> Save & Auto-Summarize
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: MEETING DETAILS & 1-CLICK PDF EXPORT -->
+  <div class="app-dialog-overlay hidden" id="modalMeetingDetails">
+    <div class="app-dialog-card modal-large" id="printableMeetingCard">
+      <div class="dialog-header">
+        <div class="dialog-icon-badge purple-badge"><i class="ri-file-text-line"></i></div>
+        <div>
+          <h3 id="mdDetailTitle">Project Alpha Discussion</h3>
+          <p id="mdDetailMeta" style="color: var(--text-dim); font-size: 12px;">Today, 10:30 AM • 22 min</p>
+        </div>
+        <button class="close-dialog-btn" id="closeDetailModal">&times;</button>
+      </div>
+      
+      <div class="dialog-body" style="max-height: 65vh; overflow-y: auto;">
+        <!-- Executive Summary Section -->
+        <div class="detail-section">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--primary);">
+            <i class="ri-sparkling-fill"></i> Executive AI Summary
+          </h4>
+          <p id="mdDetailSummary" style="font-size: 13.5px; line-height: 1.6; color: var(--text-main);"></p>
+        </div>
+
+        <!-- Key Decisions Section -->
+        <div class="detail-section" style="margin-top: 14px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
+            <i class="ri-check-double-line" style="color: var(--success);"></i> Key Decisions
+          </h4>
+          <ul id="mdDetailDecisions" class="decisions-bullet-list"></ul>
+        </div>
+
+        <!-- Action Items Table -->
+        <div class="detail-section" style="margin-top: 14px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">
+            <i class="ri-checkbox-circle-line" style="color: var(--warning);"></i> Extracted Action Items
+          </h4>
+          <ul id="mdDetailActions" class="actions-checklist-ul"></ul>
+        </div>
+      </div>
+
+      <div class="dialog-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-danger-outline" id="btnDeleteMeetingItem">
+          <i class="ri-delete-bin-line"></i> Delete
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" id="btnCopyMeetingText">
+            <i class="ri-file-copy-line"></i> Copy Text
+          </button>
+          <button class="btn-primary-purple" id="btnPrintPdfBtn">
+            <i class="ri-printer-line"></i> Print / Export PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: COMMAND PALETTE (CTRL+K / CMD+K) -->
+  <div class="app-dialog-overlay hidden" id="modalCommandPalette">
+    <div class="cmd-palette-box">
+      <div class="cmd-palette-search">
+        <i class="ri-search-line"></i>
+        <input type="text" id="cmdPaletteInput" placeholder="Type a command or jump to page...">
+        <kbd>ESC</kbd>
+      </div>
+      <div class="cmd-palette-results" id="cmdPaletteResults">
+        <!-- Results dynamically filtered -->
       </div>
     </div>
   </div>
