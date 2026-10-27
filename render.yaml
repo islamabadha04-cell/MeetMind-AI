@@ -1,0 +1,28 @@
+services:
+  # 1. FastAPI Python Backend Web Service
+  - type: web
+    name: meetmind-api
+    env: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        value: sqlite:///./smart_noter.db
+
+  # 2. Static Web & PWA Mobile Frontend
+  - type: web
+    name: meetmind-app
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: ""
+    staticPublishPath: .
