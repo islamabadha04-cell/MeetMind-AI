@@ -21,7 +21,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="1.0.0",
-    description="Next-Generation AI Meeting Assistant & Smart Productivity Platform (2027)",
+    description="Next-Generation AI Meeting Assistant & Smart Productivity Platform (2026)",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs"
 )

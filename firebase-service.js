@@ -121,6 +121,7 @@ window.MeetMindFirebase = {
       await signOut(auth);
       window.MeetMindFirebase.currentUser = null;
       localStorage.removeItem('meetmind_user');
+      sessionStorage.removeItem('meetmind_guest_session');
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -137,7 +138,7 @@ window.MeetMindFirebase = {
   // 2. Firestore Meetings (Strictly isolated by userId)
   saveMeeting: async (meetingData) => {
     const user = window.MeetMindFirebase.currentUser;
-    if (!user) {
+    if (!user || user.isGuest) {
       return { success: false, error: "Must be signed in to sync to cloud" };
     }
     try {
@@ -155,7 +156,7 @@ window.MeetMindFirebase = {
   },
 
   subscribeMeetings: (userId, callback) => {
-    if (!userId) {
+    if (!userId || userId === 'demo_guest_evaluator') {
       callback([]);
       return () => {};
     }
@@ -195,7 +196,7 @@ window.MeetMindFirebase = {
   // 3. Firestore Tasks (Strictly isolated by userId)
   saveTask: async (taskData) => {
     const user = window.MeetMindFirebase.currentUser;
-    if (!user) {
+    if (!user || user.isGuest) {
       return { success: false, error: "Must be signed in to sync to cloud" };
     }
     try {
@@ -212,7 +213,7 @@ window.MeetMindFirebase = {
   },
 
   subscribeTasks: (userId, callback) => {
-    if (!userId) {
+    if (!userId || userId === 'demo_guest_evaluator') {
       callback([]);
       return () => {};
     }
@@ -246,7 +247,10 @@ window.MeetMindFirebase = {
   // 4. Cloud Storage (Audio Upload Scoped by User ID)
   uploadAudioBlob: async (audioBlob, fileName) => {
     const user = window.MeetMindFirebase.currentUser;
-    const uid = user ? user.uid : "unauthenticated";
+    if (!user || user.isGuest) {
+      return { success: false, error: "Must be signed in with a real account to upload audio to cloud" };
+    }
+    const uid = user.uid;
     try {
       const fileRef = storageRef(storage, `recordings/${uid}/${Date.now()}_${fileName || 'meeting.webm'}`);
       const uploadRes = await uploadBytes(fileRef, audioBlob);

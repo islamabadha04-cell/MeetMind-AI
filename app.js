@@ -4,11 +4,20 @@
 // ==========================================================================
 
 // 1. Authentication Route Guard: Dashboard requires an authenticated account
+const isGuestSession = sessionStorage.getItem('meetmind_guest_session') === 'true';
 const storedUserJson = localStorage.getItem('meetmind_user');
 let currentUser = storedUserJson ? JSON.parse(storedUserJson) : null;
 
-// Allow evaluation bypass if parameter present for quick dev testing
-if (!currentUser && !window.location.search.includes('bypass=true')) {
+// Allow evaluation ONLY via explicit guest session; unauthenticated access redirects to /login
+if (isGuestSession) {
+  currentUser = {
+    name: 'Demo Reviewer',
+    email: 'demo@meetmind.ai',
+    uid: 'demo_guest_evaluator',
+    isGuest: true
+  };
+} else if (!currentUser) {
+  // Unauthenticated visitors redirect immediately to /login (no bypass permitted)
   window.location.replace('/login');
 }
 
@@ -147,7 +156,24 @@ function handleSignOut() {
       window.MeetMindFirebase.logout();
     }
     localStorage.removeItem('meetmind_user');
+    sessionStorage.removeItem('meetmind_guest_session');
     window.location.replace('/login');
+  }
+}
+
+function updateConnectionStatusUI() {
+  const backendIndicator = document.getElementById('backendStatusIndicator');
+  if (!backendIndicator) return;
+
+  if (currentUser && currentUser.isGuest) {
+    backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #F59E0B;"></span> Local Sandbox (Demo Mode)';
+    backendIndicator.style.color = '#F59E0B';
+  } else if (currentUser && !currentUser.isGuest) {
+    backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #10B981;"></span> Connected (Cloud Sync Active)';
+    backendIndicator.style.color = '#10B981';
+  } else {
+    backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #EF4444;"></span> Not Connected';
+    backendIndicator.style.color = '#EF4444';
   }
 }
 
@@ -155,6 +181,20 @@ if (btnSignOutTop) btnSignOutTop.addEventListener('click', handleSignOut);
 if (btnSidebarLogout) btnSidebarLogout.addEventListener('click', handleSignOut);
 if (deskUserCard) deskUserCard.addEventListener('click', handleSignOut);
 if (topAvatarWrap) topAvatarWrap.addEventListener('click', handleSignOut);
+
+const btnCheckBackendHealth = document.getElementById('btnCheckBackendHealth');
+if (btnCheckBackendHealth) {
+  btnCheckBackendHealth.addEventListener('click', () => {
+    updateConnectionStatusUI();
+    if (currentUser?.isGuest) {
+      showToast('Sandbox Active: Running locally in Demo Reviewer mode 🔒');
+    } else if (currentUser) {
+      showToast('Backend Connected: Firebase Auth & Firestore live ✨');
+    } else {
+      showToast('Backend status: Not authenticated ⚠️');
+    }
+  });
+}
 
 // ==========================================================================
 // Toast Helper
@@ -211,6 +251,23 @@ function updateStats() {
   // Notification badge indicator
   if (notifDot) {
     notifDot.style.display = pendingCount > 0 ? 'block' : 'none';
+  }
+
+  // Update free minutes usage display
+  const deskUserUsage = document.getElementById('deskUserUsage');
+  if (deskUserUsage) {
+    deskUserUsage.textContent = `${totalMinutes} / 120 free mins`;
+  }
+
+  // Toggle First-Run Onboarding Guide (auto-shows when meetings library is empty)
+  const onboardingGuideCard = document.getElementById('onboardingGuideCard');
+  const isDismissed = localStorage.getItem('meetmind_onboarding_dismissed') === 'true';
+  if (onboardingGuideCard) {
+    if (!isDismissed && meetings.length === 0) {
+      onboardingGuideCard.style.display = 'block';
+    } else {
+      onboardingGuideCard.style.display = 'none';
+    }
   }
 }
 
@@ -781,13 +838,45 @@ if (audioDropZone) {
 
 function handleAudioFileSelected(file) {
   currentUploadedFile = file;
+  currentUploadedFile.durationSeconds = 0;
+  currentUploadedFile.durationStr = 'Detecting duration...';
+
   if (uploadedFileName) uploadedFileName.textContent = file.name;
   const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-  if (uploadedFileSize) uploadedFileSize.textContent = `${sizeMb} MB • Ready for AI Transcription`;
+  if (uploadedFileSize) uploadedFileSize.textContent = `${sizeMb} MB • Detecting audio duration...`;
 
+  const blobUrl = URL.createObjectURL(file);
   if (studioAudioPlayer) {
-    studioAudioPlayer.src = URL.createObjectURL(file);
+    studioAudioPlayer.src = blobUrl;
   }
+
+  // Extract real audio duration directly from audio metadata
+  const metaAudio = document.createElement('audio');
+  metaAudio.preload = 'metadata';
+  metaAudio.src = blobUrl;
+  metaAudio.onloadedmetadata = () => {
+    const rawSec = Math.round(metaAudio.duration);
+    currentUploadedFile.durationSeconds = rawSec;
+    if (isNaN(rawSec) || rawSec <= 0) {
+      currentUploadedFile.durationStr = 'Audio Note';
+    } else if (rawSec < 60) {
+      currentUploadedFile.durationStr = `${rawSec} sec`;
+    } else {
+      const m = Math.floor(rawSec / 60);
+      const s = rawSec % 60;
+      currentUploadedFile.durationStr = s > 0 ? `${m}m ${s}s` : `${m} min`;
+    }
+    if (uploadedFileSize) {
+      uploadedFileSize.textContent = `${sizeMb} MB • Duration: ${currentUploadedFile.durationStr}`;
+    }
+  };
+  metaAudio.onerror = () => {
+    currentUploadedFile.durationStr = 'Audio Note';
+    if (uploadedFileSize) {
+      uploadedFileSize.textContent = `${sizeMb} MB • Audio Note`;
+    }
+  };
+
   if (uploadedAudioPreview) uploadedAudioPreview.classList.remove('hidden');
   showToast(`Audio file "${file.name}" loaded 🎵`);
 }
@@ -805,51 +894,63 @@ if (btnTranscribeUploadedAudio) {
   btnTranscribeUploadedAudio.addEventListener('click', async () => {
     if (!currentUploadedFile) return;
 
-    btnTranscribeUploadedAudio.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Processing Audio with AI Engine...';
+    btnTranscribeUploadedAudio.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Processing audio file & metadata...';
     btnTranscribeUploadedAudio.disabled = true;
 
-    showToast('Uploading audio and synthesizing AI brief... ⏳');
+    showToast('Indexing audio note & calculating duration... ⏳');
 
-    setTimeout(async () => {
-      const fName = currentUploadedFile.name.replace(/\.[^/.]+$/, '');
-      const newM = {
-        id: Date.now(),
-        title: `Recording: ${fName}`,
-        date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        duration: '18 min',
-        tag: 'Client',
-        tagClass: 'tag-client',
-        summary: `AI Transcription of ${currentUploadedFile.name}: Discussed operational goals, sprint delivery milestones, and team action items with end-to-end cloud isolation.`,
-        decisions: [
-          'Approved technical integration roadmap',
-          'Scheduled validation review for upcoming sprint'
-        ],
-        actionItems: [
-          `Send summary notes for ${currentUploadedFile.name} to team`,
-          'Verify audio backup in private storage'
-        ],
-        transcript: `Detailed transcript extracted from ${currentUploadedFile.name}. Key points covered: architectural validation, low-latency audio capture, and cross-platform synchronization.`
-      };
+    // Wait a moment for audio element metadata to load if user clicked rapidly
+    if (!currentUploadedFile.durationSeconds) {
+      await new Promise(r => setTimeout(r, 450));
+    }
 
-      meetings.unshift(newM);
-      persistData();
+    const fName = currentUploadedFile.name.replace(/\.[^/.]+$/, '');
+    const realDuration = currentUploadedFile.durationStr && currentUploadedFile.durationStr !== 'Detecting duration...'
+      ? currentUploadedFile.durationStr
+      : 'Audio Note';
+    const sizeMb = (currentUploadedFile.size / (1024 * 1024)).toFixed(1);
 
-      if (window.MeetMindFirebase) {
-        window.MeetMindFirebase.saveMeeting(newM);
-        window.MeetMindFirebase.uploadAudioBlob(currentUploadedFile, currentUploadedFile.name);
+    const newM = {
+      id: Date.now(),
+      title: `Audio Note: ${fName}`,
+      date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      duration: realDuration,
+      tag: 'Work',
+      tagClass: 'tag-work',
+      summary: `Audio recording "${currentUploadedFile.name}" (${realDuration}, ${sizeMb} MB) saved to workspace. Audio player is ready for playback. Cloud transcription coming soon.`,
+      decisions: [
+        'Audio recording indexed in workspace library',
+        `File metadata verified: ${sizeMb} MB, duration ${realDuration}`
+      ],
+      actionItems: [
+        `Review audio playback for ${currentUploadedFile.name}`
+      ],
+      transcript: `[Audio recording attached: ${currentUploadedFile.name} • Duration: ${realDuration} • Size: ${sizeMb} MB]. Automated speech-to-text transcription not yet generated for this uploaded file.`
+    };
+
+    meetings.unshift(newM);
+    persistData();
+
+    // Cloud upload audio blob ONLY if signed in with real account (not guest)
+    if (window.MeetMindFirebase && currentUser && !currentUser.isGuest) {
+      try {
+        await window.MeetMindFirebase.saveMeeting(newM);
+        await window.MeetMindFirebase.uploadAudioBlob(currentUploadedFile, currentUploadedFile.name);
+      } catch (err) {
+        console.warn('Cloud storage upload note:', err);
       }
+    }
 
-      btnTranscribeUploadedAudio.innerHTML = '<i class="ri-sparkling-fill"></i> AI Transcribe & Extract Action Items';
-      btnTranscribeUploadedAudio.disabled = false;
+    btnTranscribeUploadedAudio.innerHTML = '<i class="ri-file-music-line"></i> Create Meeting Note from File (Audio Attached)';
+    btnTranscribeUploadedAudio.disabled = false;
 
-      renderMeetings();
-      renderMeetingsTable(activeMeetingFilter);
-      renderDocumentsVault();
-      updateStats();
+    renderMeetings();
+    renderMeetingsTable(activeMeetingFilter);
+    renderDocumentsVault();
+    updateStats();
 
-      showToast(`Audio transcribed and added to Meeting Library! 🎉`);
-      openMeetingDetailsModal(newM);
-    }, 1200);
+    showToast(`Meeting note created from audio file (${realDuration})! 📁`);
+    openMeetingDetailsModal(newM);
   });
 }
 
@@ -1533,29 +1634,35 @@ if (btnSubmitYoutubeImport) {
       return alert('Please enter a valid YouTube video URL (e.g. https://www.youtube.com/watch?v=...)');
     }
 
-    showToast('Validating YouTube video track... ⏳');
-    setTimeout(() => {
-      const newM = {
-        id: Date.now(),
-        title: `YouTube Video: ${url.slice(0, 32)}...`,
-        date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        duration: '15 min',
-        tag: 'Product',
-        tagClass: 'tag-product',
-        sourceUrl: url,
-        summary: `Video session summary: Extracted key points and agenda items from public video link (${url}).`,
-        decisions: ['Indexed video reference into workspace knowledge base'],
-        actionItems: ['Review video discussion points with team']
-      };
-      meetings.unshift(newM);
-      persistData();
-      renderMeetings();
-      renderMeetingsTable(activeMeetingFilter);
-      renderDocumentsVault();
-      updateStats();
-      showToast('Video indexed into Meeting Library! 🎥');
-      openMeetingDetailsModal(newM);
-    }, 800);
+    const newM = {
+      id: Date.now(),
+      title: `YouTube: ${url}`,
+      date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      duration: 'Video Link',
+      tag: 'Product',
+      tagClass: 'tag-product',
+      sourceUrl: url,
+      summary: `Link saved: ${url}. Transcript not extracted yet.`,
+      decisions: [],
+      actionItems: [`Watch video reference: ${url}`],
+      transcript: `Source video URL: ${url}\nTranscript not extracted yet.`
+    };
+
+    meetings.unshift(newM);
+    persistData();
+
+    if (window.MeetMindFirebase && currentUser && !currentUser.isGuest) {
+      window.MeetMindFirebase.saveMeeting(newM);
+    }
+
+    renderMeetings();
+    renderMeetingsTable(activeMeetingFilter);
+    renderDocumentsVault();
+    updateStats();
+    showToast('Video link saved as meeting note! 📌');
+    openMeetingDetailsModal(newM);
+
+    document.getElementById('importYoutubeUrlInput').value = '';
   });
 }
 
@@ -1579,10 +1686,23 @@ if (btnSubmitDocImport) {
     }
 
     const file = fileInput.files[0];
+    const lowerName = file.name.toLowerCase();
+
+    // Check for binary/PDF documents that cannot be parsed as plain text
+    if (lowerName.endsWith('.pdf') || lowerName.endsWith('.docx') || lowerName.endsWith('.doc')) {
+      alert('Text could not be extracted from this PDF/binary document. Please upload a plain text notes file (.txt, .md, .json).');
+      return;
+    }
+
     const reader = new FileReader();
 
     reader.onload = (e) => {
       const content = e.target.result;
+      if (!content || typeof content !== 'string' || /[\x00-\x08\x0E-\x1F]/.test(content.slice(0, 500))) {
+        alert('Text could not be extracted from this file. Please upload a plain text notes file (.txt, .md, .json).');
+        return;
+      }
+
       const fName = file.name;
       const lines = content.split('\n').filter(l => l.trim().length > 0);
       const summaryText = lines.slice(0, 4).join(' ');
@@ -1591,22 +1711,27 @@ if (btnSubmitDocImport) {
         id: Date.now(),
         title: `Notes: ${fName}`,
         date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        duration: 'Read: 5m',
+        duration: `Notes (${lines.length} lines)`,
         tag: 'Work',
         tagClass: 'tag-work',
-        summary: summaryText ? `Extracted Notes: ${summaryText.slice(0, 220)}...` : `Discussion notes from ${fName}.`,
+        summary: summaryText ? `Extracted Notes: ${summaryText.slice(0, 240)}...` : `Discussion notes from ${fName}.`,
         decisions: ['Document verified and stored in documents vault'],
         actionItems: [`Review ${fName} key points with team`],
-        transcript: content.slice(0, 1000)
+        transcript: content.slice(0, 3000)
       };
 
       meetings.unshift(newM);
       persistData();
+
+      if (window.MeetMindFirebase && currentUser && !currentUser.isGuest) {
+        window.MeetMindFirebase.saveMeeting(newM);
+      }
+
       renderMeetings();
       renderMeetingsTable(activeMeetingFilter);
       renderDocumentsVault();
       updateStats();
-      showToast(`Notes "${fName}" imported & summarized! 📄✨`);
+      showToast(`Notes "${fName}" imported! 📄✨`);
       openMeetingDetailsModal(newM);
     };
 
@@ -1923,17 +2048,92 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================================================
+// Calendar Dynamic Agenda Rendering
+// ==========================================================================
+function renderCalendarAgenda() {
+  const container = document.getElementById('calendarAgendaEvents');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const datedTasks = tasks.filter(t => t.deadline);
+  if (datedTasks.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 28px 16px; color: var(--text-dim);">
+        <i class="ri-calendar-line" style="font-size: 28px; color: var(--primary);"></i>
+        <h4 style="margin: 8px 0 4px; font-weight: 700; color: var(--text-main);">No Scheduled Deadlines</h4>
+        <p style="font-size: 13px;">Action items with deadlines created in your meetings will appear here automatically.</p>
+      </div>
+    `;
+    return;
+  }
+
+  datedTasks.slice(0, 6).forEach(task => {
+    const div = document.createElement('div');
+    div.className = 'agenda-event';
+    div.innerHTML = `
+      <div class="event-time">${escapeHtml(task.deadline)}</div>
+      <div class="event-content">
+        <h5>${escapeHtml(task.title)}</h5>
+        <p>Assignee: ${escapeHtml(task.assignee || 'You')} &bull; Priority: ${escapeHtml((task.priority || 'medium').toUpperCase())}</p>
+      </div>
+      <button class="btn-join-meeting btn-sync-gcal" title="Add to Google Calendar"><i class="ri-calendar-line"></i> Sync</button>
+    `;
+    div.querySelector('.btn-sync-gcal').addEventListener('click', () => {
+      const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(task.title)}&details=${encodeURIComponent('Assigned via MeetMind AI')}`;
+      window.open(gCalUrl, '_blank');
+    });
+    container.appendChild(div);
+  });
+}
+
+// ==========================================================================
+// Onboarding Guide Handlers
+// ==========================================================================
+const btnDismissOnboarding = document.getElementById('btnDismissOnboarding');
+if (btnDismissOnboarding) {
+  btnDismissOnboarding.addEventListener('click', () => {
+    localStorage.setItem('meetmind_onboarding_dismissed', 'true');
+    const card = document.getElementById('onboardingGuideCard');
+    if (card) card.style.display = 'none';
+  });
+}
+
+const btnOnboardRecord = document.getElementById('btnOnboardRecord');
+if (btnOnboardRecord) btnOnboardRecord.addEventListener('click', () => navigateToPage('record'));
+
+const btnOnboardLibrary = document.getElementById('btnOnboardLibrary');
+if (btnOnboardLibrary) btnOnboardLibrary.addEventListener('click', () => navigateToPage('meetings'));
+
+const btnOnboardTeam = document.getElementById('btnOnboardTeam');
+if (btnOnboardTeam) btnOnboardTeam.addEventListener('click', () => navigateToPage('workspaces'));
+
+// ==========================================================================
 // Firebase Real-time Sync & Authentication
 // ==========================================================================
 function initFirebaseIntegration() {
   if (!window.MeetMindFirebase) {
-    setTimeout(initFirebaseIntegration, 250);
+    setTimeout(initFirebaseIntegration, 200);
     return;
   }
 
   const fb = window.MeetMindFirebase;
+  const isGuest = sessionStorage.getItem('meetmind_guest_session') === 'true';
 
-  // 1. Auth Listener
+  // Demo Guest Sandbox Mode: local-only, no cloud subscriptions, no cloud writes
+  if (isGuest) {
+    console.log('🔒 Demo Reviewer Sandbox Mode Active (Local Storage Only)');
+    currentUser = {
+      name: 'Demo Reviewer',
+      email: 'demo@meetmind.ai',
+      uid: 'demo_guest_evaluator',
+      isGuest: true
+    };
+    initUserProfile();
+    updateConnectionStatusUI();
+    return;
+  }
+
+  // 1. Real Firebase Auth State Verification
   fb.onAuthUpdate((user) => {
     if (user) {
       currentUser = {
@@ -1944,13 +2144,13 @@ function initFirebaseIntegration() {
       };
       localStorage.setItem('meetmind_user', JSON.stringify(currentUser));
       initUserProfile();
+      updateConnectionStatusUI();
 
       // Subscribe to meetings scoped strictly to this authenticated user
       fb.subscribeMeetings(user.uid, (remoteMeetings) => {
-        if (remoteMeetings && remoteMeetings.length > 0) {
-          const remoteIds = new Set(remoteMeetings.map(m => m.id));
-          const localKept = meetings.filter(m => !remoteIds.has(m.id));
-          meetings = [...remoteMeetings, ...localKept];
+        if (remoteMeetings) {
+          meetings = remoteMeetings;
+          persistData();
           renderMeetings();
           renderMeetingsTable(activeMeetingFilter);
           renderDocumentsVault();
@@ -1958,16 +2158,24 @@ function initFirebaseIntegration() {
         }
       });
 
-      // Subscribe to user tasks
+      // Subscribe to user tasks scoped strictly to this authenticated user
       fb.subscribeTasks(user.uid, (remoteTasks) => {
-        if (remoteTasks && remoteTasks.length > 0) {
-          const remoteTaskIds = new Set(remoteTasks.map(t => t.id));
-          const localKept = tasks.filter(t => !remoteTaskIds.has(t.id));
-          tasks = [...remoteTasks, ...localKept];
+        if (remoteTasks) {
+          tasks = remoteTasks;
+          persistData();
           renderTasks(activeTaskFilter);
+          renderCalendarAgenda();
           updateStats();
         }
       });
+    } else {
+      // Real Firebase Auth reports no authenticated user
+      // Even if someone manually injected localStorage in console, reject and redirect!
+      if (!sessionStorage.getItem('meetmind_guest_session')) {
+        console.warn('⛔ Unauthenticated session detected. Redirecting to /login...');
+        localStorage.removeItem('meetmind_user');
+        window.location.replace('/login');
+      }
     }
   });
 }
@@ -1996,10 +2204,12 @@ function escapeHtml(str) {
 // Initial Boot
 // ==========================================================================
 initUserProfile();
+updateConnectionStatusUI();
 navigateToPage('dashboard');
 renderMeetings();
 renderMeetingsTable();
 renderTasks();
 renderDocumentsVault();
+renderCalendarAgenda();
 initFirebaseIntegration();
 updateStats();

@@ -37,7 +37,7 @@ class AIService:
             except Exception as err:
                 print(f"[AIService] Gemini summary fallback notice: {err}")
 
-        # Structured 2027 Meeting Summary Format (Resilient Fallback)
+        # Structured 2026 Meeting Summary Format (Resilient Fallback)
         executive_summary = (
             f"The session focused on '{title}'. The participants aligned on core system deliverables, "
             f"agreed to shorten deployment cycles, and committed to weekly reviews."

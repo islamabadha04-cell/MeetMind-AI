@@ -136,6 +136,7 @@
           <div class="user-info">
             <span class="user-name" id="deskUserName">User</span>
             <span class="user-plan-badge" id="deskUserPlan">Free Account</span>
+            <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;" id="deskUserUsage">0 / 120 free mins</div>
           </div>
           <button id="btnSidebarLogout" title="Sign out" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; margin-left: auto; padding: 4px;">
             <i class="ri-logout-box-r-line"></i>
@@ -174,9 +175,38 @@
           <!-- Welcome Hero & Stats Row -->
           <div class="welcome-stats-row">
             <div class="welcome-banner">
-              <h2 class="welcome-title" id="dashWelcomeTitle">Good morning 👋</h2>
+              <h2 class="welcome-title" id="dashWelcomeTitle">Welcome to MeetMind AI 👋</h2>
               <p class="welcome-sub">Turn your conversations into structured decisions and automated action items.</p>
             </div>
+
+          <!-- First-Run 3-Step Onboarding Guide -->
+          <div class="onboarding-guide-card" id="onboardingGuideCard" style="display: none; background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-lg); padding: 18px 22px; margin-bottom: 22px; position: relative;">
+            <button id="btnDismissOnboarding" style="position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px;" title="Dismiss Guide"><i class="ri-close-line"></i></button>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+              <span style="background: var(--primary); color: #fff; width: 26px; height: 26px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;"><i class="ri-compass-3-line"></i></span>
+              <h3 style="font-size: 15px; font-weight: 800; color: var(--text-main);">Quick Start — 3 Steps to Master MeetMind AI</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 10px;">
+              <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 3px;">STEP 1 &bull; RECORD</div>
+                <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 3px;">Record a 30s Voice Test</h4>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px;">Test real-time waveform visualizer and speech capture in Urdu or English.</p>
+                <button class="btn-secondary" id="btnOnboardRecord" style="padding: 4px 10px; font-size: 11.5px; width: 100%;"><i class="ri-mic-line"></i> Open Studio</button>
+              </div>
+              <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--secondary); margin-bottom: 3px;">STEP 2 &bull; REVIEW</div>
+                <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 3px;">Review Executive Brief</h4>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px;">Inspect structured decisions and action items generated from discussions.</p>
+                <button class="btn-secondary" id="btnOnboardLibrary" style="padding: 4px 10px; font-size: 11.5px; width: 100%;"><i class="ri-folders-line"></i> View Library</button>
+              </div>
+              <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+                <div style="font-size: 11px; font-weight: 700; color: #10B981; margin-bottom: 3px;">STEP 3 &bull; COLLABORATE</div>
+                <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 3px;">Invite One Teammate</h4>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px;">Share meeting minutes, tasks, and action item deadlines with your team.</p>
+                <button class="btn-secondary" id="btnOnboardTeam" style="padding: 4px 10px; font-size: 11.5px; width: 100%;"><i class="ri-team-line"></i> Team Workspace</button>
+              </div>
+            </div>
+          </div>
 
             <div class="stats-cards-group">
               <div class="stat-card">
@@ -455,7 +485,7 @@
               <div class="dropzone-icon"><i class="ri-upload-cloud-2-line"></i></div>
               <h3 style="font-size: 18px; font-weight: 700; margin: 8px 0 4px;">Drag & Drop Meeting Audio File Here</h3>
               <p style="font-size: 13px; color: var(--text-muted); max-width: 480px; margin: 0 auto 16px;">
-                Supports MP3, WAV, M4A, AAC, Zoom & Google Meet Recordings. Instant neural transcription with Gemini 1.5 Flash.
+                Supports MP3, WAV, M4A, OGG, and WebM audio files. Audio duration and playback are extracted directly in your browser.
               </p>
               <button class="btn-secondary" id="btnBrowseAudioFile" type="button">
                 <i class="ri-folder-open-line"></i> Browse File from Computer
@@ -468,7 +498,7 @@
                   <div class="audio-file-icon"><i class="ri-file-music-line"></i></div>
                   <div>
                     <h4 id="uploadedFileName" style="font-size: 15px; font-weight: 700;">audio-sample.mp3</h4>
-                    <span id="uploadedFileSize" style="font-size: 12px; color: var(--text-dim);">14.2 MB • Ready for AI Transcription</span>
+                    <span id="uploadedFileSize" style="font-size: 12px; color: var(--text-dim);">Detecting duration...</span>
                   </div>
                 </div>
                 <button class="btn-icon-danger" id="btnRemoveAudioFile" title="Remove File"><i class="ri-close-line"></i></button>
@@ -478,8 +508,11 @@
               <audio id="studioAudioPlayer" controls style="width: 100%; margin: 16px 0; border-radius: var(--radius-md);"></audio>
 
               <button class="btn-primary-purple" id="btnTranscribeUploadedAudio" style="width: 100%; padding: 13px;">
-                <i class="ri-sparkling-fill"></i> AI Transcribe & Extract Action Items
+                <i class="ri-file-music-line"></i> Create Meeting Note from File (Audio Attached)
               </button>
+              <p style="font-size: 11.5px; color: var(--text-dim); text-align: center; margin-top: 8px;">
+                Audio metadata and real duration will be indexed. Full speech-to-text automated transcription pipeline is coming soon.
+              </p>
             </div>
           </div>
         </div>
@@ -600,7 +633,7 @@
             <div class="chat-conversation-area" id="deskChatArea">
               <div class="chat-bubble ai-bubble">
                 <div class="ai-header-badge"><i class="ri-sparkling-fill"></i> MeetMind AI Assistant</div>
-                <p>Hello Ali! I am your AI Meeting Assistant. You can ask me anything about your past meetings, decisions made, action items, or upcoming deadlines.</p>
+                <p>Hello! I am your AI Meeting Assistant. You can ask me anything about your past meetings, decisions made, action items, or upcoming deadlines.</p>
               </div>
             </div>
 
@@ -628,7 +661,7 @@
           <div class="welcome-stats-row">
             <div>
               <h2 class="welcome-title">Knowledge Base & Multi-Source Import</h2>
-              <p class="welcome-sub">Import YouTube URLs, Zoom/Meet links, and upload documents (PDF/DOCX) for AI summarization.</p>
+              <p class="welcome-sub">Save video links, open Google Meet/Zoom in Recording Studio, and import notes for review.</p>
             </div>
           </div>
 
@@ -638,14 +671,14 @@
               <div class="import-panel-header">
                 <div class="import-icon red-icon"><i class="ri-youtube-fill"></i></div>
                 <div>
-                  <h4>YouTube Video Transcription</h4>
-                  <p>Process public meeting video URL or recorded webinar</p>
+                  <h4>Save Video Link as a Meeting Note</h4>
+                  <p>Bookmark a YouTube video or webinar link in your library</p>
                 </div>
               </div>
-              <input type="url" id="importYoutubeUrlInput" placeholder="https://youtube.com/watch?v=..." class="panel-input">
-              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Validates public video and imports audio track for summarization.</p>
+              <input type="url" id="importYoutubeUrlInput" placeholder="https://www.youtube.com/watch?v=..." class="panel-input">
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Saves the public video link as a reference note. Automated caption extraction coming soon.</p>
               <button class="btn-primary-purple" id="btnSubmitYoutubeImport" style="margin-top: 10px;">
-                <i class="ri-magic-line"></i> Import & Summarize Video
+                <i class="ri-bookmark-line"></i> Save Video Link as Note
               </button>
             </div>
 
@@ -699,22 +732,9 @@
 
           <div class="calendar-agenda-grid">
             <div class="agenda-day-card">
-              <span class="agenda-day-title">Upcoming Agenda & Sessions</span>
-              <div class="agenda-event">
-                <div class="event-time">10:00 AM</div>
-                <div class="event-content">
-                  <h5>Sprint Review & Product Demonstration</h5>
-                  <p>Agenda: Review weekly deliverables, live demo, and team sign-offs.</p>
-                </div>
-                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Open Meet</button>
-              </div>
-              <div class="agenda-event">
-                <div class="event-time">02:00 PM</div>
-                <div class="event-content">
-                  <h5>Engineering & Infrastructure Architecture Sync</h5>
-                  <p>Agenda: Review multi-tenant cloud storage, PWA caching, and performance metrics.</p>
-                </div>
-                <button class="btn-join-meeting" onclick="window.open('https://meet.google.com','_blank')">Open Meet</button>
+              <span class="agenda-day-title">Upcoming Agenda & Scheduled Tasks</span>
+              <div id="calendarAgendaEvents">
+                <!-- Dynamically populated from user's real tasks with deadlines -->
               </div>
             </div>
           </div>
@@ -808,12 +828,18 @@
               </div>
 
               <div style="font-size: 12.5px; border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; justify-content: space-between;">
-                <span style="color: var(--text-muted);">Transcription Models:</span>
-                <span style="font-weight: 600;">Web Speech API &bull; Gemini 1.5 Flash</span>
+                <span style="color: var(--text-muted);">Speech Recognition:</span>
+                <span style="font-weight: 600;">Web Speech API (Chrome / Edge)</span>
               </div>
-              <div style="font-size: 12.5px; padding-top: 8px; display: flex; justify-content: space-between;">
-                <span style="color: var(--text-muted);">Data Storage:</span>
+              <div style="font-size: 12.5px; padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-muted);">Cloud Sync:</span>
                 <span style="font-weight: 600; color: var(--success);" id="settingCloudStatusText"><i class="ri-cloud-line"></i> Firebase Cloud Firestore</span>
+              </div>
+              <div style="font-size: 12.5px; padding-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-muted);">Backend Status:</span>
+                <span id="backendStatusIndicator" style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #10B981;">
+                  <span class="live-pulse-dot" style="background: #10B981;"></span> Connected
+                </span>
               </div>
             </div>
 

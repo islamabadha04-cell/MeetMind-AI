@@ -1,4 +1,4 @@
-# 🎙️ MeetMind AI — Next-Generation AI Meeting Assistant (2027)
+# 🎙️ MeetMind AI — Next-Generation AI Meeting Assistant (2026)
 
 > **Transform conversations into actionable insights.** AI-powered meeting recording, real-time speech-to-text, structured summaries, smart action item management, and conversational meeting search (RAG).
 
@@ -94,4 +94,4 @@ flutter run
 ---
 
 ## 📄 License
-MIT License. Built for the Next-Generation AI Productivity Platform (2027).
+MIT License. Built for the Next-Generation AI Productivity Platform (2026).

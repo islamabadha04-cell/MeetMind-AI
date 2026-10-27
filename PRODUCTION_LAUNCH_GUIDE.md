@@ -1,4 +1,4 @@
-# MeetMind AI (2027) — Complete Production & Release Roadmap
+# MeetMind AI (2026) — Complete Production & Release Roadmap
 
 Yeh guide step-by-step batati hai ke is app ko live internet par deploy karne, updates ke liye CI/CD pipelines chalane, aur mobile release (Google Play Store) ke liye kya kya karna hoga.
 

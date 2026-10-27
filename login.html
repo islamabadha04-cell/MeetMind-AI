@@ -362,6 +362,7 @@
               uid: res.user.uid,
               photo: res.user.photoURL || ''
             };
+            sessionStorage.removeItem('meetmind_guest_session');
             localStorage.setItem('meetmind_user', JSON.stringify(userObj));
             window.location.href = '/app';
           }
@@ -396,6 +397,7 @@
           email: user.email,
           uid: user.uid
         };
+        sessionStorage.removeItem('meetmind_guest_session');
         localStorage.setItem('meetmind_user', JSON.stringify(userObj));
         window.location.href = '/app';
       } catch (err) {
@@ -409,6 +411,7 @@
     const btnGuestAccess = document.getElementById('btnGuestAccess');
     if (btnGuestAccess) {
       btnGuestAccess.addEventListener('click', () => {
+        sessionStorage.setItem('meetmind_guest_session', 'true');
         localStorage.setItem('meetmind_user', JSON.stringify({ 
           name: 'Demo Reviewer', 
           email: 'demo@meetmind.ai', 
