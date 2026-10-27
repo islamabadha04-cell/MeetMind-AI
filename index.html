@@ -14,10 +14,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MeetMind AI">
 
-  <!-- Google Fonts: Inter & Manrope -->
+  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Remix Icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
@@ -26,28 +26,28 @@
 </head>
 <body>
 
-  <!-- Top Universal Header & View Mode Switcher -->
+  <!-- Top Universal Header -->
   <header class="universal-header">
     <div class="u-brand">
       <div class="u-logo">
         <i class="ri-voiceprint-fill"></i>
       </div>
       <div>
-        <div class="u-tag">2027 Production UI • Complete App</div>
+        <div class="u-tag"><span class="live-pulse-dot"></span> Cloud Synchronized</div>
         <h1 class="u-title">MeetMind AI</h1>
       </div>
     </div>
 
     <!-- Mode Selector -->
     <div class="u-switcher">
-      <button class="u-btn active" data-view="desktop" id="btnViewDesktop">
-        <i class="ri-computer-line"></i> Desktop App
+      <button class="u-btn active" data-view="desktop" id="btnViewDesktop" title="Full Desktop Application">
+        <i class="ri-macbook-line"></i> Desktop
       </button>
-      <button class="u-btn" data-view="mobile-showcase" id="btnViewMobileShowcase">
-        <i class="ri-layout-grid-line"></i> Mobile Showcase (5 Screens)
+      <button class="u-btn" data-view="mobile-showcase" id="btnViewMobileShowcase" title="5-Screen Flow">
+        <i class="ri-smartphone-line"></i> Mobile Showcase
       </button>
-      <button class="u-btn" data-view="mobile-phone" id="btnViewMobilePhone">
-        <i class="ri-smartphone-line"></i> Interactive Phone
+      <button class="u-btn" data-view="mobile-phone" id="btnViewMobilePhone" title="Device Simulator">
+        <i class="ri-device-line"></i> Device Sim
       </button>
     </div>
 
@@ -60,7 +60,7 @@
 
       <!-- Install on Mobile Phone (PWA QR) -->
       <button class="pwa-install-btn" id="installMobileBtn">
-        <i class="ri-install-line"></i> Install on Mobile
+        <i class="ri-download-cloud-2-line"></i> Install App
       </button>
     </div>
   </header>
@@ -77,52 +77,59 @@
         </div>
         <div class="sidebar-title-wrap">
           <h2 class="sidebar-title">MeetMind AI</h2>
-          <span class="sidebar-sub">Your AI Meeting Assistant</span>
+          <span class="sidebar-sub">Enterprise Workspace</span>
         </div>
       </div>
 
       <nav class="sidebar-menu">
+        <span class="sidebar-category-header">WORKSPACE</span>
         <button class="menu-item active" data-nav="dashboard">
-          <i class="ri-dashboard-line"></i> Dashboard
+          <i class="ri-dashboard-2-line"></i> <span>Dashboard</span>
         </button>
         <button class="menu-item" data-nav="record">
-          <i class="ri-mic-line"></i> Record Studio
+          <i class="ri-mic-2-line"></i> <span>Record Studio</span>
+          <span class="studio-live-pill"><span class="dot"></span> LIVE</span>
         </button>
         <button class="menu-item" data-nav="meetings">
-          <i class="ri-folders-line"></i> Meetings
+          <i class="ri-folders-line"></i> <span>Meeting Library</span>
         </button>
         <button class="menu-item" data-nav="tasks">
-          <i class="ri-checkbox-circle-line"></i> Tasks
+          <i class="ri-checkbox-circle-line"></i> <span>Action Items</span>
           <span class="badge-count" id="navTaskCountBadge">8</span>
         </button>
+
+        <span class="sidebar-category-header">AI INTELLIGENCE</span>
         <button class="menu-item" data-nav="chat">
-          <i class="ri-chat-voice-line"></i> Ask AI Chat
+          <i class="ri-sparkling-2-line"></i> <span>Ask AI Chat</span>
         </button>
         <button class="menu-item" data-nav="knowledge">
-          <i class="ri-database-2-line"></i> Knowledge & Links
-        </button>
-        <button class="menu-item" data-nav="calendar">
-          <i class="ri-calendar-event-line"></i> Calendar
-        </button>
-        <button class="menu-item" data-nav="workspaces">
-          <i class="ri-team-line"></i> Workspaces
+          <i class="ri-links-line"></i> <span>Source Import</span>
         </button>
         <button class="menu-item" data-nav="documents">
-          <i class="ri-file-text-line"></i> Documents
+          <i class="ri-file-text-line"></i> <span>Documents Vault</span>
+        </button>
+
+        <span class="sidebar-category-header">COLLABORATION</span>
+        <button class="menu-item" data-nav="calendar">
+          <i class="ri-calendar-event-line"></i> <span>Calendar</span>
+        </button>
+        <button class="menu-item" data-nav="workspaces">
+          <i class="ri-team-line"></i> <span>Team Workspaces</span>
         </button>
       </nav>
 
       <div class="sidebar-bottom">
         <button class="menu-item" data-nav="settings">
-          <i class="ri-settings-3-line"></i> Settings & Export
+          <i class="ri-settings-3-line"></i> <span>Settings & API</span>
         </button>
         
         <div class="sidebar-user-card" id="deskUserCard">
           <img src="assets/emily.jpg" alt="Ali Raza" class="user-avatar-sm" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'">
           <div class="user-info">
             <span class="user-name">Ali Raza</span>
-            <span class="user-plan-badge">Pro Plan • 42/500m</span>
+            <span class="user-plan-badge">Enterprise Tier</span>
           </div>
+          <i class="ri-more-2-fill user-more-dots"></i>
         </div>
       </div>
     </aside>
@@ -156,32 +163,44 @@
           <div class="welcome-stats-row">
             <div class="welcome-banner">
               <h2 class="welcome-title">Good morning, Ali 👋</h2>
-              <p class="welcome-sub">Capture your ideas, turn conversations into action.</p>
+              <p class="welcome-sub">Turn your conversations into structured decisions and automated action items.</p>
             </div>
 
             <div class="stats-cards-group">
               <div class="stat-card">
-                <span class="stat-label">Total Meetings</span>
+                <div class="stat-card-header">
+                  <span class="stat-label">Total Meetings</span>
+                  <div class="stat-icon-mini purple-tint"><i class="ri-voiceprint-line"></i></div>
+                </div>
                 <div class="stat-number-row">
                   <span class="stat-value" id="statTotalMeetings">24</span>
-                  <span class="stat-change positive">+12% this week</span>
+                  <span class="stat-change positive"><i class="ri-arrow-up-line"></i> +12%</span>
                 </div>
+                <span class="stat-sub-caption">Indexed in cloud</span>
               </div>
 
               <div class="stat-card">
-                <span class="stat-label">Recording Time</span>
+                <div class="stat-card-header">
+                  <span class="stat-label">Audio Captured</span>
+                  <div class="stat-icon-mini blue-tint"><i class="ri-time-line"></i></div>
+                </div>
                 <div class="stat-number-row">
                   <span class="stat-value">18h 45m</span>
-                  <span class="stat-change positive">+8% this week</span>
+                  <span class="stat-change positive"><i class="ri-arrow-up-line"></i> +8%</span>
                 </div>
+                <span class="stat-sub-caption">Across 14 projects</span>
               </div>
 
               <div class="stat-card">
-                <span class="stat-label">Open Tasks</span>
+                <div class="stat-card-header">
+                  <span class="stat-label">Open Tasks</span>
+                  <div class="stat-icon-mini emerald-tint"><i class="ri-checkbox-circle-line"></i></div>
+                </div>
                 <div class="stat-number-row">
                   <span class="stat-value" id="statOpenTasks">8</span>
-                  <span class="stat-change neutral">+3% this week</span>
+                  <span class="stat-change neutral">Active</span>
                 </div>
+                <span class="stat-sub-caption">Pending completion</span>
               </div>
             </div>
           </div>
@@ -194,12 +213,13 @@
                   <i class="ri-mic-fill"></i>
                 </div>
                 <div>
-                  <h3 class="hero-card-title">Start Recording</h3>
-                  <p class="hero-card-desc">AI powered transcription & summarization</p>
+                  <div class="hero-badge-pill"><span class="pulse-emerald-dot"></span> Next-Gen Speech Engine</div>
+                  <h3 class="hero-card-title">Start AI Voice Recording</h3>
+                  <p class="hero-card-desc">Real-time bilingual transcription, speaker separation & instant executive briefs.</p>
                 </div>
               </div>
               <button class="hero-record-btn" id="deskRecordBtn">
-                <i class="ri-play-fill"></i> Record Now
+                <i class="ri-play-fill"></i> <span>Launch Studio</span>
               </button>
             </div>
 
@@ -208,7 +228,7 @@
                 <i class="ri-upload-cloud-2-line"></i>
               </div>
               <h4 class="mini-card-title">Upload Audio</h4>
-              <span class="mini-card-sub">MP3, WAV, M4A...</span>
+              <span class="mini-card-sub">MP3, WAV, M4A, Zoom</span>
             </div>
 
             <div class="mini-action-card" id="deskImportLinkCard">
@@ -216,7 +236,7 @@
                 <i class="ri-links-line"></i>
               </div>
               <h4 class="mini-card-title">Import Link</h4>
-              <span class="mini-card-sub">Zoom, Meet, YouTube...</span>
+              <span class="mini-card-sub">Zoom, Meet, YouTube</span>
             </div>
 
             <div class="mini-action-card" id="deskUploadDocCard">
@@ -224,7 +244,7 @@
                 <i class="ri-file-text-line"></i>
               </div>
               <h4 class="mini-card-title">Upload Document</h4>
-              <span class="mini-card-sub">PDF, DOCX, TXT...</span>
+              <span class="mini-card-sub">PDF, DOCX, TXT notes</span>
             </div>
           </div>
 
