@@ -236,6 +236,43 @@ if (deskRecordBtn) {
   deskRecordBtn.addEventListener('click', () => navigateToPage('record'));
 }
 
+// Additional Dashboard Action Cards & Links
+const deskViewAllMeetings = document.getElementById('deskViewAllMeetings');
+if (deskViewAllMeetings) deskViewAllMeetings.addEventListener('click', () => navigateToPage('meetings'));
+
+const deskUploadAudioCard = document.getElementById('deskUploadAudioCard');
+if (deskUploadAudioCard) deskUploadAudioCard.addEventListener('click', () => navigateToPage('record'));
+
+const deskImportLinkCard = document.getElementById('deskImportLinkCard');
+if (deskImportLinkCard) deskImportLinkCard.addEventListener('click', () => navigateToPage('knowledge'));
+
+const deskUploadDocCard = document.getElementById('deskUploadDocCard');
+if (deskUploadDocCard) deskUploadDocCard.addEventListener('click', () => navigateToPage('knowledge'));
+
+const qaAskMeetings = document.getElementById('qaAskMeetings');
+if (qaAskMeetings) qaAskMeetings.addEventListener('click', () => navigateToPage('chat'));
+
+const qaCreateTask = document.getElementById('qaCreateTask');
+if (qaCreateTask) qaCreateTask.addEventListener('click', () => {
+  if (modalCreateTask) modalCreateTask.classList.remove('hidden');
+});
+
+const qaViewCalendar = document.getElementById('qaViewCalendar');
+if (qaViewCalendar) qaViewCalendar.addEventListener('click', () => navigateToPage('calendar'));
+
+const qaManageWorkspace = document.getElementById('qaManageWorkspace');
+if (qaManageWorkspace) qaManageWorkspace.addEventListener('click', () => navigateToPage('workspaces'));
+
+const btnInviteMember = document.getElementById('btnInviteMember');
+if (btnInviteMember) {
+  btnInviteMember.addEventListener('click', () => {
+    const email = prompt('Enter team member email to invite:');
+    if (email && email.trim()) {
+      showToast(`Invitation sent to ${email.trim()}! 📩`);
+    }
+  });
+}
+
 // ==========================================================================
 // Real Audio Recording Studio & Visualizer (Web Audio API & SpeechRecognition)
 // ==========================================================================
@@ -1560,6 +1597,7 @@ function initFirebaseIntegration() {
 // ==========================================================================
 // Initial Boot
 // ==========================================================================
+navigateToPage('dashboard');
 renderMeetings();
 renderMeetingsTable();
 renderTasks();
