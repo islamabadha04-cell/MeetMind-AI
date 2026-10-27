@@ -8,13 +8,27 @@ Yeh guide step-by-step batati hai ke is app ko live internet par deploy karne, u
 
 Abhi app aapke local computer aur Wi-Fi par chal rahi hai. Dunya mein kahin bhi kisi ke mobile par chalane ke liye:
 
-### Option A: Cloud Hosting (Free & Easiest — Railway / Render)
+### Option A: Firebase Hosting & Cloud Services (Connected to `meetmind-ai-74519`)
+Aapka Firebase project already configure ho chuka hai!
+1. **Firebase Console** (https://console.firebase.google.com/project/meetmind-ai-74519):
+   - **Authentication**: `Build -> Authentication -> Sign-in method` mein jaakar **Google** enable karein.
+   - **Firestore Database**: `Build -> Firestore Database` -> Create Database (Start in test mode).
+   - **Storage**: `Build -> Storage` -> Get Started (Start in test mode).
+2. **Instant 1-Command Deploy**:
+   Terminal mein run karein:
+   ```bash
+   npx.cmd firebase-tools login
+   npx.cmd firebase-tools deploy
+   ```
+   Aapki app foran live link par chal jaye gi: `https://meetmind-ai-74519.web.app`
+
+### Option B: Cloud Hosting (Render / Railway)
 1. Apne code ko **GitHub** par push karein (`git push origin main`).
 2. **Railway.app** ya **Render.com** par free account banayein.
 3. `New Project` -> GitHub repo select karein.
 4. Yeh automatically `backend/Dockerfile` ko detect karke backend deploy kar dega aur aapko free live HTTPS link mil jayega (e.g. `https://meetmind-api.up.railway.app`).
 
-### Option B: VPS Server (DigitalOcean, AWS, Hetzner)
+### Option C: VPS Server (DigitalOcean, AWS, Hetzner)
 Agar aapka apna VPS server hai:
 1. Server par login karein.
 2. Hamara banaya hua script chalayein:

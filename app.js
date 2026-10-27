@@ -322,6 +322,11 @@ mBtnEndRecording.addEventListener('click', () => {
   meetings.unshift(newMeeting);
   renderMeetings();
 
+  // Save to Firebase Cloud Firestore if available
+  if (window.MeetMindFirebase) {
+    window.MeetMindFirebase.saveMeeting(newMeeting);
+  }
+
   // Scroll to summary screen in mobile showcase
   const phones = document.querySelectorAll('.mockup-phone');
   if (phones[3]) phones[3].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -557,9 +562,75 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================================================
+// Firebase Real-time Sync & Authentication
+// ==========================================================================
+function initFirebaseIntegration() {
+  if (!window.MeetMindFirebase) {
+    setTimeout(initFirebaseIntegration, 300);
+    return;
+  }
+
+  const fb = window.MeetMindFirebase;
+
+  // 1. Auth State Updates
+  fb.onAuthUpdate((user) => {
+    if (user) {
+      document.querySelectorAll('.user-name, .m-greet, .welcome-title').forEach(el => {
+        if (el.classList.contains('welcome-title')) {
+          el.textContent = `Good morning, ${user.displayName || user.email.split('@')[0]} 👋`;
+        } else if (el.classList.contains('m-greet')) {
+          el.textContent = `Good morning, ${user.displayName || user.email.split('@')[0]} 👋`;
+        } else {
+          el.textContent = user.displayName || user.email.split('@')[0];
+        }
+      });
+      if (user.photoURL) {
+        document.querySelectorAll('.user-avatar-sm, .user-avatar-top, .m-avatar').forEach(img => {
+          img.src = user.photoURL;
+        });
+      }
+      showToast(`Signed in as ${user.displayName || user.email} 🔥`);
+    }
+  });
+
+  // 2. Real-time Firestore Meetings Sync
+  fb.subscribeMeetings((remoteMeetings) => {
+    if (remoteMeetings && remoteMeetings.length > 0) {
+      const remoteIds = new Set(remoteMeetings.map(m => m.id));
+      const localKept = meetings.filter(m => !remoteIds.has(m.id));
+      meetings = [...remoteMeetings, ...localKept];
+      renderMeetings();
+    }
+  });
+
+  // 3. User Avatar Click -> Sign in with Google
+  const profileElements = [document.getElementById('deskUserCard'), document.querySelector('.user-avatar-top'), document.querySelector('.m-avatar')];
+  profileElements.forEach(el => {
+    if (el) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', async () => {
+        if (fb.currentUser) {
+          if (confirm(`Currently signed in as ${fb.currentUser.email}. Do you want to sign out?`)) {
+            await fb.logout();
+            showToast('Signed out of Firebase');
+          }
+        } else {
+          showToast('Opening Google Sign-In...');
+          const res = await fb.loginWithGoogle();
+          if (res.success) {
+            showToast(`Welcome ${res.user.displayName}! 🎉`);
+          }
+        }
+      });
+    }
+  });
+}
+
+// ==========================================================================
 // Initial Execution
 // ==========================================================================
 renderMeetings();
 initMobileWaveform();
 animateWaveform();
 startTimer();
+initFirebaseIntegration();
