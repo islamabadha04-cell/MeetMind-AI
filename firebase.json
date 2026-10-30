@@ -27,7 +27,15 @@
         "destination": "/privacy.html"
       },
       {
+        "source": "/privacy.html",
+        "destination": "/privacy.html"
+      },
+      {
         "source": "/terms",
+        "destination": "/terms.html"
+      },
+      {
+        "source": "/terms.html",
         "destination": "/terms.html"
       },
       {
