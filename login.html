@@ -369,7 +369,14 @@
         } catch (err) {
           console.warn('Google Auth note:', err);
           btnGoogleAuth.innerHTML = '<i class="ri-google-fill"></i> Continue with Google';
-          alert('Google Sign-In notice: ' + (err.message || 'Please check your connection or continue with email/demo.'));
+          if (err.code === 'auth/popup-closed-by-user') {
+            return; // User simply closed the popup window
+          }
+          if (err.code === 'auth/operation-not-allowed' || (err.message && err.message.includes('operation-not-allowed'))) {
+            alert('Google Sign-In is not enabled yet in Firebase Console.\n\nTo enable:\n1. Go to Firebase Console -> Authentication -> Sign-in method\n2. Click Google -> Toggle Enable -> Save.\n\nIn the meantime, you can sign up with Email & Password below, or click "Continue as Demo Guest" for instant access.');
+          } else {
+            alert('Google Sign-In notice: ' + (err.message || 'Please check your connection or continue with email/demo.'));
+          }
         }
       });
     }
