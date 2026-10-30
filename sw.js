@@ -1,5 +1,5 @@
 // MeetMind AI - Service Worker
-const CACHE_NAME = 'meetmind-ai-cache-v3';
+const CACHE_NAME = 'meetmind-ai-cache-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

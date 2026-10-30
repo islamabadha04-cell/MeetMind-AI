@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import json
 
 from app.core.config import settings
@@ -197,6 +197,31 @@ def create_meeting(item: MeetingCreate, db: Session = Depends(get_db)):
         summary=summary_record.executive_summary,
         action_items=ai_data["action_items"]
     )
+
+@app.post(f"{settings.API_V1_STR}/meetings/transcribe-audio")
+async def transcribe_audio_file(
+    file: UploadFile = File(...),
+    title: Optional[str] = Form(None)
+):
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=400, detail="Empty audio file provided")
+    
+    file_name = file.filename or "uploaded_recording.wav"
+    mime_type = file.content_type or "audio/wav"
+    ai_result = AIService.transcribe_and_summarize_audio(contents, file_name, mime_type)
+    
+    return {
+        "status": "success",
+        "filename": file_name,
+        "title": title or file_name.rsplit(".", 1)[0],
+        "transcript": ai_result.get("transcript", ""),
+        "executive_summary": ai_result.get("executive_summary", ""),
+        "key_points": ai_result.get("key_points", []),
+        "decisions": ai_result.get("decisions", []),
+        "action_items": ai_result.get("action_items", []),
+        "risks": ai_result.get("risks", [])
+    }
 
 # ----------------- Tasks Endpoints -----------------
 @app.get(f"{settings.API_V1_STR}/tasks", response_model=List[TaskResponse])
