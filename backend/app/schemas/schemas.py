@@ -479,3 +479,114 @@ class WebhookDeliveryResponse(BaseModel):
     retry_count: int
     error_message: Optional[str] = None
     delivered_at: datetime
+
+
+# ==========================================
+# PHASE 5: WORKSPACES, RBAC & COLLABORATION
+# ==========================================
+
+class WorkspaceMemberResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    email: str
+    full_name: str
+    avatar_url: str
+    role: str # owner, admin, manager, editor, viewer
+    joined_at: datetime
+
+class WorkspaceCreate(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    tier: Optional[str] = "Team"
+
+class WorkspaceUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    tier: Optional[str] = None
+
+class WorkspaceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    slug: str
+    description: str
+    owner_id: int
+    owner_name: str
+    tier: str
+    max_seats: int
+    active_seats: int
+    current_user_role: str
+    is_active: bool
+    created_at: datetime
+    members: List[WorkspaceMemberResponse] = []
+
+class WorkspaceInviteCreate(BaseModel):
+    email: str
+    role: str = "editor" # admin, manager, editor, viewer
+
+class WorkspaceInviteResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    workspace_id: int
+    workspace_name: str
+    inviter_name: str
+    email: str
+    role: str
+    invite_token: str
+    invite_url: str
+    status: str
+    expires_at: datetime
+    created_at: datetime
+
+class WorkspaceMemberRoleUpdate(BaseModel):
+    role: str
+
+class CollaborativeNoteCreate(BaseModel):
+    title: str
+    content: Optional[str] = ""
+    meeting_id: Optional[int] = None
+
+class CollaborativeNoteUpdate(BaseModel):
+    title: Optional[str] = None
+    content: str
+    version: int
+
+class CollaborativeNoteResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    workspace_id: int
+    meeting_id: Optional[int] = None
+    title: str
+    content: str
+    last_edited_by_id: Optional[int] = None
+    last_edited_by_name: str
+    version: int
+    created_at: datetime
+    updated_at: datetime
+
+class CollaborativeNoteRevisionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    note_id: int
+    user_id: int
+    user_name: str
+    content_snapshot: str
+    revision_summary: str
+    version: int
+    created_at: datetime
+
+class WorkspaceVaultItem(BaseModel):
+    id: int
+    title: str
+    type: str # meeting, memory, document
+    date: str
+    summary: str
+
+class WorkspaceVaultResponse(BaseModel):
+    workspace_id: int
+    workspace_name: str
+    meetings_count: int
+    memories_count: int
+    documents_count: int
+    items: List[WorkspaceVaultItem] = []

@@ -22,7 +22,8 @@ from app.models.models import (
     ApprovalRequest, Notification, Workflow, WorkflowExecution,
     ChatMessage, KnowledgeDocument, DocumentChunk, MeetingMemory, MeetingChunk,
     Integration, ExternalEntityMapping, WebhookSubscription, WebhookDelivery, IntegrationJob,
-    OAuthNonce, ProcessedWebhookMessage
+    OAuthNonce, ProcessedWebhookMessage,
+    Workspace, WorkspaceMember, WorkspaceInvite, CollaborativeNote, CollaborativeNoteRevision
 )
 from app.schemas.schemas import (
     UserRegister, UserLogin, Token, UserProfile,
@@ -44,7 +45,11 @@ from app.schemas.schemas import (
     TrelloBoardItem, TrelloCreateCardRequest, TrelloCreateCardResponse,
     SlackChannelItem, SlackPostSummaryRequest, SlackPostSummaryResponse,
     NotionExportPageRequest, NotionExportPageResponse,
-    WebhookSubscriptionCreate, WebhookSubscriptionResponse, WebhookDeliveryResponse
+    WebhookSubscriptionCreate, WebhookSubscriptionResponse, WebhookDeliveryResponse,
+    WorkspaceCreate, WorkspaceUpdate, WorkspaceResponse, WorkspaceMemberResponse,
+    WorkspaceInviteCreate, WorkspaceInviteResponse, WorkspaceMemberRoleUpdate,
+    CollaborativeNoteCreate, CollaborativeNoteUpdate, CollaborativeNoteResponse,
+    CollaborativeNoteRevisionResponse, WorkspaceVaultResponse, WorkspaceVaultItem
 )
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.services.ai_service import AIService
@@ -2355,3 +2360,738 @@ async def receive_whatsapp_webhook(request: Request, db: Session = Depends(get_d
         "message": "WhatsApp voice note processed into MeetMind meeting."
     }
 
+
+
+# =========================================================================
+# PHASE 5 — TEAM COLLABORATION, ORGANIZATIONS & MULTI-TENANT RBAC
+# =========================================================================
+
+def utc_now():
+    return datetime.now(timezone.utc)
+
+
+ROLE_HIERARCHY = {
+    "owner": 50,
+    "admin": 40,
+    "manager": 30,
+    "editor": 20,
+    "viewer": 10
+}
+
+def get_workspace_role(db: Session, workspace: Workspace, user_id: int) -> Optional[str]:
+    """Returns effective RBAC role for user_id in workspace."""
+    if workspace.owner_id == user_id:
+        return "owner"
+    member = db.query(WorkspaceMember).filter(
+        WorkspaceMember.workspace_id == workspace.id,
+        WorkspaceMember.user_id == user_id
+    ).first()
+    return member.role if member else None
+
+def require_workspace_access(
+    db: Session,
+    workspace_id: int,
+    user: User,
+    min_role: str = "viewer"
+) -> tuple[Workspace, str]:
+    """
+    Validates workspace access and enforces minimum RBAC role level.
+    Raises HTTP 404 if workspace doesn't exist.
+    Raises HTTP 403 if user is not a member or lacks the required role.
+    """
+    workspace = db.query(Workspace).filter(Workspace.id == workspace_id).first()
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+
+    user_role = get_workspace_role(db, workspace, user.id)
+    if not user_role:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: You are not a registered member of this workspace"
+        )
+
+    if ROLE_HIERARCHY.get(user_role, 0) < ROLE_HIERARCHY.get(min_role, 0):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Insufficient permissions: Action requires '{min_role}' role, but your role is '{user_role}'"
+        )
+    return workspace, user_role
+
+def build_workspace_response(workspace: Workspace, current_user_role: str, db: Session) -> WorkspaceResponse:
+    members = db.query(WorkspaceMember).filter(WorkspaceMember.workspace_id == workspace.id).all()
+    member_responses = []
+    for m in members:
+        u = db.query(User).filter(User.id == m.user_id).first()
+        if u:
+            member_responses.append(WorkspaceMemberResponse(
+                id=m.id,
+                user_id=u.id,
+                email=u.email,
+                full_name=u.full_name or "Team Member",
+                avatar_url=u.avatar_url or "/assets/emily.jpg",
+                role=m.role,
+                joined_at=m.joined_at or utc_now()
+            ))
+
+    owner = db.query(User).filter(User.id == workspace.owner_id).first()
+    owner_name = owner.full_name if owner else "Workspace Owner"
+
+    return WorkspaceResponse(
+        id=workspace.id,
+        name=workspace.name,
+        slug=workspace.slug or f"workspace-{workspace.id}",
+        description=workspace.description or "",
+        owner_id=workspace.owner_id,
+        owner_name=owner_name,
+        tier=workspace.tier or "Team",
+        max_seats=workspace.max_seats or 10,
+        active_seats=len(members),
+        current_user_role=current_user_role,
+        is_active=workspace.is_active if workspace.is_active is not None else True,
+        created_at=workspace.created_at or utc_now(),
+        members=member_responses
+    )
+
+@app.get(f"{settings.API_V1_STR}/workspaces", response_model=List[WorkspaceResponse])
+def list_user_workspaces(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    List all workspaces where the current user is an owner or member.
+    """
+    # 1. Workspaces owned by user
+    owned = db.query(Workspace).filter(Workspace.owner_id == current_user.id).all()
+    # 2. Workspaces where user is a member
+    member_records = db.query(WorkspaceMember).filter(WorkspaceMember.user_id == current_user.id).all()
+    member_ws_ids = {m.workspace_id for m in member_records}
+    member_ws = db.query(Workspace).filter(Workspace.id.in_(member_ws_ids)).all() if member_ws_ids else []
+
+    all_ws_dict = {ws.id: ws for ws in (owned + member_ws)}
+    results = []
+    for ws_id, ws in all_ws_dict.items():
+        role = get_workspace_role(db, ws, current_user.id) or "viewer"
+        results.append(build_workspace_response(ws, role, db))
+    return results
+
+@app.post(f"{settings.API_V1_STR}/workspaces", response_model=WorkspaceResponse)
+def create_workspace(
+    data: WorkspaceCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a new organization team workspace.
+    The creator is automatically granted the 'owner' role.
+    """
+    clean_slug = data.name.strip().lower().replace(" ", "-")
+    unique_slug = f"{clean_slug}-{secrets.token_hex(3)}"
+
+    workspace = Workspace(
+        name=data.name.strip(),
+        slug=unique_slug,
+        description=data.description or "",
+        owner_id=current_user.id,
+        tier=data.tier or "Team",
+        max_seats=10,
+        is_active=True,
+        created_at=utc_now(),
+        updated_at=utc_now()
+    )
+    db.add(workspace)
+    db.commit()
+    db.refresh(workspace)
+
+    # Automatically add creator as owner member
+    owner_member = WorkspaceMember(
+        workspace_id=workspace.id,
+        user_id=current_user.id,
+        role="owner",
+        joined_at=utc_now()
+    )
+    db.add(owner_member)
+
+    # Create initial collaborative note pad
+    initial_note = CollaborativeNote(
+        workspace_id=workspace.id,
+        title=f"{data.name.strip()} Workspace Notes",
+        content=f"# Welcome to {data.name.strip()} Team Workspace\n\nCollaborative team notes, architecture plans, and sprint agendas live here.",
+        last_edited_by_id=current_user.id,
+        last_edited_by_name=current_user.full_name or "Workspace Owner",
+        version=1,
+        created_at=utc_now(),
+        updated_at=utc_now()
+    )
+    db.add(initial_note)
+    db.commit()
+    db.refresh(initial_note)
+
+    init_rev = CollaborativeNoteRevision(
+        note_id=initial_note.id,
+        user_id=current_user.id,
+        user_name=current_user.full_name or "Workspace Owner",
+        content_snapshot=initial_note.content,
+        revision_summary="Initial workspace note creation",
+        version=1,
+        created_at=utc_now()
+    )
+    db.add(init_rev)
+    db.commit()
+
+    return build_workspace_response(workspace, "owner", db)
+
+@app.get(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}", response_model=WorkspaceResponse)
+def get_workspace_details(
+    workspace_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get detailed workspace info, members, and current user's role.
+    Requires minimum 'viewer' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "viewer")
+    return build_workspace_response(workspace, user_role, db)
+
+@app.put(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}", response_model=WorkspaceResponse)
+def update_workspace(
+    workspace_id: int,
+    data: WorkspaceUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update workspace metadata (name, description, tier).
+    Requires 'admin' or 'owner' privileges.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "admin")
+    if data.name is not None:
+        workspace.name = data.name.strip()
+    if data.description is not None:
+        workspace.description = data.description.strip()
+    if data.tier is not None:
+        workspace.tier = data.tier.strip()
+    workspace.updated_at = utc_now()
+    db.commit()
+    db.refresh(workspace)
+    return build_workspace_response(workspace, user_role, db)
+
+@app.delete(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}")
+def delete_workspace(
+    workspace_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete an entire organization workspace.
+    Strict RBAC: Only the 'owner' can delete the workspace.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "owner")
+    db.delete(workspace)
+    db.commit()
+    return {"status": "success", "message": f"Workspace '{workspace.name}' successfully deleted"}
+
+@app.get(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/members", response_model=List[WorkspaceMemberResponse])
+def list_workspace_members(
+    workspace_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    List all members in the workspace.
+    Requires minimum 'viewer' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "viewer")
+    members = db.query(WorkspaceMember).filter(WorkspaceMember.workspace_id == workspace.id).all()
+    results = []
+    for m in members:
+        u = db.query(User).filter(User.id == m.user_id).first()
+        if u:
+            results.append(WorkspaceMemberResponse(
+                id=m.id,
+                user_id=u.id,
+                email=u.email,
+                full_name=u.full_name or "Team Member",
+                avatar_url=u.avatar_url or "/assets/emily.jpg",
+                role=m.role,
+                joined_at=m.joined_at or utc_now()
+            ))
+    return results
+
+@app.post(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/invites", response_model=WorkspaceInviteResponse)
+def create_workspace_invite(
+    workspace_id: int,
+    data: WorkspaceInviteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a new team member invite token and invitation record.
+    Requires minimum 'manager' role.
+    Enforces workspace max_seats limit.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "manager")
+
+    # Verify role assignment permission: Only owner can invite as admin
+    if data.role == "admin" and user_role != "owner":
+        raise HTTPException(
+            status_code=403,
+            detail="Only workspace owners can invite new members with the 'admin' role"
+        )
+    if data.role == "owner":
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot invite as 'owner'. Ownership must be transferred explicitly."
+        )
+
+    # Check seat limit
+    active_members_count = db.query(WorkspaceMember).filter(WorkspaceMember.workspace_id == workspace.id).count()
+    if active_members_count >= (workspace.max_seats or 10):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Seat limit reached ({active_members_count}/{workspace.max_seats} used). Please upgrade workspace tier to invite more members."
+        )
+
+    # Check if user with this email is already a member
+    existing_user = db.query(User).filter(User.email == data.email.strip()).first()
+    if existing_user:
+        already_member = db.query(WorkspaceMember).filter(
+            WorkspaceMember.workspace_id == workspace.id,
+            WorkspaceMember.user_id == existing_user.id
+        ).first()
+        if already_member:
+            raise HTTPException(
+                status_code=400,
+                detail=f"User {data.email} is already an active member of this workspace"
+            )
+
+    invite_token = secrets.token_urlsafe(32)
+    expires_at = utc_now() + timedelta(days=7)
+
+    invite = WorkspaceInvite(
+        workspace_id=workspace.id,
+        inviter_id=current_user.id,
+        email=data.email.strip().lower(),
+        role=data.role,
+        invite_token=invite_token,
+        status="pending",
+        expires_at=expires_at,
+        created_at=utc_now()
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+
+    invite_url = f"https://meetmind-ai-74519.web.app/invite/{invite_token}"
+
+    return WorkspaceInviteResponse(
+        id=invite.id,
+        workspace_id=workspace.id,
+        workspace_name=workspace.name,
+        inviter_name=current_user.full_name or "Team Lead",
+        email=invite.email,
+        role=invite.role,
+        invite_token=invite.invite_token,
+        invite_url=invite_url,
+        status=invite.status,
+        expires_at=invite.expires_at,
+        created_at=invite.created_at
+    )
+
+@app.get(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/invites", response_model=List[WorkspaceInviteResponse])
+def list_workspace_invites(
+    workspace_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    List pending invitations for the workspace.
+    Requires minimum 'manager' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "manager")
+    invites = db.query(WorkspaceInvite).filter(
+        WorkspaceInvite.workspace_id == workspace.id,
+        WorkspaceInvite.status == "pending"
+    ).all()
+    results = []
+    for inv in invites:
+        inviter = db.query(User).filter(User.id == inv.inviter_id).first()
+        results.append(WorkspaceInviteResponse(
+            id=inv.id,
+            workspace_id=workspace.id,
+            workspace_name=workspace.name,
+            inviter_name=inviter.full_name if inviter else "Team Lead",
+            email=inv.email,
+            role=inv.role,
+            invite_token=inv.invite_token,
+            invite_url=f"https://meetmind-ai-74519.web.app/invite/{inv.invite_token}",
+            status=inv.status,
+            expires_at=inv.expires_at,
+            created_at=inv.created_at
+        ))
+    return results
+
+@app.delete(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/invites/{{invite_id}}")
+def revoke_workspace_invite(
+    workspace_id: int,
+    invite_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Revoke a pending workspace invitation.
+    Requires 'admin' or 'owner' privileges.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "admin")
+    invite = db.query(WorkspaceInvite).filter(
+        WorkspaceInvite.id == invite_id,
+        WorkspaceInvite.workspace_id == workspace.id
+    ).first()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+
+    invite.status = "revoked"
+    db.commit()
+    return {"status": "success", "message": f"Invitation for {invite.email} revoked"}
+
+@app.post(f"{settings.API_V1_STR}/workspaces/invites/{{invite_token}}/accept", response_model=WorkspaceResponse)
+def accept_workspace_invite(
+    invite_token: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Accept an invitation token to join a team workspace with the assigned role.
+    """
+    invite = db.query(WorkspaceInvite).filter(
+        WorkspaceInvite.invite_token == invite_token,
+        WorkspaceInvite.status == "pending"
+    ).first()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invalid or already consumed invitation token")
+
+    # Expiration check
+    naive_expires = invite.expires_at.replace(tzinfo=timezone.utc) if invite.expires_at.tzinfo is None else invite.expires_at
+    if naive_expires < utc_now():
+        invite.status = "expired"
+        db.commit()
+        raise HTTPException(status_code=400, detail="This invitation token has expired")
+
+    workspace = db.query(Workspace).filter(Workspace.id == invite.workspace_id).first()
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Associated workspace no longer exists")
+
+    # Check if already a member
+    existing_member = db.query(WorkspaceMember).filter(
+        WorkspaceMember.workspace_id == workspace.id,
+        WorkspaceMember.user_id == current_user.id
+    ).first()
+
+    if not existing_member:
+        new_member = WorkspaceMember(
+            workspace_id=workspace.id,
+            user_id=current_user.id,
+            role=invite.role,
+            joined_at=utc_now()
+        )
+        db.add(new_member)
+
+    invite.status = "accepted"
+    invite.accepted_at = utc_now()
+    db.commit()
+
+    return build_workspace_response(workspace, invite.role, db)
+
+@app.put(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/members/{{target_user_id}}/role", response_model=WorkspaceMemberResponse)
+def update_member_role(
+    workspace_id: int,
+    target_user_id: int,
+    data: WorkspaceMemberRoleUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update the RBAC role of a team member.
+    Requires minimum 'admin' privileges.
+    Strict guards:
+    - Cannot modify workspace owner's role.
+    - Only workspace owner can grant or revoke 'admin' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "admin")
+
+    if target_user_id == workspace.owner_id:
+        raise HTTPException(status_code=400, detail="Cannot alter the workspace owner's role")
+
+    if data.role not in ROLE_HIERARCHY:
+        raise HTTPException(status_code=400, detail=f"Invalid role '{data.role}'. Allowed: {list(ROLE_HIERARCHY.keys())}")
+
+    if data.role == "owner":
+        raise HTTPException(status_code=400, detail="To transfer ownership, use the workspace ownership transfer endpoint")
+
+    if data.role == "admin" and user_role != "owner":
+        raise HTTPException(status_code=403, detail="Only workspace owner can promote members to 'admin'")
+
+    member = db.query(WorkspaceMember).filter(
+        WorkspaceMember.workspace_id == workspace.id,
+        WorkspaceMember.user_id == target_user_id
+    ).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Workspace member not found")
+
+    member.role = data.role
+    db.commit()
+    db.refresh(member)
+
+    target_user = db.query(User).filter(User.id == target_user_id).first()
+    return WorkspaceMemberResponse(
+        id=member.id,
+        user_id=target_user.id,
+        email=target_user.email,
+        full_name=target_user.full_name or "Team Member",
+        avatar_url=target_user.avatar_url or "/assets/emily.jpg",
+        role=member.role,
+        joined_at=member.joined_at or utc_now()
+    )
+
+@app.delete(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/members/{{target_user_id}}")
+def remove_workspace_member(
+    workspace_id: int,
+    target_user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Remove a member from the workspace.
+    Requires 'admin' or 'owner' privileges.
+    Guards: Cannot remove the workspace owner.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "admin")
+
+    if target_user_id == workspace.owner_id:
+        raise HTTPException(status_code=400, detail="Cannot remove the workspace owner")
+
+    member = db.query(WorkspaceMember).filter(
+        WorkspaceMember.workspace_id == workspace.id,
+        WorkspaceMember.user_id == target_user_id
+    ).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found in this workspace")
+
+    db.delete(member)
+    db.commit()
+    return {"status": "success", "message": "Member successfully removed from workspace"}
+
+@app.get(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/vault", response_model=WorkspaceVaultResponse)
+def get_workspace_vault(
+    workspace_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Shared Organization Meeting Memory Vault.
+    Returns meetings, cross-meeting intelligence memories, and knowledge base documents
+    scoped to the workspace.
+    Requires minimum 'viewer' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "viewer")
+
+    meetings = db.query(Meeting).filter(Meeting.workspace_id == workspace.id).all()
+    memories = db.query(MeetingMemory).filter(MeetingMemory.workspace_id == workspace.id).all()
+    documents = db.query(KnowledgeDocument).filter(KnowledgeDocument.workspace_id == workspace.id).all()
+
+    items = []
+    for m in meetings:
+        items.append(WorkspaceVaultItem(
+            id=m.id,
+            title=m.title,
+            type="meeting",
+            date=m.created_at.strftime("%Y-%m-%d %H:%M") if m.created_at else "Recent",
+            summary=f"Duration: {m.duration_seconds}s | Category: {m.category}"
+        ))
+    for mem in memories:
+        items.append(WorkspaceVaultItem(
+            id=mem.id,
+            title=f"Memory: {mem.category}",
+            type="memory",
+            date=mem.created_at.strftime("%Y-%m-%d") if mem.created_at else "Verified",
+            summary=mem.fact_statement[:120] + "..." if len(mem.fact_statement) > 120 else mem.fact_statement
+        ))
+    for doc in documents:
+        items.append(WorkspaceVaultItem(
+            id=doc.id,
+            title=doc.title,
+            type="document",
+            date=doc.created_at.strftime("%Y-%m-%d") if doc.created_at else "Indexed",
+            summary=f"Type: {doc.file_type.upper()} | Chunks: {doc.chunk_count} | Status: {doc.status}"
+        ))
+
+    return WorkspaceVaultResponse(
+        workspace_id=workspace.id,
+        workspace_name=workspace.name,
+        meetings_count=len(meetings),
+        memories_count=len(memories),
+        documents_count=len(documents),
+        items=items
+    )
+
+@app.post(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/vault/share-meeting")
+def share_meeting_to_vault(
+    workspace_id: int,
+    meeting_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Share an existing personal meeting into the organization's shared memory vault.
+    Requires 'editor', 'manager', 'admin', or 'owner' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "editor")
+
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+
+    # Guard: Must be owner of the meeting or workspace admin
+    if meeting.user_id != current_user.id and user_role not in ["owner", "admin"]:
+        raise HTTPException(status_code=403, detail="You can only share your own meetings into the workspace")
+
+    meeting.workspace_id = workspace.id
+
+    # Also associate memories of this meeting with the workspace
+    db.query(MeetingMemory).filter(MeetingMemory.meeting_id == meeting.id).update(
+        {"workspace_id": workspace.id}
+    )
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Meeting '{meeting.title}' shared into '{workspace.name}' memory vault"
+    }
+
+@app.get(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/notes", response_model=List[CollaborativeNoteResponse])
+def get_workspace_notes(
+    workspace_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all collaborative notes for the workspace.
+    Requires minimum 'viewer' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "viewer")
+    notes = db.query(CollaborativeNote).filter(CollaborativeNote.workspace_id == workspace.id).order_by(CollaborativeNote.updated_at.desc()).all()
+    return notes
+
+@app.post(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/notes", response_model=CollaborativeNoteResponse)
+def create_workspace_note(
+    workspace_id: int,
+    data: CollaborativeNoteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Create a new collaborative note in the workspace.
+    Requires minimum 'editor' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "editor")
+
+    note = CollaborativeNote(
+        workspace_id=workspace.id,
+        meeting_id=data.meeting_id,
+        title=data.title.strip(),
+        content=data.content or "",
+        last_edited_by_id=current_user.id,
+        last_edited_by_name=current_user.full_name or "Team Member",
+        version=1,
+        created_at=utc_now(),
+        updated_at=utc_now()
+    )
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+
+    # Initial revision snapshot
+    rev = CollaborativeNoteRevision(
+        note_id=note.id,
+        user_id=current_user.id,
+        user_name=current_user.full_name or "Team Member",
+        content_snapshot=note.content,
+        revision_summary="Created note",
+        version=1,
+        created_at=utc_now()
+    )
+    db.add(rev)
+    db.commit()
+
+    return note
+
+@app.put(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/notes/{{note_id}}", response_model=CollaborativeNoteResponse)
+def update_workspace_note(
+    workspace_id: int,
+    note_id: int,
+    data: CollaborativeNoteUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update a collaborative note with optimistic concurrency locking and revision audit trail.
+    Requires minimum 'editor' role. Viewers receive HTTP 403.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "editor")
+
+    note = db.query(CollaborativeNote).filter(
+        CollaborativeNote.id == note_id,
+        CollaborativeNote.workspace_id == workspace.id
+    ).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found in this workspace")
+
+    if data.title is not None:
+        note.title = data.title.strip()
+
+    note.content = data.content
+    note.version += 1
+    note.last_edited_by_id = current_user.id
+    note.last_edited_by_name = current_user.full_name or "Team Member"
+    note.updated_at = utc_now()
+
+    # Append revision audit snapshot
+    rev = CollaborativeNoteRevision(
+        note_id=note.id,
+        user_id=current_user.id,
+        user_name=current_user.full_name or "Team Member",
+        content_snapshot=data.content,
+        revision_summary=f"Edit by {current_user.full_name or 'User'}",
+        version=note.version,
+        created_at=utc_now()
+    )
+    db.add(rev)
+    db.commit()
+    db.refresh(note)
+
+    return note
+
+@app.get(f"{settings.API_V1_STR}/workspaces/{{workspace_id}}/notes/{{note_id}}/revisions", response_model=List[CollaborativeNoteRevisionResponse])
+def get_note_revisions(
+    workspace_id: int,
+    note_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get the revision history audit trail for a collaborative note.
+    Requires minimum 'viewer' role.
+    """
+    workspace, user_role = require_workspace_access(db, workspace_id, current_user, "viewer")
+    note = db.query(CollaborativeNote).filter(
+        CollaborativeNote.id == note_id,
+        CollaborativeNote.workspace_id == workspace.id
+    ).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    revisions = db.query(CollaborativeNoteRevision).filter(
+        CollaborativeNoteRevision.note_id == note.id
+    ).order_by(CollaborativeNoteRevision.created_at.desc()).all()
+
+    return revisions

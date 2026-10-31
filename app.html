@@ -1158,36 +1158,217 @@
         </div>
       </div>
 
-      <!-- ==================== PAGE 8: WORKSPACES ==================== -->
+      <!-- ==================== PAGE 8: WORKSPACES (PHASE 5) ==================== -->
       <div class="page-view hidden" id="page-workspaces">
         <div class="desktop-content-body">
-          <div class="welcome-stats-row">
-            <div>
-              <h2 class="welcome-title">Team Workspace & Collaboration</h2>
-              <p class="welcome-sub">Manage workspace members, assign role permissions, and access shared meetings.</p>
+          <!-- Workspace Header & Switcher Row -->
+          <div class="welcome-stats-row" style="align-items: flex-start; margin-bottom: 20px;">
+            <div style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+                <h2 class="welcome-title" style="margin: 0;" id="wsActiveTitle">Cowlar Engineering</h2>
+                <span class="badge-tag" id="wsTierBadge" style="background: rgba(99, 102, 241, 0.12); color: var(--primary); font-weight: 600;">Team Plan (10 Seats)</span>
+                <span class="badge-tag" id="wsSeatsBadge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 600;">4 / 10 Seats Used</span>
+                <span class="badge-tag" id="wsRoleBadge" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-weight: 600;">Your Role: Owner</span>
+              </div>
+              <p class="welcome-sub" id="wsActiveDesc" style="margin: 0 0 10px 0;">Primary engineering, product architecture, and sprint meeting workspace.</p>
+              
+              <!-- Workspace Switcher Dropdown -->
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                <label for="selectActiveWorkspace" style="font-size: 12px; font-weight: 600; color: var(--text-muted);"><i class="ri-community-line"></i> Switch Workspace:</label>
+                <select id="selectActiveWorkspace" class="input-select" style="padding: 5px 10px; border-radius: 6px; font-size: 12.5px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer;">
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
             </div>
-            <button class="btn-primary-purple" id="btnInviteMember">
-              <i class="ri-user-add-line"></i> Invite Member
+
+            <!-- Top Actions -->
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button class="btn-secondary" id="btnOpenCreateWsModal" style="display: flex; align-items: center; gap: 6px;">
+                <i class="ri-add-circle-line"></i> New Workspace
+              </button>
+              <button class="btn-primary-purple" id="btnOpenInviteModal" style="display: flex; align-items: center; gap: 6px;">
+                <i class="ri-user-add-line"></i> Invite Member
+              </button>
+            </div>
+          </div>
+
+          <!-- Subpage Tabs Bar -->
+          <div class="workspace-tabs-bar" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+            <button class="ws-tab-btn active" data-wstab="members" id="wsTabBtnMembers" style="background: none; border: none; font-size: 13.5px; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--primary); border-bottom: 2px solid var(--primary);">
+              <i class="ri-team-line"></i> Team Members & RBAC
+            </button>
+            <button class="ws-tab-btn" data-wstab="vault" id="wsTabBtnVault" style="background: none; border: none; font-size: 13.5px; font-weight: 500; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text-muted);">
+              <i class="ri-archive-drawer-line"></i> Shared Memory Vault
+            </button>
+            <button class="ws-tab-btn" data-wstab="notes" id="wsTabBtnNotes" style="background: none; border: none; font-size: 13.5px; font-weight: 500; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text-muted);">
+              <i class="ri-edit-2-line"></i> Collaborative Pad
+            </button>
+            <button class="ws-tab-btn" data-wstab="invites" id="wsTabBtnInvites" style="background: none; border: none; font-size: 13.5px; font-weight: 500; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: var(--text-muted);">
+              <i class="ri-mail-send-line"></i> Pending Invites (<span id="wsPendingInvitesBadge">0</span>)
             </button>
           </div>
 
-          <div class="workspace-members-table-wrap">
-            <table class="meetings-table">
-              <thead>
-                <tr>
-                  <th>Member</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="workspaceMembersTableBody">
-                <!-- Dynamically populated with authenticated user -->
-              </tbody>
-            </table>
+          <!-- TAB 1: MEMBERS & RBAC -->
+          <div id="wsTabContentMembers">
+            <div class="workspace-members-table-wrap">
+              <table class="meetings-table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Email</th>
+                    <th>Role & Permissions</th>
+                    <th>Joined</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="workspaceMembersTableBody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- RBAC Hierarchy Card -->
+            <div style="margin-top: 20px; padding: 16px; background: rgba(99, 102, 241, 0.04); border: 1px solid var(--border-color); border-radius: 10px;">
+              <h4 style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                <i class="ri-shield-keyhole-line" style="color: var(--primary);"></i> Role-Based Access Control (RBAC) Permissions Matrix
+              </h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 12px; color: var(--text-muted); margin-top: 10px;">
+                <div style="padding: 10px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                  <strong style="color: #6366f1;">👑 Owner:</strong> Full workspace deletion, billing management, role delegation.
+                </div>
+                <div style="padding: 10px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                  <strong style="color: #3b82f6;">🛡️ Admin:</strong> Member management, workspace settings, vault operations.
+                </div>
+                <div style="padding: 10px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                  <strong style="color: #10b981;">📋 Manager:</strong> Task approvals, member invites, meeting sharing.
+                </div>
+                <div style="padding: 10px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                  <strong style="color: #f59e0b;">✍️ Editor:</strong> Collaborative pad editing, upload knowledge docs, create meetings.
+                </div>
+                <div style="padding: 10px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                  <strong style="color: #8b5cf6;">👁️ Viewer:</strong> Read-only access to shared meetings, memories, and documents.
+                </div>
+              </div>
+            </div>
           </div>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top: 14px;">
-            <i class="ri-shield-user-line" style="color: var(--primary);"></i> <strong>Data Isolation:</strong> All meetings, audio, and tasks in this workspace are strictly scoped to your authenticated account.
+
+          <!-- TAB 2: SHARED MEMORY VAULT -->
+          <div id="wsTabContentVault" class="hidden">
+            <!-- Vault Metrics & Quick Share -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; gap: 16px;">
+                <div style="padding: 12px 18px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                  <i class="ri-video-chat-line" style="font-size: 20px; color: var(--primary);"></i>
+                  <div>
+                    <div style="font-size: 18px; font-weight: 700;" id="wsVaultMeetingsCount">0</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Shared Meetings</div>
+                  </div>
+                </div>
+                <div style="padding: 12px 18px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                  <i class="ri-brain-line" style="font-size: 20px; color: #10b981;"></i>
+                  <div>
+                    <div style="font-size: 18px; font-weight: 700;" id="wsVaultMemoriesCount">0</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Cross-Meeting Memories</div>
+                  </div>
+                </div>
+                <div style="padding: 12px 18px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                  <i class="ri-file-text-line" style="font-size: 20px; color: #f59e0b;"></i>
+                  <div>
+                    <div style="font-size: 18px; font-weight: 700;" id="wsVaultDocsCount">0</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Knowledge Documents</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Share Meeting to Vault Action -->
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="selectMeetingToShare" class="input-select" style="padding: 7px 12px; border-radius: 6px; font-size: 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main);">
+                  <option value="">Select personal meeting to share...</option>
+                </select>
+                <button class="btn-primary-purple" id="btnShareMeetingToVault" style="padding: 7px 14px; font-size: 12px;">
+                  <i class="ri-share-forward-line"></i> Share to Vault
+                </button>
+              </div>
+            </div>
+
+            <!-- Vault Items Table / Grid -->
+            <div class="workspace-members-table-wrap">
+              <table class="meetings-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Title & Reference</th>
+                    <th>Summary / Excerpt</th>
+                    <th>Date</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="wsVaultItemsBody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 3: COLLABORATIVE NOTES PAD -->
+          <div id="wsTabContentNotes" class="hidden">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
+              <!-- Note Top Bar -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <div style="flex: 1; min-width: 250px;">
+                  <input type="text" id="collabNoteTitle" class="search-bar-input" style="width: 100%; font-size: 16px; font-weight: 700; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);" placeholder="Note Title...">
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span class="badge-tag" id="collabVersionBadge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">v1</span>
+                  <span id="collabSyncStatus" style="font-size: 12px; color: #10b981; display: flex; align-items: center; gap: 4px;">
+                    <i class="ri-check-line"></i> Synced & Saved
+                  </span>
+                  <button class="btn-secondary" id="btnOpenRevisionsModal" style="padding: 6px 12px; font-size: 12px;">
+                    <i class="ri-history-line"></i> Revisions
+                  </button>
+                  <button class="btn-primary-purple" id="btnSaveCollabNote" style="padding: 6px 16px; font-size: 12px;">
+                    <i class="ri-save-line"></i> Save Pad
+                  </button>
+                </div>
+              </div>
+
+              <!-- Collaborators Bar -->
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 12px; color: var(--text-muted);">
+                <i class="ri-group-line" style="color: var(--primary);"></i>
+                <span>Active Collaborators:</span>
+                <div id="collabActiveUsers" style="display: flex; gap: 6px; align-items: center;">
+                  <!-- Avatars populated dynamically -->
+                </div>
+              </div>
+
+              <!-- Note Textarea -->
+              <textarea id="collabNoteContent" style="width: 100%; min-height: 380px; box-sizing: border-box; padding: 16px; font-family: 'Inter', monospace, sans-serif; font-size: 14px; line-height: 1.6; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); resize: vertical;" placeholder="Type collaborative team notes in Markdown..."></textarea>
+            </div>
+          </div>
+
+          <!-- TAB 4: PENDING INVITES -->
+          <div id="wsTabContentInvites" class="hidden">
+            <div class="workspace-members-table-wrap">
+              <table class="meetings-table">
+                <thead>
+                  <tr>
+                    <th>Invited Email</th>
+                    <th>Invited Role</th>
+                    <th>Sent By</th>
+                    <th>Status</th>
+                    <th>Expires</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="wsInvitesTableBody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 18px;">
+            <i class="ri-shield-user-line" style="color: var(--primary);"></i> <strong>Enterprise Multi-Tenant Isolation:</strong> All meetings, audio, and tasks in this workspace are strictly scoped to authenticated members of <em><span id="wsFooterOrgName">Cowlar Engineering</span></em>.
           </p>
         </div>
       </div>
@@ -2195,7 +2376,7 @@
 
   <script src="api-config.js"></script>
   <script type="module" src="firebase-service.js"></script>
-  <script src="app.js"></script>
+  
 
   <!-- ==================== MODAL: TASK DETAILS & AUDIT HISTORY ==================== -->
   <div class="modal-overlay hidden" id="taskDetailsModal">
@@ -2336,5 +2517,102 @@
     </div>
   </div>
 
+
+    <!-- ==================== PHASE 5: WORKSPACE MODALS ==================== -->
+    <!-- Modal 1: Invite Team Member -->
+    <div class="modal-backdrop hidden" id="modalInviteMember">
+      <div class="modal-box" style="max-width: 500px;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="tool-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary); font-size: 20px; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <i class="ri-user-add-line"></i>
+            </div>
+            <h3 class="modal-title">Invite Team Member</h3>
+          </div>
+          <button class="btn-close-modal" id="btnCloseInviteModal">&times;</button>
+        </div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 20px;">
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 6px;">Email Address</label>
+            <input type="email" id="inputInviteEmail" class="search-bar-input" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);" placeholder="teammate@company.com">
+          </div>
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 6px;">Role & Permissions</label>
+            <select id="selectInviteRole" class="input-select" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);">
+              <option value="editor">Editor — Can edit notes, upload docs & create meetings</option>
+              <option value="manager">Manager — Can approve tasks & invite teammates</option>
+              <option value="admin">Admin — Full workspace management & settings</option>
+              <option value="viewer">Viewer — Read-only access to shared vault</option>
+            </select>
+          </div>
+          <div id="inviteResultBox" class="hidden" style="padding: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; font-size: 12px;">
+            <div style="font-weight: 600; color: #10b981; margin-bottom: 4px;">Invite Link Generated:</div>
+            <input type="text" id="inputGeneratedInviteUrl" readonly style="width: 100%; box-sizing: border-box; padding: 6px; font-size: 11px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 4px;">
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-color);">
+          <button class="btn-secondary" id="btnCancelInvite">Cancel</button>
+          <button class="btn-primary-purple" id="btnSubmitInvite">Send Invitation</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Create Organization Workspace -->
+    <div class="modal-backdrop hidden" id="modalCreateWorkspace">
+      <div class="modal-box" style="max-width: 500px;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="tool-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary); font-size: 20px; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <i class="ri-community-line"></i>
+            </div>
+            <h3 class="modal-title">Create New Team Workspace</h3>
+          </div>
+          <button class="btn-close-modal" id="btnCloseCreateWsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 20px;">
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 6px;">Workspace Name</label>
+            <input type="text" id="inputNewWsName" class="search-bar-input" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);" placeholder="e.g. Acme Product & Design">
+          </div>
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 6px;">Description</label>
+            <textarea id="inputNewWsDesc" style="width: 100%; height: 70px; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); resize: none;" placeholder="Sprint meetings, client reviews, and shared architectural notes."></textarea>
+          </div>
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 6px;">Tier Plan</label>
+            <select id="selectNewWsTier" class="input-select" style="width: 100%; box-sizing: border-box; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main);">
+              <option value="Team">Team Tier — Up to 10 Seats included</option>
+              <option value="Enterprise">Enterprise Tier — Unlimited seats & dedicated memory vault</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border-color);">
+          <button class="btn-secondary" id="btnCancelCreateWs">Cancel</button>
+          <button class="btn-primary-purple" id="btnSubmitCreateWs">Create Workspace</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: Note Revision History -->
+    <div class="modal-backdrop hidden" id="modalNoteRevisions">
+      <div class="modal-box" style="max-width: 600px;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="tool-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary); font-size: 20px; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <i class="ri-history-line"></i>
+            </div>
+            <h3 class="modal-title">Revision History & Audit Trail</h3>
+          </div>
+          <button class="btn-close-modal" id="btnCloseRevisionsModal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px; max-height: 420px; overflow-y: auto;">
+          <div id="noteRevisionsList" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+<script src="app.js"></script>
 </body>
 </html>

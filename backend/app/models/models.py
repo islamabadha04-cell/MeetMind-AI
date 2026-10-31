@@ -32,14 +32,90 @@ class User(Base):
     webhook_subscriptions = relationship("WebhookSubscription", back_populates="user", cascade="all, delete-orphan")
     integration_jobs = relationship("IntegrationJob", back_populates="user", cascade="all, delete-orphan")
     oauth_nonces = relationship("OAuthNonce", back_populates="user", cascade="all, delete-orphan")
+    owned_workspaces = relationship("Workspace", back_populates="owner", foreign_keys="Workspace.owner_id")
+    workspace_memberships = relationship("WorkspaceMember", back_populates="user", cascade="all, delete-orphan")
 
 class Workspace(Base):
     __tablename__ = "workspaces"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    slug = Column(String(100), unique=True, index=True, nullable=False)
+    description = Column(Text, default="")
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    tier = Column(String(50), default="Team") # Starter, Team, Enterprise
+    max_seats = Column(Integer, default=10)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
+
+    owner = relationship("User", back_populates="owned_workspaces", foreign_keys=[owner_id])
+    members = relationship("WorkspaceMember", back_populates="workspace", cascade="all, delete-orphan")
+    invites = relationship("WorkspaceInvite", back_populates="workspace", cascade="all, delete-orphan")
+    notes = relationship("CollaborativeNote", back_populates="workspace", cascade="all, delete-orphan")
+    meetings = relationship("Meeting", back_populates="workspace")
+
+class WorkspaceMember(Base):
+    __tablename__ = "workspace_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    role = Column(String(50), nullable=False, default="viewer") # owner, admin, manager, editor, viewer
+    joined_at = Column(DateTime, default=utc_now)
+
+    workspace = relationship("Workspace", back_populates="members")
+    user = relationship("User", back_populates="workspace_memberships")
+
+class WorkspaceInvite(Base):
+    __tablename__ = "workspace_invites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False, index=True)
+    inviter_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    email = Column(String(255), nullable=False, index=True)
+    role = Column(String(50), default="editor") # admin, manager, editor, viewer
+    invite_token = Column(String(128), unique=True, index=True, nullable=False)
+    status = Column(String(30), default="pending") # pending, accepted, revoked, expired
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=utc_now)
+    accepted_at = Column(DateTime, nullable=True)
+
+    workspace = relationship("Workspace", back_populates="invites")
+    inviter = relationship("User")
+
+class CollaborativeNote(Base):
+    __tablename__ = "collaborative_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=False, index=True)
+    meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=True, index=True)
+    title = Column(String(255), nullable=False, default="Team Meeting Notes")
+    content = Column(Text, default="")
+    last_edited_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    last_edited_by_name = Column(String(100), default="Team Member")
+    version = Column(Integer, default=1)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
+
+    workspace = relationship("Workspace", back_populates="notes")
+    meeting = relationship("Meeting")
+    revisions = relationship("CollaborativeNoteRevision", back_populates="note", cascade="all, delete-orphan")
+
+class CollaborativeNoteRevision(Base):
+    __tablename__ = "collaborative_note_revisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    note_id = Column(Integer, ForeignKey("collaborative_notes.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_name = Column(String(100), default="Team Member")
+    content_snapshot = Column(Text, nullable=False)
+    revision_summary = Column(String(255), default="Document update")
+    version = Column(Integer, default=1)
+    created_at = Column(DateTime, default=utc_now)
+
+    note = relationship("CollaborativeNote", back_populates="revisions")
+    user = relationship("User")
 
 class Meeting(Base):
     __tablename__ = "meetings"
@@ -52,9 +128,11 @@ class Meeting(Base):
     source_type = Column(String(50), default="audio_recording") # audio_recording, audio_upload, meeting_link, youtube, document, manual
     audio_file_path = Column(String(500), nullable=True)
     duration_seconds = Column(Integer, default=0)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=utc_now)
 
     user = relationship("User", back_populates="meetings")
+    workspace = relationship("Workspace", back_populates="meetings")
     transcripts = relationship("TranscriptSegment", back_populates="meeting", cascade="all, delete-orphan")
     chunks = relationship("MeetingChunk", back_populates="meeting", cascade="all, delete-orphan")
     summary = relationship("MeetingSummary", back_populates="meeting", uselist=False, cascade="all, delete-orphan")
@@ -110,6 +188,7 @@ class Task(Base):
     meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, default="")
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
     assignee = Column(String(100), default="Unassigned")
     deadline = Column(String(50), nullable=True)
     priority = Column(String(20), default="medium") # low, medium, high, urgent
@@ -229,6 +308,7 @@ class KnowledgeDocument(Base):
     category = Column(String(100), default="General Policy")
     status = Column(String(30), default="indexed") # uploaded, processing, indexed, failed
     chunk_count = Column(Integer, default=0)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
     raw_text = Column(Text, nullable=True)
     created_at = Column(DateTime, default=utc_now)
 
@@ -252,6 +332,7 @@ class MeetingMemory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    workspace_id = Column(Integer, ForeignKey("workspaces.id"), nullable=True, index=True)
     category = Column(String(100), default="Important Decisions")
     fact_statement = Column(Text, nullable=False)
     meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=True)

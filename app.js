@@ -2379,23 +2379,702 @@ if (btnSyncCalendar) {
 const workspaceMembersTableBody = document.getElementById('workspaceMembersTableBody');
 const btnInviteMember = document.getElementById('btnInviteMember');
 
-function renderWorkspaceMembers() {
-  if (!workspaceMembersTableBody) return;
-  const user = currentUser || { name: 'User', email: 'user@meetmind.ai' };
+// ==============================================================================
+// PHASE 5: TEAM WORKSPACES, MULTI-TENANT RBAC, SHARED VAULT & COLLABORATION
+// ==============================================================================
 
-  workspaceMembersTableBody.innerHTML = `
-    <tr>
-      <td><strong>${escapeHtml(user.name || user.email.split('@')[0])}</strong></td>
-      <td style="color: var(--text-dim);">${escapeHtml(user.email || 'user@meetmind.ai')}</td>
-      <td><span class="badge-tag tag-work">Workspace Owner</span></td>
-      <td><span class="badge-summary-ready"><i class="ri-checkbox-circle-fill"></i> Active</span></td>
-    </tr>
-  `;
+let currentWorkspaces = [];
+let activeWorkspace = null;
+let currentWorkspaceNotes = [];
+let activeCollabNote = null;
+let collabAutosaveTimer = null;
+
+// Tab Switching within Workspace
+function switchWorkspaceSubTab(tabName) {
+  const tabs = {
+    members: { btn: document.getElementById('wsTabBtnMembers'), view: document.getElementById('wsTabContentMembers') },
+    vault: { btn: document.getElementById('wsTabBtnVault'), view: document.getElementById('wsTabContentVault') },
+    notes: { btn: document.getElementById('wsTabBtnNotes'), view: document.getElementById('wsTabContentNotes') },
+    invites: { btn: document.getElementById('wsTabBtnInvites'), view: document.getElementById('wsTabContentInvites') }
+  };
+
+  Object.keys(tabs).forEach(k => {
+    const item = tabs[k];
+    if (!item.btn || !item.view) return;
+    if (k === tabName) {
+      item.btn.style.color = 'var(--primary)';
+      item.btn.style.fontWeight = '600';
+      item.btn.style.borderBottom = '2px solid var(--primary)';
+      item.view.classList.remove('hidden');
+    } else {
+      item.btn.style.color = 'var(--text-muted)';
+      item.btn.style.fontWeight = '500';
+      item.btn.style.borderBottom = 'none';
+      item.view.classList.add('hidden');
+    }
+  });
+
+  if (tabName === 'vault') loadWorkspaceVault();
+  if (tabName === 'notes') loadWorkspaceNotes();
+  if (tabName === 'invites') loadWorkspaceInvites();
 }
 
-if (btnInviteMember) {
-  btnInviteMember.addEventListener('click', () => {
-    alert('Team Workspace Collaboration:\n\nInviting team members with role-based access control (Admin, Editor, Viewer) is available on the Team Tier (Rs 6,999/mo).\n\nTo activate your team workspace, please contact Hasnain Ali at islamabad.ha04@gmail.com.');
+// Bind subtab buttons
+['members', 'vault', 'notes', 'invites'].forEach(tabName => {
+  const btn = document.getElementById(`wsTabBtn${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+  if (btn) btn.addEventListener('click', () => switchWorkspaceSubTab(tabName));
+});
+
+// Load Workspaces from Backend
+async function renderWorkspaceMembers() {
+  await loadWorkspaces();
+}
+
+async function loadWorkspaces(preferredWsId) {
+  try {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch('/workspaces') : fetch('/api/v1/workspaces'));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    currentWorkspaces = data || [];
+
+    const selectEl = document.getElementById('selectActiveWorkspace');
+    if (selectEl) {
+      selectEl.innerHTML = '';
+      currentWorkspaces.forEach(ws => {
+        const opt = document.createElement('option');
+        opt.value = ws.id;
+        opt.textContent = `${ws.name} (${ws.current_user_role.toUpperCase()})`;
+        selectEl.appendChild(opt);
+      });
+    }
+
+    if (currentWorkspaces.length > 0) {
+      const targetId = preferredWsId || parseInt(localStorage.getItem('meetmind_active_ws')) || currentWorkspaces[0].id;
+      activeWorkspace = currentWorkspaces.find(w => w.id === targetId) || currentWorkspaces[0];
+      if (selectEl) selectEl.value = activeWorkspace.id;
+      localStorage.setItem('meetmind_active_ws', activeWorkspace.id);
+      updateActiveWorkspaceUI();
+    }
+  } catch (err) {
+    console.warn('[Workspaces] Failed to load workspaces:', err);
+    // Fallback UI
+    const tbody = document.getElementById('workspaceMembersTableBody');
+    if (tbody && (!currentWorkspaces || currentWorkspaces.length === 0)) {
+      const user = currentUser || { name: 'Emily Watson', email: 'emily@example.com' };
+      tbody.innerHTML = `
+        <tr>
+          <td><strong>${escapeHtml(user.name || 'Emily Watson')}</strong></td>
+          <td style="color: var(--text-dim);">${escapeHtml(user.email || 'emily@example.com')}</td>
+          <td><span class="badge-tag" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">👑 Owner</span></td>
+          <td style="color: var(--text-muted); font-size: 12px;">Active</td>
+          <td style="text-align: right; color: var(--text-muted); font-size: 11px;">Primary Member</td>
+        </tr>
+      `;
+    }
+  }
+}
+
+// Workspace Switcher Event
+const selectActiveWorkspace = document.getElementById('selectActiveWorkspace');
+if (selectActiveWorkspace) {
+  selectActiveWorkspace.addEventListener('change', (e) => {
+    const wsId = parseInt(e.target.value);
+    activeWorkspace = currentWorkspaces.find(w => w.id === wsId);
+    if (activeWorkspace) {
+      localStorage.setItem('meetmind_active_ws', activeWorkspace.id);
+      updateActiveWorkspaceUI();
+    }
+  });
+}
+
+function updateActiveWorkspaceUI() {
+  if (!activeWorkspace) return;
+  const titleEl = document.getElementById('wsActiveTitle');
+  const descEl = document.getElementById('wsActiveDesc');
+  const tierEl = document.getElementById('wsTierBadge');
+  const seatsEl = document.getElementById('wsSeatsBadge');
+  const roleEl = document.getElementById('wsRoleBadge');
+  const footerOrgEl = document.getElementById('wsFooterOrgName');
+
+  if (titleEl) titleEl.textContent = activeWorkspace.name;
+  if (descEl) descEl.textContent = activeWorkspace.description || 'Enterprise collaboration and team memory vault.';
+  if (tierEl) tierEl.textContent = `${activeWorkspace.tier} Plan (${activeWorkspace.max_seats} Seats)`;
+  if (seatsEl) seatsEl.textContent = `${activeWorkspace.active_seats} / ${activeWorkspace.max_seats} Seats Used`;
+  if (roleEl) roleEl.textContent = `Your Role: ${activeWorkspace.current_user_role.toUpperCase()}`;
+  if (footerOrgEl) footerOrgEl.textContent = activeWorkspace.name;
+
+  renderWorkspaceMembersTable();
+}
+
+function renderWorkspaceMembersTable() {
+  const tbody = document.getElementById('workspaceMembersTableBody');
+  if (!tbody || !activeWorkspace) return;
+
+  const roleColors = {
+    owner: { bg: 'rgba(99, 102, 241, 0.12)', color: '#6366f1', icon: '👑', label: 'Owner' },
+    admin: { bg: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', icon: '🛡️', label: 'Admin' },
+    manager: { bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', icon: '📋', label: 'Manager' },
+    editor: { bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', icon: '✍️', label: 'Editor' },
+    viewer: { bg: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', icon: '👁️', label: 'Viewer' }
+  };
+
+  const isUserAdminOrOwner = activeWorkspace.current_user_role === 'owner' || activeWorkspace.current_user_role === 'admin';
+
+  tbody.innerHTML = (activeWorkspace.members || []).map(m => {
+    const r = roleColors[m.role] || roleColors.viewer;
+    const isOwner = m.role === 'owner';
+    const joinedStr = m.joined_at ? new Date(m.joined_at).toLocaleDateString() : 'Active';
+
+    // Role selector dropdown for admins/owner (cannot change owner)
+    let roleCellHtml = `<span class="badge-tag" style="background: ${r.bg}; color: ${r.color}; font-weight: 600;">${r.icon} ${r.label}</span>`;
+    if (isUserAdminOrOwner && !isOwner) {
+      roleCellHtml = `
+        <select class="input-select member-role-select" data-user-id="${m.user_id}" style="padding: 3px 8px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main);">
+          <option value="viewer" ${m.role === 'viewer' ? 'selected' : ''}>👁️ Viewer</option>
+          <option value="editor" ${m.role === 'editor' ? 'selected' : ''}>✍️ Editor</option>
+          <option value="manager" ${m.role === 'manager' ? 'selected' : ''}>📋 Manager</option>
+          ${activeWorkspace.current_user_role === 'owner' ? `<option value="admin" ${m.role === 'admin' ? 'selected' : ''}>🛡️ Admin</option>` : ''}
+        </select>
+      `;
+    }
+
+    let actionCellHtml = '<span style="color: var(--text-muted); font-size: 11px;">Immutable</span>';
+    if (isUserAdminOrOwner && !isOwner) {
+      actionCellHtml = `
+        <button class="btn-secondary btn-remove-member" data-user-id="${m.user_id}" data-name="${escapeHtml(m.full_name)}" style="padding: 4px 8px; font-size: 11px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+          <i class="ri-user-unfollow-line"></i> Remove
+        </button>
+      `;
+    }
+
+    return `
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${r.bg}; color: ${r.color}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">
+              ${escapeHtml(m.full_name.charAt(0))}
+            </div>
+            <div>
+              <div style="font-weight: 600;">${escapeHtml(m.full_name)}</div>
+            </div>
+          </div>
+        </td>
+        <td style="color: var(--text-muted); font-size: 12.5px;">${escapeHtml(m.email)}</td>
+        <td>${roleCellHtml}</td>
+        <td style="color: var(--text-muted); font-size: 12px;">${joinedStr}</td>
+        <td style="text-align: right;">${actionCellHtml}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Bind role change selectors
+  tbody.querySelectorAll('.member-role-select').forEach(sel => {
+    sel.addEventListener('change', async (e) => {
+      const userId = e.target.getAttribute('data-user-id');
+      const newRole = e.target.value;
+      await updateMemberRole(userId, newRole);
+    });
+  });
+
+  // Bind remove member buttons
+  tbody.querySelectorAll('.btn-remove-member').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const userId = btn.getAttribute('data-user-id');
+      const name = btn.getAttribute('data-name');
+      if (confirm(`Are you sure you want to remove ${name} from this workspace?`)) {
+        await removeWorkspaceMember(userId);
+      }
+    });
+  });
+}
+
+// Update Role API
+async function updateMemberRole(userId, newRole) {
+  if (!activeWorkspace) return;
+  try {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/members/${userId}/role`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole })
+    }) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/members/${userId}/role`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole })
+    }));
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to update member role');
+    }
+    showToast(`Role updated to ${newRole.toUpperCase()}`);
+    await loadWorkspaces(activeWorkspace.id);
+  } catch (err) {
+    alert(`RBAC Error: ${err.message}`);
+  }
+}
+
+// Remove Member API
+async function removeWorkspaceMember(userId) {
+  if (!activeWorkspace) return;
+  try {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/members/${userId}`, {
+      method: 'DELETE'
+    }) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/members/${userId}`, {
+      method: 'DELETE'
+    }));
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Failed to remove member');
+    }
+    showToast('Member removed from workspace');
+    await loadWorkspaces(activeWorkspace.id);
+  } catch (err) {
+    alert(`RBAC Error: ${err.message}`);
+  }
+}
+
+// ==========================================
+// TAB 2: SHARED MEMORY VAULT
+// ==========================================
+async function loadWorkspaceVault() {
+  if (!activeWorkspace) return;
+  try {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/vault`) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/vault`));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const vault = await res.json();
+
+    const mCount = document.getElementById('wsVaultMeetingsCount');
+    const memCount = document.getElementById('wsVaultMemoriesCount');
+    const dCount = document.getElementById('wsVaultDocsCount');
+    const tbody = document.getElementById('wsVaultItemsBody');
+
+    if (mCount) mCount.textContent = vault.meetings_count || 0;
+    if (memCount) memCount.textContent = vault.memories_count || 0;
+    if (dCount) dCount.textContent = vault.documents_count || 0;
+
+    // Populate personal meeting share selector
+    const shareSelect = document.getElementById('selectMeetingToShare');
+    if (shareSelect && window.state && window.state.meetings) {
+      shareSelect.innerHTML = '<option value="">Select personal meeting to share...</option>';
+      window.state.meetings.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.title} (${m.created_at ? new Date(m.created_at).toLocaleDateString() : 'Recent'})`;
+        shareSelect.appendChild(opt);
+      });
+    }
+
+    if (tbody) {
+      if (!vault.items || vault.items.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">
+              <i class="ri-inbox-line" style="font-size: 24px; display: block; margin-bottom: 6px;"></i>
+              No meetings or documents shared to this organization vault yet.
+            </td>
+          </tr>
+        `;
+      } else {
+        const typeIcons = {
+          meeting: { icon: 'ri-video-chat-line', color: '#6366f1', label: 'Meeting' },
+          memory: { icon: 'ri-brain-line', color: '#10b981', label: 'Memory' },
+          document: { icon: 'ri-file-text-line', color: '#f59e0b', label: 'Document' }
+        };
+
+        tbody.innerHTML = vault.items.map(it => {
+          const t = typeIcons[it.type] || typeIcons.meeting;
+          return `
+            <tr>
+              <td>
+                <span class="badge-tag" style="background: rgba(99, 102, 241, 0.08); color: ${t.color}; font-weight: 600;">
+                  <i class="${t.icon}"></i> ${t.label}
+                </span>
+              </td>
+              <td><strong>${escapeHtml(it.title)}</strong></td>
+              <td style="color: var(--text-muted); font-size: 12.5px; max-width: 320px;">${escapeHtml(it.summary)}</td>
+              <td style="color: var(--text-muted); font-size: 12px;">${escapeHtml(it.date)}</td>
+              <td style="text-align: right;">
+                <span class="badge-summary-ready"><i class="ri-shield-check-line"></i> Scoped</span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+  } catch (err) {
+    console.warn('[Vault] Failed to load vault:', err);
+  }
+}
+
+// Share Meeting Button Event
+const btnShareMeetingToVault = document.getElementById('btnShareMeetingToVault');
+if (btnShareMeetingToVault) {
+  btnShareMeetingToVault.addEventListener('click', async () => {
+    if (!activeWorkspace) return;
+    const shareSelect = document.getElementById('selectMeetingToShare');
+    const meetingId = shareSelect ? shareSelect.value : null;
+    if (!meetingId) {
+      alert('Please select a meeting to share into the organization vault.');
+      return;
+    }
+
+    try {
+      const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/vault/share-meeting?meeting_id=${meetingId}`, {
+        method: 'POST'
+      }) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/vault/share-meeting?meeting_id=${meetingId}`, {
+        method: 'POST'
+      }));
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Failed to share meeting');
+      }
+      showToast('Meeting successfully shared to organization vault!');
+      await loadWorkspaceVault();
+    } catch (err) {
+      alert(`Sharing Error: ${err.message}`);
+    }
+  });
+}
+
+// ==========================================
+// TAB 3: COLLABORATIVE NOTES PAD
+// ==========================================
+async function loadWorkspaceNotes() {
+  if (!activeWorkspace) return;
+  try {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/notes`) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/notes`));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const notes = await res.json();
+    currentWorkspaceNotes = notes || [];
+
+    if (currentWorkspaceNotes.length > 0) {
+      activeCollabNote = currentWorkspaceNotes[0];
+      const titleInput = document.getElementById('collabNoteTitle');
+      const contentInput = document.getElementById('collabNoteContent');
+      const verBadge = document.getElementById('collabVersionBadge');
+      const activeUsers = document.getElementById('collabActiveUsers');
+
+      if (titleInput) titleInput.value = activeCollabNote.title;
+      if (contentInput) contentInput.value = activeCollabNote.content;
+      if (verBadge) verBadge.textContent = `v${activeCollabNote.version}`;
+
+      if (activeUsers && activeWorkspace.members) {
+        activeUsers.innerHTML = activeWorkspace.members.slice(0, 3).map(m => `
+          <div title="${escapeHtml(m.full_name)} (${m.role})" style="width: 24px; height: 24px; border-radius: 50%; background: #6366f1; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid var(--bg-card);">
+            ${escapeHtml(m.full_name.charAt(0))}
+          </div>
+        `).join('') + `<span style="font-size: 11.5px; color: var(--text-muted); margin-left: 4px;">(${activeWorkspace.members.length} online)</span>`;
+      }
+    }
+  } catch (err) {
+    console.warn('[CollabNotes] Failed to load notes:', err);
+  }
+}
+
+// Save Collab Note
+async function saveCollabNote() {
+  if (!activeWorkspace || !activeCollabNote) return;
+  const titleInput = document.getElementById('collabNoteTitle');
+  const contentInput = document.getElementById('collabNoteContent');
+  const syncStatus = document.getElementById('collabSyncStatus');
+
+  if (syncStatus) syncStatus.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Saving...';
+
+  try {
+    const payload = {
+      title: titleInput ? titleInput.value : activeCollabNote.title,
+      content: contentInput ? contentInput.value : activeCollabNote.content,
+      version: activeCollabNote.version
+    };
+
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/notes/${activeCollabNote.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/notes/${activeCollabNote.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }));
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || 'Save failed');
+    }
+
+    activeCollabNote = await res.json();
+    const verBadge = document.getElementById('collabVersionBadge');
+    if (verBadge) verBadge.textContent = `v${activeCollabNote.version}`;
+    if (syncStatus) syncStatus.innerHTML = '<i class="ri-check-line"></i> Synced & Saved';
+    showToast('Collaborative note saved!');
+  } catch (err) {
+    if (syncStatus) syncStatus.innerHTML = '<i class="ri-error-warning-line" style="color: #ef4444;"></i> Save failed';
+    alert(`Collaborative Note Error: ${err.message}`);
+  }
+}
+
+const btnSaveCollabNote = document.getElementById('btnSaveCollabNote');
+if (btnSaveCollabNote) btnSaveCollabNote.addEventListener('click', saveCollabNote);
+
+// Autosave on textarea input
+const collabNoteContent = document.getElementById('collabNoteContent');
+if (collabNoteContent) {
+  collabNoteContent.addEventListener('input', () => {
+    const syncStatus = document.getElementById('collabSyncStatus');
+    if (syncStatus) syncStatus.innerHTML = '<span style="color: #f59e0b;"><i class="ri-edit-line"></i> Unsaved changes...</span>';
+    clearTimeout(collabAutosaveTimer);
+    collabAutosaveTimer = setTimeout(saveCollabNote, 4000);
+  });
+}
+
+// Revision History Modal
+const btnOpenRevisionsModal = document.getElementById('btnOpenRevisionsModal');
+const modalNoteRevisions = document.getElementById('modalNoteRevisions');
+const btnCloseRevisionsModal = document.getElementById('btnCloseRevisionsModal');
+
+if (btnOpenRevisionsModal) {
+  btnOpenRevisionsModal.addEventListener('click', async () => {
+    if (!activeWorkspace || !activeCollabNote) return;
+    try {
+      const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/notes/${activeCollabNote.id}/revisions`) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/notes/${activeCollabNote.id}/revisions`));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const revisions = await res.json();
+      const listEl = document.getElementById('noteRevisionsList');
+      if (listEl) {
+        listEl.innerHTML = revisions.map(rev => `
+          <div style="padding: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div>
+                <strong>v${rev.version} — ${escapeHtml(rev.revision_summary)}</strong>
+                <span style="font-size: 11px; color: var(--text-muted); margin-left: 8px;">by ${escapeHtml(rev.user_name)}</span>
+              </div>
+              <span style="font-size: 11px; color: var(--text-muted);">${rev.created_at ? new Date(rev.created_at).toLocaleString() : 'Recent'}</span>
+            </div>
+            <pre style="margin: 0; padding: 8px; font-size: 12px; background: var(--bg-main); border-radius: 4px; overflow-x: auto; color: var(--text-dim); max-height: 120px;">${escapeHtml(rev.content_snapshot.slice(0, 300))}${rev.content_snapshot.length > 300 ? '...' : ''}</pre>
+          </div>
+        `).join('');
+      }
+      if (modalNoteRevisions) modalNoteRevisions.classList.remove('hidden');
+    } catch (err) {
+      alert(`Revisions Error: ${err.message}`);
+    }
+  });
+}
+if (btnCloseRevisionsModal && modalNoteRevisions) {
+  btnCloseRevisionsModal.addEventListener('click', () => modalNoteRevisions.classList.add('hidden'));
+}
+
+// ==========================================
+// TAB 4: PENDING INVITES
+// ==========================================
+async function loadWorkspaceInvites() {
+  if (!activeWorkspace) return;
+  try {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/invites`) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/invites`));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const invites = await res.json();
+    const tbody = document.getElementById('wsInvitesTableBody');
+    const badge = document.getElementById('wsPendingInvitesBadge');
+
+    if (badge) badge.textContent = (invites || []).length;
+    if (tbody) {
+      if (!invites || invites.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">
+              <i class="ri-mail-line" style="font-size: 24px; display: block; margin-bottom: 6px;"></i>
+              No pending invitations for this workspace.
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = invites.map(inv => `
+          <tr>
+            <td><strong>${escapeHtml(inv.email)}</strong></td>
+            <td><span class="badge-tag" style="background: rgba(99, 102, 241, 0.08); color: var(--primary); font-weight: 600;">${inv.role.toUpperCase()}</span></td>
+            <td style="color: var(--text-muted); font-size: 12px;">${escapeHtml(inv.inviter_name)}</td>
+            <td><span class="badge-tag" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Pending</span></td>
+            <td style="color: var(--text-muted); font-size: 12px;">${inv.expires_at ? new Date(inv.expires_at).toLocaleDateString() : '7 Days'}</td>
+            <td style="text-align: right;">
+              <button class="btn-secondary btn-copy-invite" data-url="${escapeHtml(inv.invite_url)}" style="padding: 3px 8px; font-size: 11px;">
+                <i class="ri-file-copy-line"></i> Copy Link
+              </button>
+              <button class="btn-secondary btn-revoke-invite" data-id="${inv.id}" style="padding: 3px 8px; font-size: 11px; color: #ef4444; margin-left: 6px;">
+                <i class="ri-close-circle-line"></i> Revoke
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        tbody.querySelectorAll('.btn-copy-invite').forEach(b => {
+          b.addEventListener('click', () => {
+            navigator.clipboard.writeText(b.getAttribute('data-url'));
+            showToast('Invitation link copied to clipboard!');
+          });
+        });
+
+        tbody.querySelectorAll('.btn-revoke-invite').forEach(b => {
+          b.addEventListener('click', async () => {
+            const invId = b.getAttribute('data-id');
+            await revokeInvite(invId);
+          });
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Invites] Failed to load invites:', err);
+  }
+}
+
+async function revokeInvite(inviteId) {
+  if (!activeWorkspace) return;
+  try {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/invites/${inviteId}`, {
+      method: 'DELETE'
+    }) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/invites/${inviteId}`, {
+      method: 'DELETE'
+    }));
+    if (!res.ok) throw new Error('Revoke failed');
+    showToast('Invitation revoked');
+    await loadWorkspaceInvites();
+  } catch (err) {
+    alert(`Revoke Error: ${err.message}`);
+  }
+}
+
+// ==========================================
+// MODALS: INVITE MEMBER & CREATE WORKSPACE
+// ==========================================
+
+// Invite Member Modal
+const btnOpenInviteModal = document.getElementById('btnOpenInviteModal');
+const modalInviteMember = document.getElementById('modalInviteMember');
+const btnCloseInviteModal = document.getElementById('btnCloseInviteModal');
+const btnCancelInvite = document.getElementById('btnCancelInvite');
+const btnSubmitInvite = document.getElementById('btnSubmitInvite');
+
+window.openInviteModal = openInviteModal;
+window.switchWorkspaceSubTab = switchWorkspaceSubTab;
+
+function openInviteModal() {
+  const modal = modalInviteMember || document.getElementById('modalInviteMember');
+  if (modal) {
+    modal.classList.remove('hidden');
+    const resultBox = document.getElementById('inviteResultBox');
+    if (resultBox) resultBox.classList.add('hidden');
+    const emailInput = document.getElementById('inputInviteEmail');
+    if (emailInput) { emailInput.value = ''; emailInput.focus(); }
+  }
+}
+
+if (btnOpenInviteModal) btnOpenInviteModal.addEventListener('click', openInviteModal);
+const legacyBtnInviteMember = document.getElementById('btnInviteMember');
+if (legacyBtnInviteMember) legacyBtnInviteMember.addEventListener('click', openInviteModal);
+
+if (btnCloseInviteModal && modalInviteMember) btnCloseInviteModal.addEventListener('click', () => modalInviteMember.classList.add('hidden'));
+if (btnCancelInvite && modalInviteMember) btnCancelInvite.addEventListener('click', () => modalInviteMember.classList.add('hidden'));
+
+if (btnSubmitInvite) {
+  btnSubmitInvite.addEventListener('click', async () => {
+    if (!activeWorkspace) return;
+    const emailInput = document.getElementById('inputInviteEmail');
+    const roleSelect = document.getElementById('selectInviteRole');
+    const email = emailInput ? emailInput.value.trim() : '';
+    const role = roleSelect ? roleSelect.value : 'editor';
+
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid teammate email address.');
+      return;
+    }
+
+    try {
+      const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/workspaces/${activeWorkspace.id}/invites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role })
+      }) : fetch(`/api/v1/workspaces/${activeWorkspace.id}/invites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role })
+      }));
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Invitation failed');
+      }
+
+      const invData = await res.json();
+      const resultBox = document.getElementById('inviteResultBox');
+      const urlInput = document.getElementById('inputGeneratedInviteUrl');
+      if (resultBox && urlInput) {
+        resultBox.classList.remove('hidden');
+        urlInput.value = invData.invite_url;
+      }
+      showToast(`Invitation created for ${email}!`);
+      await loadWorkspaceInvites();
+    } catch (err) {
+      alert(`Invite Error: ${err.message}`);
+    }
+  });
+}
+
+// Create Workspace Modal
+const btnOpenCreateWsModal = document.getElementById('btnOpenCreateWsModal');
+const modalCreateWorkspace = document.getElementById('modalCreateWorkspace');
+const btnCloseCreateWsModal = document.getElementById('btnCloseCreateWsModal');
+const btnCancelCreateWs = document.getElementById('btnCancelCreateWs');
+const btnSubmitCreateWs = document.getElementById('btnSubmitCreateWs');
+
+if (btnOpenCreateWsModal && modalCreateWorkspace) {
+  btnOpenCreateWsModal.addEventListener('click', () => {
+    modalCreateWorkspace.classList.remove('hidden');
+    const nameInput = document.getElementById('inputNewWsName');
+    if (nameInput) { nameInput.value = ''; nameInput.focus(); }
+  });
+}
+if (btnCloseCreateWsModal && modalCreateWorkspace) btnCloseCreateWsModal.addEventListener('click', () => modalCreateWorkspace.classList.add('hidden'));
+if (btnCancelCreateWs && modalCreateWorkspace) btnCancelCreateWs.addEventListener('click', () => modalCreateWorkspace.classList.add('hidden'));
+
+if (btnSubmitCreateWs) {
+  btnSubmitCreateWs.addEventListener('click', async () => {
+    const nameInput = document.getElementById('inputNewWsName');
+    const descInput = document.getElementById('inputNewWsDesc');
+    const tierSelect = document.getElementById('selectNewWsTier');
+
+    const name = nameInput ? nameInput.value.trim() : '';
+    const description = descInput ? descInput.value.trim() : '';
+    const tier = tierSelect ? tierSelect.value : 'Team';
+
+    if (!name) {
+      alert('Please enter a workspace name.');
+      return;
+    }
+
+    try {
+      const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch('/workspaces', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description, tier })
+      }) : fetch('/api/v1/workspaces', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description, tier })
+      }));
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Failed to create workspace');
+      }
+
+      const newWs = await res.json();
+      if (modalCreateWorkspace) modalCreateWorkspace.classList.add('hidden');
+      showToast(`Workspace '${newWs.name}' created!`);
+      await loadWorkspaces(newWs.id);
+    } catch (err) {
+      alert(`Create Workspace Error: ${err.message}`);
+    }
   });
 }
 

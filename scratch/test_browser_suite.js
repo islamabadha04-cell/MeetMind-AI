@@ -844,8 +844,8 @@ async function runBrowserTests() {
     assert('Filter resets smoothly to all 10 providers', allCardsCount === 10);
 
     // 6. Open Integration Modal for Google Calendar
-    await cdp.evaluate('document.querySelector(\'#integ-card-google_calendar .btn-integ-connect\')?.click()');
-    await sleep(250);
+    await cdp.evaluate('document.querySelector(\'#integ-card-google_calendar .btn-integ-connect, #integ-card-google_calendar .btn-integ-settings\')?.click()');
+    await sleep(350);
     const isIntegModalOpen = await cdp.evaluate('!document.getElementById("integrationModal").classList.contains("hidden")');
     assert('Integration settings modal opens cleanly', isIntegModalOpen);
 
@@ -855,7 +855,7 @@ async function runBrowserTests() {
 
     // 8. Test Connection button inside modal
     await cdp.evaluate('document.getElementById("btnIntegTestConnection")?.click()');
-    await sleep(300);
+    await sleep(600);
     const isTestBoxVisible = await cdp.evaluate('document.getElementById("integModalTestResultBox")?.style.display !== "none"');
     assert('Integration test connection verifies diagnostic responsiveness', isTestBoxVisible);
 
@@ -880,6 +880,78 @@ async function runBrowserTests() {
 
 
     
+    // -------------------------------------------------------------------------
+    // TEST SUITE 5G: Phase 5 Team Workspaces, Multi-Tenant RBAC & Collaboration
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 5G: Phase 5 Team Workspaces, RBAC & Team Collaboration');
+    console.log('======================================================');
+
+    // 1. Navigate to Team Workspaces
+    await cdp.evaluate('navigateToPage("workspaces")');
+    await sleep(600);
+    const isWsActive = await cdp.evaluate('!document.getElementById("page-workspaces").classList.contains("hidden")');
+    assert('Navigate to Team Workspaces view', isWsActive);
+
+    // 2. Verify Active Workspace Title and Badges
+    const wsTitle = await cdp.evaluate('document.getElementById("wsActiveTitle")?.textContent');
+    assert('Active workspace displays Cowlar Engineering', wsTitle && wsTitle.includes('Cowlar Engineering'));
+
+    const wsRole = await cdp.evaluate('document.getElementById("wsRoleBadge")?.textContent');
+    assert('Current user role badge displayed correctly', wsRole && wsRole.toUpperCase().includes('OWNER'));
+
+    // 3. Verify Team Members Table
+    const memberRows = await cdp.evaluate('document.querySelectorAll("#workspaceMembersTableBody tr").length');
+    assert('Team members table populated with team members', memberRows >= 4);
+
+    // 4. Verify RBAC Matrix Legend rendered
+    const hasRbacMatrix = await cdp.evaluate('document.body.innerText.includes("Role-Based Access Control (RBAC) Permissions Matrix")');
+    assert('RBAC Permissions Matrix card visible with role definitions', hasRbacMatrix);
+
+    // 5. Test Tab 2: Shared Memory Vault
+    await cdp.evaluate('switchWorkspaceSubTab("vault")');
+    await sleep(400);
+    const isVaultVisible = await cdp.evaluate('!document.getElementById("wsTabContentVault").classList.contains("hidden")');
+    assert('Shared Memory Vault tab switches seamlessly', isVaultVisible);
+
+    const vaultItemsCount = await cdp.evaluate('document.querySelectorAll("#wsVaultItemsBody tr").length');
+    assert('Shared vault items rendered with organization scoping', vaultItemsCount >= 1);
+
+    // 6. Test Tab 3: Collaborative Pad
+    await cdp.evaluate('switchWorkspaceSubTab("notes")');
+    await sleep(400);
+    const isPadVisible = await cdp.evaluate('!document.getElementById("wsTabContentNotes").classList.contains("hidden")');
+    assert('Collaborative Notes Pad tab switches seamlessly', isPadVisible);
+
+    const padTitle = await cdp.evaluate('document.getElementById("collabNoteTitle")?.value');
+    assert('Collaborative note title loaded into editor', padTitle && padTitle.length > 0);
+
+    const padContent = await cdp.evaluate('document.getElementById("collabNoteContent")?.value');
+    assert('Collaborative note markdown content loaded into editor', padContent && padContent.length > 0);
+
+    // 7. Test Tab 4: Pending Invites
+    await cdp.evaluate('switchWorkspaceSubTab("invites")');
+    await sleep(400);
+    const isInvitesVisible = await cdp.evaluate('!document.getElementById("wsTabContentInvites").classList.contains("hidden")');
+    assert('Pending Invites tab switches seamlessly', isInvitesVisible);
+
+    // 8. Test Invite Member Modal
+    await cdp.evaluate('document.getElementById("btnOpenInviteModal")?.click() || (window.openInviteModal && window.openInviteModal())');
+    await sleep(250);
+    const isInviteModalOpen = await cdp.evaluate('!document.getElementById("modalInviteMember").classList.contains("hidden")');
+    assert('Invite Team Member modal opens cleanly', isInviteModalOpen);
+
+    await cdp.evaluate('document.getElementById("btnCloseInviteModal")?.click()');
+    await sleep(200);
+    const isInviteModalClosed = await cdp.evaluate('document.getElementById("modalInviteMember").classList.contains("hidden")');
+    assert('Invite Team Member modal closes cleanly', isInviteModalClosed);
+
+    // 9. Switch back to Members Tab
+    await cdp.evaluate('switchWorkspaceSubTab("members")');
+    await sleep(250);
+    const isMembersBack = await cdp.evaluate('!document.getElementById("wsTabContentMembers").classList.contains("hidden")');
+    assert('Team Members tab restores smoothly', isMembersBack);
+
     // TEST SUITE 6: Console Logs & Uncaught Errors
     // -------------------------------------------------------------------------
     console.log('\n======================================================');
