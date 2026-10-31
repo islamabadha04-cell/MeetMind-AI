@@ -113,3 +113,4 @@ When a user edits a memory item in the UI or an automated pipeline updates detai
 4. **User Verification Workflow:**
    - Unverified memories display an amber `Unverified AI Memory` badge in the UI.
    - Users can click **Verify** to validate the fact or **Edit** to modify wording, immediately raising confidence to `1.0`.
+

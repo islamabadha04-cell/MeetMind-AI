@@ -112,3 +112,4 @@ When a search returns multiple relevant meetings, MeetMind AI's synthesis module
 - Highlights the chronology of events (e.g., *"Payment delays were first flagged on Oct 12 during the Client Sync and escalated on Oct 28 due to milestone signoff stalls"*).
 - Lists conflicting decisions or changing commitments between meetings.
 - Strictly adheres to grounded facts without extrapolation.
+

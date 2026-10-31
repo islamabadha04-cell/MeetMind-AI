@@ -103,3 +103,4 @@ The RAG engine natively responds in:
 - **English:** Formal, technical, or executive business English.
 - **Urdu Nastaliq (اردو):** Rendered in clean typography with right-to-left formatting.
 - **Roman Urdu:** Colloquial Pakistani corporate style (e.g., *"Meeting me client ne payment delay ki waja se Milestone 2 hold karne ka kaha..."*).
+

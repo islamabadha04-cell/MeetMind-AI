@@ -135,3 +135,4 @@ SIMILARITY_THRESHOLD=0.65
 | **Chunk Overlap** | 40 words | Guarantees that statements split across boundaries retain full contextual coherence. |
 | **Top-K Retrieval** | 5 chunks | Balances maximum information density with LLM context window limits and low latency. |
 | **Min Similarity Threshold** | 0.65 (Cosine) | Prevents irrelevant chunks from contaminating LLM synthesis, enabling anti-hallucination guardrails. |
+

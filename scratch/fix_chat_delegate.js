@@ -12,3 +12,4 @@ code = code.replace(targetOldChatFuncRegex, newChatFunc);
 
 fs.writeFileSync('app.js', code, 'utf8');
 console.log('Successfully updated handleDeskAiChat in app.js!');
+
