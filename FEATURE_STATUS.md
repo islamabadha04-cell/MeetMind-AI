@@ -1,10 +1,10 @@
 # 📊 MeetMind AI — Feature Status Tracker
 
-**Current Version:** 4.0.0 (Phase 4 Integrations Ecosystem Audited & Preview Deployed)  
+**Current Version:** 4.0.1 (Base v4.0.0, Security Hardened & Deployment Consistency Verified)  
 **Test Suite Coverage:** 103/103 Automated Chrome Headless Tests Passing (100% Pass Rate)  
-**Backend Pytest Suite:** 44/44 Passing (100% Pass Rate across all test suites)  
-**Security Hardening:** Persistent Shared OAuth Nonces, WhatsApp HMAC Signature, HKDF AES-256-GCM, Gmail & Workflow Draft-Only Lock  
-**Firebase Hosting Preview Channel:** [https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app](https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app)  
+**Backend Pytest Suite:** 45/45 Passing (100% Pass Rate across all test suites)  
+**Security Hardening:** Persistent Shared OAuth Nonces (Atomic SQL), WhatsApp HMAC Signature, HKDF AES-256-GCM, Gmail & Workflow Draft-Only Lock  
+**Firebase Hosting Preview Channel:** [https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app](https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app) (Version: `b1a1e26e93b5a467`)  
 **Live Production App:** [https://meetmind-ai-74519.web.app](https://meetmind-ai-74519.web.app) (Stable & Protected)  
 
 **Status Legend:**  

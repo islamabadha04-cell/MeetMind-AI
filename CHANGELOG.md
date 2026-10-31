@@ -6,7 +6,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [4.0.0] - 2026-10-31 (PHASE 4 COMPLETED & SECURITY AUDITED: THIRD-PARTY INTEGRATIONS ECOSYSTEM)
+## [4.0.1] - 2026-10-31 (DEPLOYMENT CONSISTENCY & SECURITY HARDENING VERIFICATION)
+
+### Security Hardening & Consistency Updates
+- **Atomic OAuth Nonce Expiration Filtering:**
+  - Embedded `OAuthNonce.expires_at >= naive_now` directly inside the atomic SQL `UPDATE` filter query in `integration_service.py` to prevent any possibility of consuming expired nonces even during high-concurrency race conditions.
+- **AEAD TokenDecryptionError & Reauthorization Flow:**
+  - Added explicit `TokenDecryptionError` class raised by `decrypt_token(..., raise_on_error=True)` when AEAD tag validation fails.
+  - In `backend/app/main.py`, `/api/v1/integrations/{provider}/test` catches `TokenDecryptionError` and responds with `status="reauthorization_required"` and descriptive error diagnostics.
+  - Added unit test `test_tampered_token_triggers_reauthorization_required` ensuring graceful reauthorization prompts.
+- **Pricing Page Roadmap Transparency:**
+  - Updated `index.html` Team Workspace plan card with `<span class="preview-plan-badge">Phase 5 Preview</span>`.
+  - Added clear `(Phase 5 Roadmap)` indicators to un-enforced team features (10 seats, shared vault, RBAC) and relabeled CTA to "Contact for Team Early Access".
+- **Git Tag Immutability Enforced:**
+  - Anchored tag `v4.0.0` immutably to commit `db564f4` (Phase 4 Base Delivery).
+  - Created tag `v4.0.1` for all post-release security hardening and consistency commits.
+- **Preview Channel Release:**
+  - Deployed genuinely new preview release to Firebase Hosting channel `preview-v4` (Version ID: `b1a1e26e93b5a467`).
+  - Production website (`https://meetmind-ai-74519.web.app`) remains untouched.
+- **Test Suite Results:**
+  - 45/45 passing Pytest backend tests (100%).
+  - 103/103 passing Headless Chrome browser CDP tests (100%, 0 console errors).
+
+## [4.0.0] - 2026-10-31 (PHASE 4 BASE DELIVERY: THIRD-PARTY INTEGRATIONS ECOSYSTEM)
 
 ### Security Hardening & Audit Corrections
 - **Persistent Shared OAuth Nonce Storage:**
