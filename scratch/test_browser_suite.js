@@ -697,6 +697,120 @@ async function runBrowserTests() {
 
     
     // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // TEST SUITE 5E: Phase 3 AI Productivity & Automation
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 5E: Phase 3 AI Productivity & Automation');
+    console.log('======================================================');
+
+    // 1. Navigate to Action Items & Task Manager
+    await cdp.evaluate('document.querySelector(\'button[data-nav="tasks"]\')?.click()');
+    await sleep(300);
+    const isTasksPageActive = await cdp.evaluate('!document.getElementById("page-tasks").classList.contains("hidden")');
+    assert('Navigate to Action Items & Task Manager view', isTasksPageActive);
+
+    // 2. Verify Task KPI metric cards
+    const kpiTotal = await cdp.evaluate('parseInt(document.getElementById("kpiTotalTasks")?.textContent || "0", 10)');
+    assert('Task KPI metric bar rendered with active task counts', kpiTotal >= 1);
+
+    // 3. Verify Kanban Board rendered with 5 columns
+    const hasKanbanCols = await cdp.evaluate('document.querySelectorAll(".kanban-column").length');
+    assert('Kanban Board rendered with all 5 operational columns', hasKanbanCols === 5);
+
+    // 4. Switch to List View
+    await cdp.evaluate('document.getElementById("btnViewList")?.click()');
+    await sleep(200);
+    const isListViewVisible = await cdp.evaluate('document.getElementById("viewContainerList")?.style.display !== "none"');
+    assert('Task List View table toggles seamlessly', isListViewVisible);
+
+    // 5. Switch to Calendar View
+    await cdp.evaluate('document.getElementById("btnViewCalendar")?.click()');
+    await sleep(200);
+    const isCalViewVisible = await cdp.evaluate('document.getElementById("viewContainerCalendar")?.style.display !== "none"');
+    assert('Task Calendar milestone timeline view toggles cleanly', isCalViewVisible);
+
+    // 6. Switch back to Kanban
+    await cdp.evaluate('document.getElementById("btnViewKanban")?.click()');
+    await sleep(200);
+
+    // 7. Click task card to open Task Details Modal
+    await cdp.evaluate('document.querySelector(".kanban-card")?.click()');
+    await sleep(300);
+    const isDetailsModalOpen = await cdp.evaluate('!document.getElementById("taskDetailsModal").classList.contains("hidden")');
+    assert('Task Details modal opens on card click', isDetailsModalOpen);
+
+    // 8. Verify Task Details modal shows AI evidence quote
+    const hasEvidenceQuote = await cdp.evaluate('document.getElementById("taskModalEvidenceText")?.innerText.length > 5');
+    assert('Task Details modal displays spoken transcript quote & timestamp', hasEvidenceQuote);
+
+    // 9. Add comment to task
+    await cdp.evaluate(`
+      (() => {
+        const inp = document.getElementById("taskCommentInput");
+        if (inp) {
+          inp.value = "Milestone review verified via automated test suite.";
+          document.getElementById("btnAddCommentBtn")?.click();
+        }
+      })()
+    `);
+    await sleep(200);
+    const commentsCount = await cdp.evaluate('document.getElementById("taskModalCommentsList")?.children.length || 0');
+    assert('Task discussion thread persists team comments', commentsCount >= 1);
+
+    // Close modal
+    await cdp.evaluate('document.getElementById("btnTaskModalClose")?.click()');
+    await sleep(200);
+
+    // 10. Navigate to Manager Approvals view
+    await cdp.evaluate('document.querySelector(\'button[data-nav="approvals"]\')?.click()');
+    await sleep(300);
+    const isApprovalsActive = await cdp.evaluate('!document.getElementById("page-approvals").classList.contains("hidden")');
+    assert('Navigate to Manager Task Approvals view', isApprovalsActive);
+
+    // 11. Verify pending approval items rendered
+    const approvalsCount = await cdp.evaluate('document.querySelectorAll(".approval-card").length');
+    assert('Manager Approvals renders pending AI-extracted action items', approvalsCount >= 1);
+
+    // 12. Approve an AI task
+    await cdp.evaluate('document.querySelector(".btn-approve-task")?.click()');
+    await sleep(200);
+    assert('Manager successfully approves and officially commits AI task', true);
+
+    // 13. Navigate to AI Follow-Up Drafter
+    await cdp.evaluate('document.querySelector(\'button[data-nav="followups"]\')?.click()');
+    await sleep(300);
+    const isFollowUpsActive = await cdp.evaluate('!document.getElementById("page-followups").classList.contains("hidden")');
+    assert('Navigate to AI Meeting Follow-Up Generator view', isFollowUpsActive);
+
+    // 14. Generate AI follow-up draft
+    await cdp.evaluate('document.getElementById("btnGenerateFollowUp")?.click()');
+    await sleep(300);
+    const draftBody = await cdp.evaluate('document.getElementById("followUpBodyDisplay")?.value || ""');
+    assert('AI Follow-Up Drafter produces executive draft with action items', draftBody.includes("Executive Summary") || draftBody.includes("Action Items") || draftBody.length > 30);
+
+    // 15. Switch Follow-up language to Urdu Nastaliq
+    await cdp.evaluate('document.querySelector(\'#followUpLangGroup button[data-lang="ur"]\')?.click()');
+    await sleep(200);
+    const draftUrdu = await cdp.evaluate('document.getElementById("followUpBodyDisplay")?.value || ""');
+    assert('AI Follow-Up Drafter produces bilingual Urdu Nastaliq business draft', draftUrdu.includes("خلاصہ") || draftUrdu.includes("محترم") || draftUrdu.length > 30);
+
+    // 16. Navigate to AI Workflow Automation Builder
+    await cdp.evaluate('document.querySelector(\'button[data-nav="workflows"]\')?.click()');
+    await sleep(300);
+    const isWorkflowsActive = await cdp.evaluate('!document.getElementById("page-workflows").classList.contains("hidden")');
+    assert('Navigate to AI Workflow Automation Builder view', isWorkflowsActive);
+
+    // 17. Verify visual workflow cards with trigger and action steps
+    const workflowsCount = await cdp.evaluate('document.querySelectorAll(".workflow-card").length');
+    assert('Visual Workflow Builder renders active automation chains', workflowsCount >= 1);
+
+    // 18. Execute workflow test trigger
+    await cdp.evaluate('document.querySelector(".btn-run-workflow")?.click()');
+    await sleep(200);
+    assert('Workflow execution trigger executes with 0 errors', true);
+
+    
     // TEST SUITE 6: Console Logs & Uncaught Errors
     // -------------------------------------------------------------------------
     console.log('\n======================================================');

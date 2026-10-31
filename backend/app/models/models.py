@@ -1,7 +1,10 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, Float
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.db.session import Base
+
+def utc_now():
+    return datetime.now(timezone.utc)
 
 class User(Base):
     __tablename__ = "users"
@@ -15,12 +18,15 @@ class User(Base):
     minutes_used = Column(Integer, default=42)
     minutes_limit = Column(Integer, default=500)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     meetings = relationship("Meeting", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
     knowledge_documents = relationship("KnowledgeDocument", back_populates="user", cascade="all, delete-orphan")
     memories = relationship("MeetingMemory", back_populates="user", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    workflows = relationship("Workflow", back_populates="user", cascade="all, delete-orphan")
+    approval_requests = relationship("ApprovalRequest", back_populates="user", cascade="all, delete-orphan")
 
 class Workspace(Base):
     __tablename__ = "workspaces"
@@ -28,7 +34,7 @@ class Workspace(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
 class Meeting(Base):
     __tablename__ = "meetings"
@@ -41,7 +47,7 @@ class Meeting(Base):
     source_type = Column(String(50), default="audio_recording") # audio_recording, audio_upload, meeting_link, youtube, document, manual
     audio_file_path = Column(String(500), nullable=True)
     duration_seconds = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     user = relationship("User", back_populates="meetings")
     transcripts = relationship("TranscriptSegment", back_populates="meeting", cascade="all, delete-orphan")
@@ -84,10 +90,13 @@ class MeetingSummary(Base):
     decisions_json = Column(Text, default="[]") # JSON list
     action_items_json = Column(Text, default="[]") # JSON list
     risks_json = Column(Text, default="[]") # JSON list
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     meeting = relationship("Meeting", back_populates="summary")
 
+# --------------------------------------------------------------------------
+# PHASE 3: Tasks & Automation Models
+# --------------------------------------------------------------------------
 class Task(Base):
     __tablename__ = "tasks"
 
@@ -95,15 +104,115 @@ class Task(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=True)
     title = Column(String(255), nullable=False)
+    description = Column(Text, default="")
     assignee = Column(String(100), default="Unassigned")
     deadline = Column(String(50), nullable=True)
-    priority = Column(String(20), default="medium") # low, medium, high
-    status = Column(String(20), default="pending") # pending, in_progress, completed
-    created_at = Column(DateTime, default=datetime.utcnow)
+    priority = Column(String(20), default="medium") # low, medium, high, urgent
+    status = Column(String(20), default="pending") # pending, in_progress, completed, overdue, cancelled
+    confidence_score = Column(Float, default=1.0)
+    source_transcript_timestamp = Column(String(20), default="00:00")
+    evidence_quote = Column(Text, default="")
+    is_ai_generated = Column(Boolean, default=False)
+    is_approved = Column(Boolean, default=True) # AI tasks require review
+    project = Column(String(100), default="Core Sprint")
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
 
     user = relationship("User", back_populates="tasks")
     meeting = relationship("Meeting", back_populates="tasks")
+    comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
+    history = relationship("TaskHistory", back_populates="task", cascade="all, delete-orphan")
+    approvals = relationship("ApprovalRequest", back_populates="task", cascade="all, delete-orphan")
 
+class TaskComment(Base):
+    __tablename__ = "task_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_name = Column(String(100), default="Emily Watson")
+    comment_text = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=utc_now)
+
+    task = relationship("Task", back_populates="comments")
+
+class TaskHistory(Base):
+    __tablename__ = "task_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    action = Column(String(100), nullable=False) # created, updated, status_changed, assigned, approved
+    previous_state = Column(Text, default="")
+    new_state = Column(Text, default="")
+    timestamp = Column(DateTime, default=utc_now)
+
+    task = relationship("Task", back_populates="history")
+
+class ApprovalRequest(Base):
+    __tablename__ = "approval_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
+    requester_name = Column(String(100), default="AI Synthesizer")
+    approver_name = Column(String(100), default="Emily Watson (Manager)")
+    status = Column(String(20), default="pending") # pending, approved, rejected
+    decision_notes = Column(Text, default="")
+    requested_at = Column(DateTime, default=utc_now)
+    resolved_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="approval_requests")
+    task = relationship("Task", back_populates="approvals")
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(String(50), default="deadline") # deadline, overdue, assigned, completed, approval, reminder
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    link_url = Column(String(255), default="#tasks")
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="notifications")
+
+class Workflow(Base):
+    __tablename__ = "workflows"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, default="")
+    trigger_type = Column(String(50), default="meeting_completed") # meeting_completed, task_overdue, status_changed
+    conditions_json = Column(Text, default="[]") # rules list
+    actions_json = Column(Text, default="[]") # sequential action list
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="workflows")
+    executions = relationship("WorkflowExecution", back_populates="workflow", cascade="all, delete-orphan")
+
+class WorkflowExecution(Base):
+    __tablename__ = "workflow_executions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(Integer, ForeignKey("workflows.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    trigger_event = Column(String(100), nullable=False)
+    status = Column(String(20), default="success") # success, failed, retrying
+    logs_json = Column(Text, default="[]")
+    retry_count = Column(Integer, default=0)
+    executed_at = Column(DateTime, default=utc_now)
+
+    workflow = relationship("Workflow", back_populates="executions")
+
+# --------------------------------------------------------------------------
+# Existing Knowledge & Memory Models
+# --------------------------------------------------------------------------
 class KnowledgeDocument(Base):
     __tablename__ = "knowledge_documents"
 
@@ -116,7 +225,7 @@ class KnowledgeDocument(Base):
     status = Column(String(30), default="indexed") # uploaded, processing, indexed, failed
     chunk_count = Column(Integer, default=0)
     raw_text = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     user = relationship("User", back_populates="knowledge_documents")
     chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
@@ -145,8 +254,8 @@ class MeetingMemory(Base):
     timestamp = Column(String(20), default="00:00")
     confidence = Column(String(20), default="0.95")
     revisions_json = Column(Text, default="[]")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
 
     user = relationship("User", back_populates="memories")
 
@@ -157,5 +266,4 @@ class ChatMessage(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     role = Column(String(20), nullable=False) # user or assistant
     content = Column(Text, nullable=False)
-    citations_json = Column(Text, default="[]") # citations referencing meetings or documents
-    created_at = Column(DateTime, default=datetime.utcnow)
+    citations_json = Column(Text, default="[]")

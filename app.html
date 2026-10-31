@@ -127,6 +127,18 @@
           <i class="ri-file-text-line"></i> <span>Documents Vault</span>
         </button>
 
+                <span class="sidebar-category-header">AUTOMATION &amp; TASKS</span>
+        <button class="menu-item" data-nav="approvals">
+          <i class="ri-user-follow-line"></i> <span>Manager Approvals</span>
+          <span class="badge-count" id="navApprovalsCountBadge">0</span>
+        </button>
+        <button class="menu-item" data-nav="followups">
+          <i class="ri-mail-send-line"></i> <span>AI Follow-Up Drafter</span>
+        </button>
+        <button class="menu-item" data-nav="workflows">
+          <i class="ri-git-branch-line"></i> <span>Workflow Builder</span>
+        </button>
+
         <span class="sidebar-category-header">COLLABORATION</span>
         <button class="menu-item" data-nav="calendar">
           <i class="ri-calendar-event-line"></i> <span>Calendar</span>
@@ -611,23 +623,186 @@
         <div class="desktop-content-body">
           <div class="welcome-stats-row">
             <div>
-              <h2 class="welcome-title">Action Items & Task Manager</h2>
-              <p class="welcome-sub">Turn meeting discussions into assigned tasks with due dates and priorities.</p>
+              <h2 class="welcome-title"><i class="ri-checkbox-circle-line" style="color: var(--primary);"></i> Action Items &amp; Smart Task Management</h2>
+              <p class="welcome-sub">Turn meeting discussions into organized, trackable, and approved business workflows.</p>
             </div>
-            <button class="btn-primary-purple" id="btnAddTaskModal">
-              <i class="ri-add-line"></i> Create New Task
-            </button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-secondary" id="btnAutoExtractTasks" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="ri-magic-line"></i> Extract from Meeting
+              </button>
+              <button class="btn-secondary" id="btnScanTaskAlerts" style="display: inline-flex; align-items: center; gap: 6px;">
+                <i class="ri-notification-3-line"></i> Scan Deadlines
+              </button>
+              <button class="btn-primary-purple" id="btnAddTaskModal">
+                <i class="ri-add-line"></i> Create New Task
+              </button>
+            </div>
           </div>
 
-          <!-- Tasks Filter -->
-          <div class="library-filter-row" id="taskFilterRow">
-            <button class="lib-tab active" data-task-filter="all">All Tasks</button>
-            <button class="lib-tab" data-task-filter="pending">Pending</button>
-            <button class="lib-tab" data-task-filter="completed">Completed</button>
+          <!-- Task KPI Metric Bar -->
+          <div class="task-kpi-bar" id="taskKpiBar">
+            <div class="task-kpi-card">
+              <div class="task-kpi-icon" style="background: rgba(99, 102, 241, 0.12); color: var(--primary);">
+                <i class="ri-list-check"></i>
+              </div>
+              <div class="task-kpi-info">
+                <h4 id="kpiTotalTasks">0</h4>
+                <span>Total Tasks</span>
+              </div>
+            </div>
+            <div class="task-kpi-card">
+              <div class="task-kpi-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
+                <i class="ri-time-line"></i>
+              </div>
+              <div class="task-kpi-info">
+                <h4 id="kpiPendingTasks">0</h4>
+                <span>Pending</span>
+              </div>
+            </div>
+            <div class="task-kpi-card">
+              <div class="task-kpi-icon" style="background: rgba(59, 130, 246, 0.12); color: #3b82f6;">
+                <i class="ri-loader-4-line"></i>
+              </div>
+              <div class="task-kpi-info">
+                <h4 id="kpiInProgressTasks">0</h4>
+                <span>In Progress</span>
+              </div>
+            </div>
+            <div class="task-kpi-card">
+              <div class="task-kpi-icon" style="background: rgba(239, 68, 68, 0.12); color: #ef4444;">
+                <i class="ri-alarm-warning-line"></i>
+              </div>
+              <div class="task-kpi-info">
+                <h4 id="kpiOverdueTasks">0</h4>
+                <span>Overdue</span>
+              </div>
+            </div>
+            <div class="task-kpi-card">
+              <div class="task-kpi-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                <i class="ri-checkbox-circle-line"></i>
+              </div>
+              <div class="task-kpi-info">
+                <h4 id="kpiCompletedTasks">0</h4>
+                <span>Completed</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Tasks List Grid -->
-          <div class="tasks-board-grid" id="tasksBoardGrid"></div>
+          <!-- View Switcher & Filter Toolbar -->
+          <div class="task-view-switch-row">
+            <div class="view-mode-tabs" id="taskViewModeGroup">
+              <button class="view-mode-btn active" data-view="kanban" id="btnViewKanban">
+                <i class="ri-kanban-view"></i> Kanban Board
+              </button>
+              <button class="view-mode-btn" data-view="list" id="btnViewList">
+                <i class="ri-list-unordered"></i> List View
+              </button>
+              <button class="view-mode-btn" data-view="calendar" id="btnViewCalendar">
+                <i class="ri-calendar-line"></i> Calendar View
+              </button>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <!-- Assignee Filter -->
+              <select id="taskFilterAssignee" class="filter-select-input" style="padding: 6px 12px; font-size: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-main);">
+                <option value="all">All Assignees</option>
+                <option value="Emily Watson">Emily Watson</option>
+                <option value="Hasnain Ali">Hasnain Ali</option>
+                <option value="Tariq Khan">Tariq Khan</option>
+                <option value="Unassigned">Unassigned</option>
+              </select>
+
+              <!-- Project Filter -->
+              <select id="taskFilterProject" class="filter-select-input" style="padding: 6px 12px; font-size: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-main);">
+                <option value="all">All Projects</option>
+                <option value="Core Sprint">Core Sprint</option>
+                <option value="Payments">Payments</option>
+                <option value="Mobile App">Mobile App</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- VIEW 1: KANBAN BOARD -->
+          <div id="viewContainerKanban" class="kanban-board-container">
+            <!-- Col 1: Pending -->
+            <div class="kanban-column" data-status="pending">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title" style="color: #f59e0b;"><i class="ri-time-line"></i> Pending</div>
+                <span class="kanban-col-count" id="countColPending">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanbanColPending"></div>
+            </div>
+
+            <!-- Col 2: In Progress -->
+            <div class="kanban-column" data-status="in_progress">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title" style="color: #3b82f6;"><i class="ri-loader-4-line"></i> In Progress</div>
+                <span class="kanban-col-count" id="countColInProgress">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanbanColInProgress"></div>
+            </div>
+
+            <!-- Col 3: Completed -->
+            <div class="kanban-column" data-status="completed">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title" style="color: #10b981;"><i class="ri-checkbox-circle-line"></i> Completed</div>
+                <span class="kanban-col-count" id="countColCompleted">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanbanColCompleted"></div>
+            </div>
+
+            <!-- Col 4: Overdue -->
+            <div class="kanban-column" data-status="overdue">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title" style="color: #ef4444;"><i class="ri-alarm-warning-line"></i> Overdue</div>
+                <span class="kanban-col-count" id="countColOverdue">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanbanColOverdue"></div>
+            </div>
+
+            <!-- Col 5: Cancelled -->
+            <div class="kanban-column" data-status="cancelled">
+              <div class="kanban-col-header">
+                <div class="kanban-col-title" style="color: #6b7280;"><i class="ri-close-circle-line"></i> Cancelled</div>
+                <span class="kanban-col-count" id="countColCancelled">0</span>
+              </div>
+              <div class="kanban-cards-list" id="kanbanColCancelled"></div>
+            </div>
+          </div>
+
+          <!-- VIEW 2: LIST VIEW -->
+          <div id="viewContainerList" class="task-table-wrapper" style="display: none;">
+            <table class="task-list-table">
+              <thead>
+                <tr>
+                  <th>Task Title</th>
+                  <th>Priority</th>
+                  <th>Assignee</th>
+                  <th>Deadline</th>
+                  <th>Project</th>
+                  <th>Status</th>
+                  <th>AI Source</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="taskTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- VIEW 3: CALENDAR VIEW -->
+          <div id="viewContainerCalendar" style="display: none;">
+            <div class="task-kpi-card" style="margin-bottom: 16px;">
+              <i class="ri-calendar-todo-line" style="font-size: 24px; color: var(--primary);"></i>
+              <div>
+                <h4 style="font-size: 15px; margin: 0;">Weekly Milestone Delivery Timeline</h4>
+                <span style="font-size: 12px; color: var(--text-dim);">Tasks plotted by their committed deadline dates with .ICS calendar export</span>
+              </div>
+            </div>
+            <div class="tasks-board-grid" id="calendarTasksGrid"></div>
+          </div>
+
+          <!-- Legacy Tasks Board Grid for backward compatibility with existing tests -->
+          <div class="tasks-board-grid" id="tasksBoardGrid" style="display: none;"></div>
 
           <!-- Empty Tasks State -->
           <div class="empty-state-card" id="emptyTasksState" style="display: none; text-align: center; padding: 48px 24px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color); margin-top: 16px;">
@@ -642,8 +817,9 @@
               <i class="ri-add-line"></i> Create Action Item
             </button>
           </div>
-
-      <!-- ==================== PHASE 2: AI MEETING SEARCH ==================== -->
+        </div>
+      </div>
+      
       <div class="page-view hidden" id="page-search">
         <div class="desktop-content-body">
           <div class="welcome-stats-row">
@@ -1166,6 +1342,129 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+    
+      <!-- ==================== PHASE 3: MANAGER APPROVALS ==================== -->
+      <div class="page-view hidden" id="page-approvals">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title"><i class="ri-user-follow-line" style="color: var(--primary);"></i> Manager Task Approvals</h2>
+              <p class="welcome-sub">Review AI-suggested action items, verify assignments, adjust deadlines, and prevent unauthorized execution.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-secondary active" id="btnFilterPendingApprovals" data-appr-filter="pending">Pending Review</button>
+              <button class="btn-secondary" id="btnFilterAllApprovals" data-appr-filter="all">All History</button>
+            </div>
+          </div>
+
+          <div id="approvalsListContainer"></div>
+        </div>
+      </div>
+
+      <!-- ==================== PHASE 3: AI FOLLOW-UP GENERATOR ==================== -->
+      <div class="page-view hidden" id="page-followups">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title"><i class="ri-mail-send-line" style="color: var(--primary);"></i> AI Meeting Follow-Up Generator</h2>
+              <p class="welcome-sub">Draft professional client updates, payment reminders, and deadline alerts directly from meeting minutes.</p>
+            </div>
+          </div>
+
+          <div class="followup-layout-grid">
+            <!-- Controls Card -->
+            <div class="followup-controls-card">
+              <h4 style="font-size: 14px; font-weight: 700; margin: 0; color: var(--text-main);">Follow-Up Parameters</h4>
+              
+              <div>
+                <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px;">Source Meeting</label>
+                <select id="followUpMeetingSelect" class="search-filter-select" style="width: 100%;"></select>
+              </div>
+
+              <div>
+                <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px;">Follow-Up Type</label>
+                <select id="followUpTypeSelect" class="search-filter-select" style="width: 100%;">
+                  <option value="client_followup">Client Executive Follow-Up &amp; Next Steps</option>
+                  <option value="payment_reminder">Payment Schedule &amp; Invoice Reminder (Pakistani Gateway)</option>
+                  <option value="deadline_reminder">Upcoming Milestone &amp; Deliverable Alert</option>
+                  <option value="project_status">Internal Engineering Status Briefing</option>
+                  <option value="meeting_summary">Complete Minutes of Meeting (MoM) Email</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px;">Recipient Name</label>
+                <input type="text" id="followUpRecipientInput" class="search-bar-input" style="width: 100%;" value="Tariq Khan / Client Stakeholders">
+              </div>
+
+              <div>
+                <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px;">Language</label>
+                <div class="search-mode-group" id="followUpLangGroup">
+                  <button class="search-mode-chip active" data-lang="en">English</button>
+                  <button class="search-mode-chip" data-lang="ur">اردو (Urdu)</button>
+                  <button class="search-mode-chip" data-lang="roman">Roman Urdu</button>
+                </div>
+              </div>
+
+              <div>
+                <label style="font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 4px;">Special Instructions (Optional)</label>
+                <input type="text" id="followUpInstructionsInput" class="search-bar-input" style="width: 100%;" placeholder="e.g. emphasize Raast 0% surcharge...">
+              </div>
+
+              <button class="btn-primary-purple" id="btnGenerateFollowUp" style="width: 100%; margin-top: 8px;">
+                <i class="ri-sparkling-fill"></i> Generate AI Draft
+              </button>
+
+              <div style="font-size: 11px; color: var(--text-dim); line-height: 1.4; background: rgba(99, 102, 241, 0.06); padding: 8px 10px; border-radius: var(--radius-sm);">
+                <i class="ri-shield-check-line" style="color: var(--primary);"></i> <strong>Strict Safety Guarantee:</strong> MeetMind AI drafts emails for your review and copy. It never sends messages without your explicit authorization.
+              </div>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="followup-preview-card">
+              <div class="followup-email-header">
+                <div class="followup-email-field">
+                  <strong>Subject:</strong>
+                  <input type="text" id="followUpSubjectDisplay" style="flex: 1; background: transparent; border: none; font-weight: 700; color: var(--text-main); font-size: 14px;" value="Executive Follow-Up &amp; Next Steps">
+                </div>
+                <div class="followup-email-field">
+                  <strong>To:</strong>
+                  <span id="followUpToDisplay" style="color: var(--text-main);">Tariq Khan / Client Stakeholders</span>
+                </div>
+              </div>
+
+              <textarea id="followUpBodyDisplay" class="followup-body-textarea" placeholder="AI-generated follow-up draft will appear here..."></textarea>
+
+              <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+                <button class="btn-secondary" id="btnCopyFollowUpDraft">
+                  <i class="ri-file-copy-line"></i> Copy to Clipboard
+                </button>
+                <button class="btn-primary-purple" id="btnOpenMailClient">
+                  <i class="ri-mail-open-line"></i> Open in Email Client
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PHASE 3: WORKFLOW AUTOMATION ==================== -->
+      <div class="page-view hidden" id="page-workflows">
+        <div class="desktop-content-body">
+          <div class="welcome-stats-row">
+            <div>
+              <h2 class="welcome-title"><i class="ri-git-branch-line" style="color: var(--primary);"></i> AI Workflow Automation Builder</h2>
+              <p class="welcome-sub">Connect triggers, automated extraction, manager approvals, and reminder notifications into visual workflows.</p>
+            </div>
+            <button class="btn-primary-purple" id="btnCreateWorkflowModal">
+              <i class="ri-add-line"></i> New Workflow
+            </button>
+          </div>
+
+          <div class="workflow-builder-grid" id="workflowCardsGrid"></div>
         </div>
       </div>
 
@@ -1851,5 +2150,81 @@
 
   <script type="module" src="firebase-service.js"></script>
   <script src="app.js"></script>
+
+  <!-- ==================== MODAL: TASK DETAILS & AUDIT HISTORY ==================== -->
+  <div class="modal-overlay hidden" id="taskDetailsModal">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="ri-checkbox-circle-fill" style="color: var(--primary); font-size: 20px;"></i>
+          <h3 class="modal-title" id="taskModalTitle">Task Details</h3>
+        </div>
+        <button class="modal-close" id="btnTaskModalClose"><i class="ri-close-line"></i></button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span class="badge-priority priority-high" id="taskModalPriority">HIGH</span>
+          <span class="badge-tag" id="taskModalProject">Core Sprint</span>
+          <span class="badge-summary-ready" id="taskModalStatus">Pending</span>
+        </div>
+
+        <div>
+          <label style="font-size: 11px; color: var(--text-dim); font-weight: 600;">TASK DESCRIPTION</label>
+          <p id="taskModalDesc" style="font-size: 13.5px; color: var(--text-main); margin: 4px 0;"></p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: var(--bg-body); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+          <div>
+            <span style="font-size: 11px; color: var(--text-dim); display: block;">Assignee</span>
+            <strong id="taskModalAssignee" style="font-size: 13px; color: var(--text-main);">Emily Watson</strong>
+          </div>
+          <div>
+            <span style="font-size: 11px; color: var(--text-dim); display: block;">Due Date</span>
+            <strong id="taskModalDeadline" style="font-size: 13px; color: var(--text-main);">Friday 5:00 PM</strong>
+          </div>
+        </div>
+
+        <!-- AI Grounding Evidence -->
+        <div id="taskModalEvidenceBox" class="approval-evidence-box">
+          <div style="font-weight: 600; font-size: 11px; color: var(--primary); margin-bottom: 2px;">
+            <i class="ri-sparkling-fill"></i> Spoken Meeting Quote (@ <span id="taskModalTimestamp">04:15</span>):
+          </div>
+          <span id="taskModalEvidenceText">"Emily will finalize telemetry schema definitions by Friday 5:00 PM."</span>
+        </div>
+
+        <!-- Task Comments Thread -->
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: block;">Team Discussion &amp; Notes</label>
+          <div id="taskModalCommentsList" style="max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"></div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="taskCommentInput" class="search-bar-input" style="flex: 1;" placeholder="Add a comment or update...">
+            <button class="btn-primary-purple" id="btnAddCommentBtn" style="padding: 6px 14px; font-size: 12px;">Send</button>
+          </div>
+        </div>
+
+        <!-- Audit History -->
+        <div>
+          <label style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: block;">Audit History</label>
+          <div id="taskModalHistoryList" style="max-height: 100px; overflow-y: auto; font-size: 11.5px; color: var(--text-dim); display: flex; flex-direction: column; gap: 4px;"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-secondary" id="btnDeleteTaskModal" style="color: #ef4444;">
+          <i class="ri-delete-bin-line"></i> Delete
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" id="btnExportTaskIcs">
+            <i class="ri-calendar-event-line"></i> Export .ICS
+          </button>
+          <button class="btn-primary-purple" id="btnSaveTaskModalStatus">
+            <i class="ri-check-line"></i> Update Status
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

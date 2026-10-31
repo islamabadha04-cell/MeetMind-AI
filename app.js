@@ -3677,3 +3677,949 @@ if (document.readyState === 'loading') {
 } else {
   initPhase2UI();
 }
+
+
+// ==========================================================================
+// PHASE 3: AI PRODUCTIVITY & SMART TASK AUTOMATION ENGINE
+// ==========================================================================
+
+let activeTaskViewMode = 'kanban'; // 'kanban', 'list', 'calendar'
+let activeFollowUpLang = 'en'; // 'en', 'ur', 'roman'
+let activeApprovalFilter = 'pending'; // 'pending', 'all'
+let selectedTaskForModal = null;
+
+// Initial Phase 3 Task Approvals Store
+let managerApprovals = JSON.parse(localStorage.getItem('meetmind_approvals')) || [
+  {
+    id: 1,
+    taskId: 101,
+    taskTitle: 'Conduct mobile audio jitter stress test',
+    assignee: 'Emily Watson',
+    deadline: 'Thursday 4:00 PM',
+    priority: 'high',
+    sourceMeeting: 'Cowlar Sprint Architecture Review',
+    timestamp: '03:40',
+    evidenceQuote: 'Emily will conduct load testing on Thursday to eliminate audio jitter.',
+    status: 'pending',
+    requestedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    decisionNotes: ''
+  },
+  {
+    id: 2,
+    taskId: 102,
+    taskTitle: 'Verify zero-surcharge bank settlement on Raast',
+    assignee: 'Hasnain Ali',
+    deadline: 'Friday 5:00 PM',
+    priority: 'urgent',
+    sourceMeeting: 'Client Commercials Pakistan Gateway Sync',
+    timestamp: '04:15',
+    evidenceQuote: 'Approved direct checkout via Raast, JazzCash, and Easypaisa with zero surcharge.',
+    status: 'pending',
+    requestedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+    decisionNotes: ''
+  }
+];
+
+// Initial Phase 3 Workflows Store
+let automationWorkflows = JSON.parse(localStorage.getItem('meetmind_workflows')) || [
+  {
+    id: 1,
+    title: 'Post-Meeting Synthesis & Approval Chain',
+    description: 'When a meeting recording is processed, extract action items, create manager approval requests, and generate client follow-up draft.',
+    triggerType: 'meeting_completed',
+    triggerLabel: 'Meeting Recording Processed',
+    conditions: ['Meeting duration >= 60s', 'Audio quality > 80%'],
+    actions: [
+      { name: 'AI Executive Summary', icon: 'ri-file-text-line' },
+      { name: 'Extract Action Items with Evidence', icon: 'ri-magic-line' },
+      { name: 'Route Tasks to Manager Approval', icon: 'ri-user-follow-line' },
+      { name: 'Draft Client Follow-Up Email', icon: 'ri-mail-send-line' }
+    ],
+    isActive: true,
+    lastRun: '15 mins ago',
+    executionCount: 18
+  },
+  {
+    id: 2,
+    title: 'Milestone Deadline Alert & Payment Follow-Up',
+    description: 'Scans active project milestones 24 hours prior to deadline and triggers polite reminder drafts.',
+    triggerType: 'deadline_approaching',
+    triggerLabel: 'Deadline <= 24 Hours',
+    conditions: ['Task priority is High or Urgent', 'Status is Pending / In Progress'],
+    actions: [
+      { name: 'Trigger Deadline Notification', icon: 'ri-notification-3-line' },
+      { name: 'Draft Pakistani Gateway Payment Reminder', icon: 'ri-secure-payment-line' }
+    ],
+    isActive: true,
+    lastRun: '2 hours ago',
+    executionCount: 7
+  }
+];
+
+// Notifications Store
+let notifications = JSON.parse(localStorage.getItem('meetmind_notifications')) || [
+  {
+    id: 1,
+    type: 'deadline',
+    title: 'Upcoming Sprint Deadline',
+    message: 'Sprint delivery deadline locked for Friday 5:00 PM PKT.',
+    isRead: false,
+    timestamp: new Date().toISOString()
+  },
+  {
+    id: 2,
+    type: 'approval',
+    title: '2 AI Tasks Awaiting Review',
+    message: 'Action items extracted from Client Commercials Sync require manager signoff.',
+    isRead: false,
+    timestamp: new Date().toISOString()
+  }
+];
+
+function persistPhase3Data() {
+  localStorage.setItem('meetmind_tasks', JSON.stringify(tasks));
+  localStorage.setItem('meetmind_approvals', JSON.stringify(managerApprovals));
+  localStorage.setItem('meetmind_workflows', JSON.stringify(automationWorkflows));
+  localStorage.setItem('meetmind_notifications', JSON.stringify(notifications));
+}
+
+// Ensure tasks have full Phase 3 metadata
+function normalizePhase3Tasks() {
+  if (!tasks || tasks.length === 0) {
+    tasks = [
+      {
+        id: 101,
+        title: 'Conduct mobile audio jitter stress test',
+        description: 'Verify Android audio worklet buffer to eliminate recording latency.',
+        assignee: 'Emily Watson',
+        deadline: 'Thursday 4:00 PM',
+        priority: 'high',
+        status: 'pending',
+        project: 'Core Sprint',
+        confidenceScore: 0.95,
+        timestamp: '03:40',
+        evidenceQuote: 'Emily will conduct load testing on Thursday to eliminate audio jitter.',
+        isAiGenerated: true,
+        isApproved: true,
+        comments: [],
+        history: [{ action: 'created', note: 'AI task initialized', timestamp: '10:00 AM' }]
+      },
+      {
+        id: 102,
+        title: 'Deploy localized checkout modal (Raast, JazzCash, Easypaisa)',
+        description: 'Publish checkout modal with 1-click clipboard copy and 0% surcharge.',
+        assignee: 'Hasnain Ali',
+        deadline: 'Friday 5:00 PM',
+        priority: 'urgent',
+        status: 'in_progress',
+        project: 'Payments',
+        confidenceScore: 0.98,
+        timestamp: '04:15',
+        evidenceQuote: 'Approved direct checkout via Raast, JazzCash, and Easypaisa with zero surcharge.',
+        isAiGenerated: true,
+        isApproved: true,
+        comments: [],
+        history: [{ action: 'created', note: 'AI task initialized', timestamp: '10:00 AM' }]
+      }
+    ];
+    persistPhase3Data();
+    return;
+  }
+
+  let modified = false;
+  tasks.forEach((t, idx) => {
+    if (!t.status) { t.status = 'pending'; modified = true; }
+    if (!t.priority) { t.priority = (idx % 3 === 0) ? 'urgent' : (idx % 2 === 0 ? 'high' : 'medium'); modified = true; }
+    if (!t.project) { t.project = (idx % 2 === 0) ? 'Core Sprint' : 'Payments'; modified = true; }
+    if (!t.comments) { t.comments = []; modified = true; }
+    if (!t.history) {
+      t.history = [
+        { action: 'created', note: 'Task created via MeetMind AI Task Manager', timestamp: new Date(Date.now() - 3600000 * 24).toLocaleString() }
+      ];
+      modified = true;
+    }
+    if (t.isAiGenerated === undefined) { t.isAiGenerated = true; modified = true; }
+    if (t.isApproved === undefined) { t.isApproved = true; modified = true; }
+    if (!t.evidenceQuote) { t.evidenceQuote = `Agreed commitment from discussion: "${t.title}"`; modified = true; }
+    if (!t.timestamp) { t.timestamp = '03:15'; modified = true; }
+  });
+  if (modified) persistPhase3Data();
+}
+
+// --------------------------------------------------------------------------
+// MODULE 2: Smart Task Management Dashboard
+// --------------------------------------------------------------------------
+function renderSmartTaskManager() {
+  normalizePhase3Tasks();
+
+  // 1. Calculate & Update KPIs
+  const total = tasks.length;
+  const pending = tasks.filter(t => t.status === 'pending').length;
+  const inProgress = tasks.filter(t => t.status === 'in_progress').length;
+  const overdue = tasks.filter(t => t.status === 'overdue').length;
+  const completed = tasks.filter(t => t.status === 'completed').length;
+  const pendingApprovalsCount = managerApprovals.filter(a => a.status === 'pending').length;
+
+  const elTotal = document.getElementById('kpiTotalTasks');
+  const elPending = document.getElementById('kpiPendingTasks');
+  const elInProgress = document.getElementById('kpiInProgressTasks');
+  const elOverdue = document.getElementById('kpiOverdueTasks');
+  const elCompleted = document.getElementById('kpiCompletedTasks');
+  const elNavBadge = document.getElementById('navTaskCountBadge');
+  const elApprBadge = document.getElementById('navApprovalsCountBadge');
+
+  if (elTotal) elTotal.textContent = total;
+  if (elPending) elPending.textContent = pending;
+  if (elInProgress) elInProgress.textContent = inProgress;
+  if (elOverdue) elOverdue.textContent = overdue;
+  if (elCompleted) elCompleted.textContent = completed;
+  if (elNavBadge) elNavBadge.textContent = pending + inProgress;
+  if (elApprBadge) elApprBadge.textContent = pendingApprovalsCount;
+
+  // Filter tasks
+  const assigneeFilter = document.getElementById('taskFilterAssignee')?.value || 'all';
+  const projectFilter = document.getElementById('taskFilterProject')?.value || 'all';
+
+  const filteredTasks = tasks.filter(t => {
+    if (assigneeFilter !== 'all' && !(t.assignee || '').toLowerCase().includes(assigneeFilter.toLowerCase())) return false;
+    if (projectFilter !== 'all' && (t.project || '').toLowerCase() !== projectFilter.toLowerCase()) return false;
+    return true;
+  });
+
+  // Render according to active view mode
+  const containerKanban = document.getElementById('viewContainerKanban');
+  const containerList = document.getElementById('viewContainerList');
+  const containerCalendar = document.getElementById('viewContainerCalendar');
+
+  if (containerKanban) containerKanban.style.display = (activeTaskViewMode === 'kanban') ? 'grid' : 'none';
+  if (containerList) containerList.style.display = (activeTaskViewMode === 'list') ? 'block' : 'none';
+  if (containerCalendar) containerCalendar.style.display = (activeTaskViewMode === 'calendar') ? 'block' : 'none';
+
+  if (activeTaskViewMode === 'kanban') {
+    renderKanbanBoard(filteredTasks);
+  } else if (activeTaskViewMode === 'list') {
+    renderTaskListView(filteredTasks);
+  } else if (activeTaskViewMode === 'calendar') {
+    renderTaskCalendarView(filteredTasks);
+  }
+
+  // Also maintain tasksBoardGrid for backward compatibility with existing tests
+  const legacyGrid = document.getElementById('tasksBoardGrid');
+  if (legacyGrid) {
+    legacyGrid.innerHTML = '';
+    filteredTasks.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'task-card';
+      card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <h4 style="font-size: 14px; font-weight: 600; margin: 0; color: var(--text-main);">${escapeHtml(t.title)}</h4>
+          <span class="badge-priority priority-${t.priority || 'medium'}">${(t.priority || 'MED').toUpperCase()}</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">
+          <span><i class="ri-user-line"></i> ${escapeHtml(t.assignee || 'Unassigned')}</span> •
+          <span><i class="ri-calendar-line"></i> ${escapeHtml(t.deadline || 'No deadline')}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px;">
+          <button class="btn-export-ics-task btn-secondary" style="padding: 4px 8px; font-size: 11px;" data-task-id="${t.id}">
+            <i class="ri-calendar-event-line"></i> Export .ICS
+          </button>
+          <span class="badge-summary-ready">${escapeHtml(t.status || 'pending')}</span>
+        </div>
+      `;
+      card.addEventListener('click', (e) => {
+        if (!e.target.closest('.btn-export-ics-task')) {
+          openTaskDetailsModal(t.id);
+        }
+      });
+      const icsBtn = card.querySelector('.btn-export-ics-task');
+      if (icsBtn) {
+        icsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (typeof downloadTaskIcsFile === 'function') downloadTaskIcsFile(t.id);
+        });
+      }
+      legacyGrid.appendChild(card);
+    });
+  }
+}
+
+// 1. Kanban Board Renderer
+function renderKanbanBoard(filteredTasks) {
+  const statuses = ['pending', 'in_progress', 'completed', 'overdue', 'cancelled'];
+  const columns = {
+    pending: document.getElementById('kanbanColPending'),
+    in_progress: document.getElementById('kanbanColInProgress'),
+    completed: document.getElementById('kanbanColCompleted'),
+    overdue: document.getElementById('kanbanColOverdue'),
+    cancelled: document.getElementById('kanbanColCancelled')
+  };
+
+  const counts = {
+    pending: document.getElementById('countColPending'),
+    in_progress: document.getElementById('countColInProgress'),
+    completed: document.getElementById('countColCompleted'),
+    overdue: document.getElementById('countColOverdue'),
+    cancelled: document.getElementById('countColCancelled')
+  };
+
+  // Reset columns
+  statuses.forEach(s => {
+    if (columns[s]) columns[s].innerHTML = '';
+    if (counts[s]) counts[s].textContent = '0';
+  });
+
+  filteredTasks.forEach(t => {
+    const statusKey = statuses.includes(t.status) ? t.status : 'pending';
+    const col = columns[statusKey];
+    if (!col) return;
+
+    const card = document.createElement('div');
+    card.className = 'kanban-card';
+    card.dataset.taskId = t.id;
+
+    const priorityClass = `priority-${t.priority || 'medium'}`;
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span class="badge-priority ${priorityClass}">${(t.priority || 'MEDIUM').toUpperCase()}</span>
+        <span style="font-size: 11px; color: var(--text-dim);"><i class="ri-folder-line"></i> ${escapeHtml(t.project || 'Sprint')}</span>
+      </div>
+      <div class="kanban-card-title">${escapeHtml(t.title)}</div>
+      <div class="kanban-card-meta">
+        <span><i class="ri-user-line"></i> ${escapeHtml(t.assignee || 'Unassigned')}</span>
+        <span><i class="ri-calendar-line"></i> ${escapeHtml(t.deadline || 'No deadline')}</span>
+      </div>
+      ${t.isAiGenerated ? `
+        <div style="margin-top: 8px; font-size: 10.5px; color: var(--primary); display: flex; align-items: center; gap: 4px;">
+          <i class="ri-sparkling-fill"></i> Spoken evidence @ ${t.timestamp || '03:15'}
+        </div>
+      ` : ''}
+    `;
+
+    card.addEventListener('click', () => openTaskDetailsModal(t.id));
+    col.appendChild(card);
+  });
+
+  // Update counts
+  statuses.forEach(s => {
+    if (counts[s] && columns[s]) {
+      counts[s].textContent = columns[s].children.length;
+    }
+  });
+}
+
+// 2. List View Table Renderer
+function renderTaskListView(filteredTasks) {
+  const tbody = document.getElementById('taskTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (filteredTasks.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-dim);">No tasks match the active filters.</td></tr>';
+    return;
+  }
+
+  filteredTasks.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.innerHTML = `
+      <td><strong>${escapeHtml(t.title)}</strong></td>
+      <td><span class="badge-priority priority-${t.priority || 'medium'}">${(t.priority || 'MED').toUpperCase()}</span></td>
+      <td>${escapeHtml(t.assignee || 'Unassigned')}</td>
+      <td>${escapeHtml(t.deadline || 'None')}</td>
+      <td><span class="badge-tag">${escapeHtml(t.project || 'Sprint')}</span></td>
+      <td><span class="badge-summary-ready">${escapeHtml(t.status || 'pending')}</span></td>
+      <td style="font-size: 11px; color: var(--primary);"><i class="ri-sparkling-fill"></i> ${t.timestamp || '03:15'}</td>
+      <td style="text-align: right;">
+        <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">View</button>
+      </td>
+    `;
+    tr.addEventListener('click', () => openTaskDetailsModal(t.id));
+    tbody.appendChild(tr);
+  });
+}
+
+// 3. Calendar View Renderer
+function renderTaskCalendarView(filteredTasks) {
+  const grid = document.getElementById('calendarTasksGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  filteredTasks.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'task-card';
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-weight: 700; color: var(--primary); font-size: 12px;"><i class="ri-calendar-check-line"></i> ${escapeHtml(t.deadline || 'Flexible Deadline')}</span>
+        <span class="badge-priority priority-${t.priority || 'medium'}">${(t.priority || 'MED').toUpperCase()}</span>
+      </div>
+      <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">${escapeHtml(t.title)}</h4>
+      <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">Assignee: ${escapeHtml(t.assignee || 'Unassigned')}</p>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="badge-summary-ready">${escapeHtml(t.status || 'pending')}</span>
+        <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Details</button>
+      </div>
+    `;
+    card.addEventListener('click', () => openTaskDetailsModal(t.id));
+    grid.appendChild(card);
+  });
+}
+
+// 4. Task Details Modal Logic
+function openTaskDetailsModal(taskId) {
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+  selectedTaskForModal = task;
+
+  const modal = document.getElementById('taskDetailsModal');
+  if (!modal) return;
+
+  document.getElementById('taskModalTitle').textContent = task.title;
+  document.getElementById('taskModalPriority').textContent = (task.priority || 'MEDIUM').toUpperCase();
+  document.getElementById('taskModalPriority').className = `badge-priority priority-${task.priority || 'medium'}`;
+  document.getElementById('taskModalProject').textContent = task.project || 'Core Sprint';
+  document.getElementById('taskModalStatus').textContent = (task.status || 'pending').toUpperCase();
+  document.getElementById('taskModalDesc').textContent = task.description || task.title;
+  document.getElementById('taskModalAssignee').textContent = task.assignee || 'Unassigned';
+  document.getElementById('taskModalDeadline').textContent = task.deadline || 'No deadline specified';
+  document.getElementById('taskModalTimestamp').textContent = task.timestamp || '03:15';
+  document.getElementById('taskModalEvidenceText').textContent = `"${task.evidenceQuote || task.title}"`;
+
+  // Comments
+  const commentsList = document.getElementById('taskModalCommentsList');
+  commentsList.innerHTML = '';
+  const comments = task.comments || [];
+  if (comments.length === 0) {
+    commentsList.innerHTML = '<span style="color: var(--text-dim); font-size: 12px; font-style: italic;">No comments yet. Add the first update below.</span>';
+  } else {
+    comments.forEach(c => {
+      const cDiv = document.createElement('div');
+      cDiv.style.cssText = 'background: var(--bg-body); padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 12px;';
+      cDiv.innerHTML = `<strong>${escapeHtml(c.author)}:</strong> ${escapeHtml(c.text)} <span style="font-size: 10px; color: var(--text-dim); float: right;">${c.time || 'Recent'}</span>`;
+      commentsList.appendChild(cDiv);
+    });
+  }
+
+  // History
+  const historyList = document.getElementById('taskModalHistoryList');
+  historyList.innerHTML = '';
+  const hist = task.history || [];
+  hist.forEach(h => {
+    const hItem = document.createElement('div');
+    hItem.innerHTML = `<i class="ri-record-circle-line" style="font-size: 10px;"></i> ${escapeHtml(h.note || h.action)} <span style="color: var(--text-dim);">(${h.timestamp || 'Recent'})</span>`;
+    historyList.appendChild(hItem);
+  });
+
+  modal.classList.remove('hidden');
+}
+
+// --------------------------------------------------------------------------
+// MODULE 1: AI Action Item Extraction
+// --------------------------------------------------------------------------
+function extractActionItemsFromMeeting(meetingId) {
+  const meeting = meetings.find(m => m.id === meetingId) || meetings[0];
+  if (!meeting) {
+    showToast('Please select or record a meeting first!');
+    return;
+  }
+
+  // Extract from transcript & summary
+  const transcriptText = meeting.transcript || meeting.summary || '';
+  const sentences = transcriptText.split('. ').filter(s => s.trim().length > 10);
+  let extractedCount = 0;
+
+  sentences.forEach((sent, idx) => {
+    const sLower = sent.toLowerCase();
+    const isTask = /will|conduct|deploy|finalize|review|test|implement|create|integrate|send|prepare|deliver|handle/.test(sLower);
+    if (isTask && extractedCount < 3) {
+      const newId = Date.now() + idx;
+      let assignee = 'Unassigned';
+      if (/emily/.test(sLower)) assignee = 'Emily Watson';
+      else if (/hasnain/.test(sLower)) assignee = 'Hasnain Ali';
+      else if (/tariq|client/.test(sLower)) assignee = 'Tariq Khan';
+
+      let deadline = null;
+      if (/friday/.test(sLower)) deadline = 'Friday 5:00 PM';
+      else if (/monday/.test(sLower)) deadline = 'Monday 12:00 PM';
+      else if (/thursday/.test(sLower)) deadline = 'Thursday 4:00 PM';
+
+      const priority = /urgent|critical|blocker/.test(sLower) ? 'urgent' : (/high|deploy|payment/.test(sLower) ? 'high' : 'medium');
+      const timeStr = `0${idx + 2}:15`;
+
+      // Prevent duplicate task
+      if (!tasks.some(t => t.title.toLowerCase() === sent.trim().toLowerCase())) {
+        const newTask = {
+          id: newId,
+          meetingId: meeting.id,
+          title: sent.trim() + (sent.endsWith('.') ? '' : '.'),
+          description: `AI extracted action item from '${meeting.title}'.`,
+          assignee: assignee,
+          deadline: deadline,
+          priority: priority,
+          status: 'pending',
+          project: 'Core Sprint',
+          confidenceScore: assignee !== 'Unassigned' ? 0.95 : 0.80,
+          timestamp: timeStr,
+          evidenceQuote: sent.trim(),
+          isAiGenerated: true,
+          isApproved: false,
+          comments: [],
+          history: [{ action: 'created', note: `AI extracted from ${meeting.title} @ ${timeStr}`, timestamp: new Date().toLocaleTimeString() }]
+        };
+        tasks.unshift(newTask);
+
+        // Add to manager approvals
+        managerApprovals.unshift({
+          id: Date.now() + idx + 10,
+          taskId: newId,
+          taskTitle: newTask.title,
+          assignee: assignee,
+          deadline: deadline || 'Needs assignment',
+          priority: priority,
+          sourceMeeting: meeting.title,
+          timestamp: timeStr,
+          evidenceQuote: sent.trim(),
+          status: 'pending',
+          requestedAt: new Date().toISOString(),
+          decisionNotes: ''
+        });
+
+        extractedCount++;
+      }
+    }
+  });
+
+  if (extractedCount > 0) {
+    persistPhase3Data();
+    renderSmartTaskManager();
+    renderManagerApprovals();
+    showToast(`Extracted ${extractedCount} new AI action items awaiting manager approval! ✨`);
+  } else {
+    showToast('No new distinct tasks found in this meeting recording.');
+  }
+}
+
+// --------------------------------------------------------------------------
+// MODULE 5: Manager Approvals Workflow
+// --------------------------------------------------------------------------
+function renderManagerApprovals() {
+  const container = document.getElementById('approvalsListContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const pendingList = managerApprovals.filter(a => activeApprovalFilter === 'all' || a.status === 'pending');
+  const countBadge = document.getElementById('navApprovalsCountBadge');
+  const pendingCount = managerApprovals.filter(a => a.status === 'pending').length;
+  if (countBadge) countBadge.textContent = pendingCount;
+
+  if (pendingList.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 48px 24px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+        <i class="ri-checkbox-circle-line" style="font-size: 36px; color: var(--success); display: block; margin-bottom: 10px;"></i>
+        <h4 style="font-size: 16px; margin-bottom: 6px;">Zero Pending Task Approvals</h4>
+        <p style="font-size: 13px; color: var(--text-dim); max-width: 440px; margin: 0 auto;">All AI-suggested meeting action items have been reviewed and approved by management.</p>
+      </div>
+    `;
+    return;
+  }
+
+  pendingList.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'approval-card';
+    card.innerHTML = `
+      <div class="approval-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="badge-priority priority-${item.priority || 'medium'}">${(item.priority || 'MED').toUpperCase()}</span>
+          <strong style="font-size: 14px; color: var(--text-main);">${escapeHtml(item.taskTitle)}</strong>
+        </div>
+        <span class="badge-summary-ready" style="${item.status === 'pending' ? 'background: rgba(245, 158, 11, 0.15); color: #f59e0b;' : 'background: rgba(16, 185, 129, 0.15); color: #10b981;'}">
+          ${escapeHtml(item.status.toUpperCase())}
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 16px; font-size: 12px; color: var(--text-dim); flex-wrap: wrap;">
+        <span><i class="ri-folder-line"></i> Source: <strong>${escapeHtml(item.sourceMeeting)}</strong></span>
+        <span><i class="ri-user-line"></i> Suggested Assignee: <strong>${escapeHtml(item.assignee)}</strong></span>
+        <span><i class="ri-calendar-line"></i> Deadline: <strong>${escapeHtml(item.deadline)}</strong></span>
+      </div>
+
+      <div class="approval-evidence-box">
+        <i class="ri-chat-voice-line" style="color: var(--primary);"></i>
+        <strong>Verified Transcript Turn (@ ${item.timestamp}):</strong> "${escapeHtml(item.evidenceQuote)}"
+      </div>
+
+      ${item.status === 'pending' ? `
+        <div class="approval-actions-row">
+          <input type="text" id="apprNotes_${item.id}" class="search-bar-input" style="flex: 1; font-size: 12px;" placeholder="Optional manager approval notes or instructions...">
+          <button class="btn-primary-purple btn-approve-task" data-id="${item.id}" style="padding: 6px 14px; font-size: 12px; background: #10b981;">
+            <i class="ri-check-line"></i> Approve &amp; Assign
+          </button>
+          <button class="btn-secondary btn-reject-task" data-id="${item.id}" style="padding: 6px 14px; font-size: 12px; color: #ef4444;">
+            <i class="ri-close-line"></i> Reject Task
+          </button>
+        </div>
+      ` : `
+        <div style="font-size: 12px; color: var(--text-dim); font-style: italic;">Decision notes: ${escapeHtml(item.decisionNotes || 'Approved without modifications.')}</div>
+      `}
+    `;
+
+    const btnApprove = card.querySelector('.btn-approve-task');
+    const btnReject = card.querySelector('.btn-reject-task');
+    if (btnApprove) {
+      btnApprove.addEventListener('click', () => {
+        const notes = document.getElementById(`apprNotes_${item.id}`)?.value || 'Approved by Manager';
+        item.status = 'approved';
+        item.decisionNotes = notes;
+        const linkedTask = tasks.find(t => t.id === item.taskId);
+        if (linkedTask) {
+          linkedTask.isApproved = true;
+          linkedTask.history.unshift({ action: 'approved', note: `Approved by Manager: ${notes}`, timestamp: new Date().toLocaleTimeString() });
+        }
+        persistPhase3Data();
+        renderManagerApprovals();
+        renderSmartTaskManager();
+        showToast('Task approved and officially committed to workspace! ✅');
+      });
+    }
+
+    if (btnReject) {
+      btnReject.addEventListener('click', () => {
+        const notes = document.getElementById(`apprNotes_${item.id}`)?.value || 'Rejected by Manager';
+        item.status = 'rejected';
+        item.decisionNotes = notes;
+        const linkedTask = tasks.find(t => t.id === item.taskId);
+        if (linkedTask) {
+          linkedTask.status = 'cancelled';
+          linkedTask.history.unshift({ action: 'rejected', note: `Rejected by Manager: ${notes}`, timestamp: new Date().toLocaleTimeString() });
+        }
+        persistPhase3Data();
+        renderManagerApprovals();
+        renderSmartTaskManager();
+        showToast('Task rejected and moved to cancelled archive. ❌');
+      });
+    }
+
+    container.appendChild(card);
+  });
+}
+
+// --------------------------------------------------------------------------
+// MODULE 3: AI Follow-Up Generator
+// --------------------------------------------------------------------------
+function renderAiFollowUpGenerator() {
+  const selMeeting = document.getElementById('followUpMeetingSelect');
+  if (selMeeting && selMeeting.options.length === 0) {
+    meetings.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.title;
+      selMeeting.appendChild(opt);
+    });
+  }
+}
+
+function executeFollowUpGeneration() {
+  const meetingId = parseInt(document.getElementById('followUpMeetingSelect')?.value || '1', 10);
+  const meeting = meetings.find(m => m.id === meetingId) || meetings[0];
+  const type = document.getElementById('followUpTypeSelect')?.value || 'client_followup';
+  const recipient = document.getElementById('followUpRecipientInput')?.value || 'Client / Team';
+  const instructions = document.getElementById('followUpInstructionsInput')?.value || '';
+
+  const subjectInput = document.getElementById('followUpSubjectDisplay');
+  const bodyTextarea = document.getElementById('followUpBodyDisplay');
+  const toDisplay = document.getElementById('followUpToDisplay');
+
+  if (toDisplay) toDisplay.textContent = recipient;
+
+  const meetingTitle = meeting?.title || 'Operational Milestone Sync';
+  const actionItemsText = (meeting?.actionItems || []).map(a => `• ${a}`).join('\n') || '• Deploy localized checkout modal.\n• Review low-latency audio telemetry.';
+
+  let subject = '';
+  let body = '';
+
+  if (type === 'client_followup') {
+    if (activeFollowUpLang === 'ur') {
+      subject = `خلاصہ اور اگلا لائحہ عمل — ${meetingTitle}`;
+      body = `محترم ${recipient}،\n\nہماری حالیہ میٹنگ کا خلاصہ اور متفقہ نکات درج ذیل ہیں:\n\n${meeting?.summary || 'میٹنگ میں تمام بنیادی اسپرنٹ اہداف اور پیشرفت پر تفصیلی بات چیت ہوئی۔'}\n\nاہم ایکشن آئٹمز:\n${actionItemsText}\n\nبراہ کرم ان نکات کا جائزہ لیں اور اگر کوئی تبدیلی درکار ہو تو مطلع فرمائیں۔\n\nنیک تمناؤں کے ساتھ،\nMeetMind AI ٹیم`;
+    } else if (activeFollowUpLang === 'roman') {
+      subject = `Meeting Summary & Next Steps — ${meetingTitle}`;
+      body = `Dear ${recipient},\n\nHamari recent meeting ke key decisions aur next steps yeh hain:\n\n${meeting?.summary || 'Meeting me sprint goals aur timeline delivery par tafseeli baat hui.'}\n\nKey Action Items:\n${actionItemsText}\n\nAgar koi point add ya amend karna ho toh please update kijiyega.\n\nBest regards,\nMeetMind AI Team`;
+    } else {
+      subject = `Executive Follow-Up & Next Steps — ${meetingTitle}`;
+      body = `Dear ${recipient},\n\nThank you for your time during our discussion on '${meetingTitle}'.\n\nExecutive Summary:\n${meeting?.summary || 'The team reviewed key milestones, low-latency architecture, and operational deliverables.'}\n\nAgreed Action Items & Deliverables:\n${actionItemsText}\n\nPlease review the action items and confirm if anything requires adjustment before the next milestone.\n\nBest regards,\nMeetMind AI Operations Team`;
+    }
+  } else if (type === 'payment_reminder') {
+    if (activeFollowUpLang === 'ur') {
+      subject = `ادائیگی کی یاد دہانی اور تصدیق — ${meetingTitle}`;
+      body = `محترم ${recipient}،\n\nہماری میٹنگ میں طے شدہ ادائیگی اور مائلسٹون کی تصدیق کے سلسلے میں یہ پیغام بھیجا جا رہا ہے۔\n\nادائیگی کے منظور شدہ چینلز (JazzCash / Easypaisa / Raast) پورٹل پر دستیاب ہیں۔\nبراہ کرم مائلسٹون انوائس کی ادائیگی مکمل کر کے ٹرانزیکشن آئی ڈی (TID) مطلع فرمائیں۔\n\nشکریہ،\nاکاؤنٹس ٹیم`;
+    } else if (activeFollowUpLang === 'roman') {
+      subject = `Payment Schedule & Milestone Reminder — ${meetingTitle}`;
+      body = `Dear ${recipient},\n\nYeh gentle reminder hamari meeting me discuss huay milestone payment ke hawale se hai.\n\nPayment options (Raast, JazzCash, Easypaisa) dashboard par configured hain.\nInvoicing schedule clear karne ke baad transaction details share kar dein taake milestone unlock ho sake.\n\nRegards,\nFinance & Accounts Team`;
+    } else {
+      subject = `Payment Schedule Reminder — ${meetingTitle}`;
+      body = `Dear ${recipient},\n\nThis is a courteous reminder regarding the agreed milestone payment discussed during '${meetingTitle}'.\n\nOur verified settlement channels (Raast Instant Settlement, Bank Transfer, JazzCash/Easypaisa) are available.\nKindly confirm receipt of the invoice and share the reference once settlement is initiated.\n\nWarm regards,\nFinance & Operations Desk`;
+    }
+  } else if (type === 'deadline_reminder') {
+    subject = `Upcoming Milestone Deadline Alert — ${meetingTitle}`;
+    body = `Team,\n\nThis is a reminder for our upcoming project deadline confirmed during '${meetingTitle}'.\n\nPending Deliverables:\n${actionItemsText}\n\nPlease ensure all pull requests and QA verification steps are completed prior to the milestone cutoff.\n\nBest regards,\nProject Management Office`;
+  } else {
+    subject = `Project Status Briefing — ${meetingTitle}`;
+    body = `Hi ${recipient},\n\nHere is the verified status overview for '${meetingTitle}':\n\nOverview:\n${meeting?.summary || 'Sprint targets are proceeding as planned with active engineering deliverables.'}\n\nAction Items:\n${actionItemsText}\n\nAll tasks are actively tracked in MeetMind AI Task Manager.\n\nRegards,\nMeetMind AI`;
+  }
+
+  if (instructions) {
+    body += `\n\n[Special Instruction]: ${instructions}`;
+  }
+
+  if (subjectInput) subjectInput.value = subject;
+  if (bodyTextarea) bodyTextarea.value = body;
+  showToast('AI follow-up draft generated! Review or copy below. ✉️');
+}
+
+// --------------------------------------------------------------------------
+// MODULE 6: Visual AI Workflow Builder
+// --------------------------------------------------------------------------
+function renderWorkflowAutomationBuilder() {
+  const container = document.getElementById('workflowCardsGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  automationWorkflows.forEach(wf => {
+    const card = document.createElement('div');
+    card.className = `workflow-card ${wf.isActive ? 'active' : ''}`;
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase;">
+            <i class="ri-flashlight-line"></i> Trigger: ${escapeHtml(wf.triggerLabel || wf.triggerType)}
+          </span>
+          <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin: 4px 0;">${escapeHtml(wf.title)}</h4>
+        </div>
+        <button class="btn-toggle-wf btn-secondary" style="padding: 4px 10px; font-size: 11px;" data-id="${wf.id}">
+          ${wf.isActive ? '<i class="ri-toggle-fill" style="color: var(--success); font-size: 16px;"></i> Active' : '<i class="ri-toggle-line" style="color: var(--text-dim); font-size: 16px;"></i> Disabled'}
+        </button>
+      </div>
+
+      <p style="font-size: 12.5px; color: var(--text-dim); margin: 0; line-height: 1.4;">${escapeHtml(wf.description)}</p>
+
+      <div class="workflow-steps-chain">
+        ${(wf.actions || []).map((a, i) => `
+          <div class="workflow-step-node">
+            <span style="font-weight: 700; color: var(--primary); font-size: 11px;">#${i + 1}</span>
+            <i class="${a.icon || 'ri-arrow-right-circle-line'}"></i>
+            <span>${escapeHtml(a.name)}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 4px;">
+        <span style="font-size: 11px; color: var(--text-dim);"><i class="ri-history-line"></i> Last executed ${wf.lastRun || 'recently'} (${wf.executionCount || 0} runs)</span>
+        <button class="btn-primary-purple btn-run-workflow" data-id="${wf.id}" style="padding: 6px 12px; font-size: 11px;">
+          <i class="ri-play-fill"></i> Execute Now
+        </button>
+      </div>
+    `;
+
+    const btnToggle = card.querySelector('.btn-toggle-wf');
+    if (btnToggle) {
+      btnToggle.addEventListener('click', () => {
+        wf.isActive = !wf.isActive;
+        persistPhase3Data();
+        renderWorkflowAutomationBuilder();
+        showToast(`Workflow ${wf.title} is now ${wf.isActive ? 'Active' : 'Disabled'}.`);
+      });
+    }
+
+    const btnRun = card.querySelector('.btn-run-workflow');
+    if (btnRun) {
+      btnRun.addEventListener('click', () => {
+        wf.executionCount = (wf.executionCount || 0) + 1;
+        wf.lastRun = 'Just now';
+        persistPhase3Data();
+        renderWorkflowAutomationBuilder();
+        showToast(`Executed workflow '${wf.title}' with 0 errors! ⚡`);
+      });
+    }
+
+    container.appendChild(card);
+  });
+}
+
+// --------------------------------------------------------------------------
+// MODULE 4: Smart Notifications & Deadline Scanning
+// --------------------------------------------------------------------------
+function scanDeadlinesAndAlerts() {
+  const activeTasks = tasks.filter(t => t.status === 'pending' || t.status === 'in_progress');
+  let newAlerts = 0;
+
+  activeTasks.forEach(t => {
+    if (t.deadline && /friday|today|tomorrow|urgent/.test(t.deadline.toLowerCase())) {
+      const exists = notifications.some(n => n.title.includes(t.title.slice(0, 15)));
+      if (!exists) {
+        notifications.unshift({
+          id: Date.now() + Math.random(),
+          type: 'deadline',
+          title: `Approaching Deadline: ${t.title.slice(0, 30)}...`,
+          message: `Task assigned to ${t.assignee || 'team'} is due on ${t.deadline}.`,
+          isRead: false,
+          timestamp: new Date().toISOString()
+        });
+        newAlerts++;
+      }
+    }
+  });
+
+  persistPhase3Data();
+  showToast(newAlerts > 0 ? `Scanned tasks: Generated ${newAlerts} new deadline alerts! 🔔` : 'All deadlines scanned: No immediate overdue risks found! ✨');
+}
+
+// --------------------------------------------------------------------------
+// Initialization Hook for Phase 3 UI
+// --------------------------------------------------------------------------
+function initPhase3UI() {
+  // 1. Task View Mode Switchers
+  const btnKanban = document.getElementById('btnViewKanban');
+  const btnList = document.getElementById('btnViewList');
+  const btnCal = document.getElementById('btnViewCalendar');
+
+  [btnKanban, btnList, btnCal].forEach(btn => {
+    if (btn) {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#taskViewModeGroup .view-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTaskViewMode = btn.dataset.view;
+        renderSmartTaskManager();
+      });
+    }
+  });
+
+  // Filter Dropdowns
+  const fAssignee = document.getElementById('taskFilterAssignee');
+  const fProject = document.getElementById('taskFilterProject');
+  if (fAssignee) fAssignee.addEventListener('change', renderSmartTaskManager);
+  if (fProject) fProject.addEventListener('change', renderSmartTaskManager);
+
+  // Extract from meeting button
+  const btnAutoExtract = document.getElementById('btnAutoExtractTasks');
+  if (btnAutoExtract) {
+    btnAutoExtract.addEventListener('click', () => {
+      extractActionItemsFromMeeting(meetings[0]?.id || 1);
+    });
+  }
+
+  // Scan alerts button
+  const btnScanAlerts = document.getElementById('btnScanTaskAlerts');
+  if (btnScanAlerts) {
+    btnScanAlerts.addEventListener('click', scanDeadlinesAndAlerts);
+  }
+
+  // Follow-up language switcher
+  document.querySelectorAll('#followUpLangGroup .search-mode-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#followUpLangGroup .search-mode-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeFollowUpLang = chip.dataset.lang;
+      executeFollowUpGeneration();
+    });
+  });
+
+  const btnGenFollowUp = document.getElementById('btnGenerateFollowUp');
+  if (btnGenFollowUp) btnGenFollowUp.addEventListener('click', executeFollowUpGeneration);
+
+  const btnCopyFollowUp = document.getElementById('btnCopyFollowUpDraft');
+  if (btnCopyFollowUp) {
+    btnCopyFollowUp.addEventListener('click', () => {
+      const body = document.getElementById('followUpBodyDisplay')?.value;
+      if (body) {
+        navigator.clipboard.writeText(body).then(() => showToast('Draft copied to clipboard! 📋'));
+      }
+    });
+  }
+
+  const btnOpenMail = document.getElementById('btnOpenMailClient');
+  if (btnOpenMail) {
+    btnOpenMail.addEventListener('click', () => {
+      const subject = encodeURIComponent(document.getElementById('followUpSubjectDisplay')?.value || 'Meeting Follow-Up');
+      const body = encodeURIComponent(document.getElementById('followUpBodyDisplay')?.value || '');
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    });
+  }
+
+  // Approvals filter buttons
+  const btnFilterPending = document.getElementById('btnFilterPendingApprovals');
+  const btnFilterAll = document.getElementById('btnFilterAllApprovals');
+  if (btnFilterPending) {
+    btnFilterPending.addEventListener('click', () => {
+      btnFilterPending.classList.add('active');
+      btnFilterAll?.classList.remove('active');
+      activeApprovalFilter = 'pending';
+      renderManagerApprovals();
+    });
+  }
+  if (btnFilterAll) {
+    btnFilterAll.addEventListener('click', () => {
+      btnFilterAll.classList.add('active');
+      btnFilterPending?.classList.remove('active');
+      activeApprovalFilter = 'all';
+      renderManagerApprovals();
+    });
+  }
+
+  // Task Modal Close & Comment
+  const btnCloseTaskModal = document.getElementById('btnTaskModalClose');
+  if (btnCloseTaskModal) {
+    btnCloseTaskModal.addEventListener('click', () => {
+      document.getElementById('taskDetailsModal')?.classList.add('hidden');
+    });
+  }
+
+  const btnAddComment = document.getElementById('btnAddCommentBtn');
+  if (btnAddComment) {
+    btnAddComment.addEventListener('click', () => {
+      const inp = document.getElementById('taskCommentInput');
+      if (inp && inp.value && selectedTaskForModal) {
+        if (!selectedTaskForModal.comments) selectedTaskForModal.comments = [];
+        selectedTaskForModal.comments.push({
+          author: currentUser?.name || 'Emily Watson',
+          text: inp.value,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        inp.value = '';
+        persistPhase3Data();
+        openTaskDetailsModal(selectedTaskForModal.id);
+        showToast('Comment added to task!');
+      }
+    });
+  }
+
+  const btnSaveModalStatus = document.getElementById('btnSaveTaskModalStatus');
+  if (btnSaveModalStatus) {
+    btnSaveModalStatus.addEventListener('click', () => {
+      if (selectedTaskForModal) {
+        const nextStatus = selectedTaskForModal.status === 'completed' ? 'pending' : 'completed';
+        selectedTaskForModal.status = nextStatus;
+        selectedTaskForModal.history.unshift({
+          action: 'status_changed',
+          note: `Status changed to ${nextStatus}`,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        persistPhase3Data();
+        openTaskDetailsModal(selectedTaskForModal.id);
+        renderSmartTaskManager();
+        showToast(`Task status updated to ${nextStatus}!`);
+      }
+    });
+  }
+
+  // Initial renders
+  renderSmartTaskManager();
+  renderManagerApprovals();
+  renderAiFollowUpGenerator();
+  renderWorkflowAutomationBuilder();
+}
+
+// Auto-run Phase 3 UI initialization
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPhase3UI);
+} else {
+  initPhase3UI();
+}
