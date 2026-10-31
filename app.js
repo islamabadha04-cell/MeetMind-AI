@@ -1362,7 +1362,7 @@ if (deskChatSendBtn && deskChatQueryInput) {
 }
 
 // Quick suggested prompt chips
-document.querySelectorAll('.chat-suggested-prompts .s-chip').forEach(chip => {
+document.querySelectorAll('.desktop-suggestion-chips .s-chip, .chat-suggested-prompts .s-chip').forEach(chip => {
   chip.addEventListener('click', () => {
     handleDeskAiChat(chip.textContent.trim());
   });

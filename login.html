@@ -318,10 +318,10 @@
     <a href="mailto:islamabad.ha04@gmail.com">Contact Support</a>
   </div>
 
-  <script type="module">
-    import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from './firebase-service.js';
-
+  <!-- Immediate UI Interactivity (Mode switch & Demo Guest access respond instantly) -->
+  <script>
     let isSignUp = false;
+    window.getIsSignUp = () => isSignUp;
 
     // Switch between Sign in and Sign up
     const switchModeBtn = document.getElementById('switchModeBtn');
@@ -349,6 +349,26 @@
         }
       });
     }
+
+    // Guest demo access (Instant evaluation for reviewers)
+    const btnGuestAccess = document.getElementById('btnGuestAccess');
+    if (btnGuestAccess) {
+      btnGuestAccess.addEventListener('click', () => {
+        sessionStorage.setItem('meetmind_guest_session', 'true');
+        localStorage.setItem('meetmind_user', JSON.stringify({ 
+          name: 'Demo Reviewer', 
+          email: 'demo@meetmind.ai', 
+          uid: 'demo_guest_evaluator',
+          isGuest: true 
+        }));
+        window.location.href = '/app';
+      });
+    }
+  </script>
+
+  <!-- Firebase Cloud Authentication Module -->
+  <script type="module">
+    import { auth, googleProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from './firebase-service.js';
 
     // Google Sign In
     const btnGoogleAuth = document.getElementById('btnGoogleAuth');
@@ -390,11 +410,12 @@
       const pass = document.getElementById('authPassword').value;
       const submitBtn = document.getElementById('btnSubmitForm');
       const originalText = submitBtn.textContent;
+      const isSignUpActive = window.getIsSignUp ? window.getIsSignUp() : false;
 
       try {
         submitBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Authenticating...';
         let userCredential;
-        if (isSignUp) {
+        if (isSignUpActive) {
           userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         } else {
           userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -412,24 +433,9 @@
       } catch (err) {
         console.warn('Auth notice:', err.message);
         submitBtn.textContent = originalText;
-        alert((isSignUp ? 'Registration note: ' : 'Sign in note: ') + err.message);
+        alert((isSignUpActive ? 'Registration note: ' : 'Sign in note: ') + err.message);
       }
     };
-
-    // Guest demo access (Instant evaluation for reviewers)
-    const btnGuestAccess = document.getElementById('btnGuestAccess');
-    if (btnGuestAccess) {
-      btnGuestAccess.addEventListener('click', () => {
-        sessionStorage.setItem('meetmind_guest_session', 'true');
-        localStorage.setItem('meetmind_user', JSON.stringify({ 
-          name: 'Demo Reviewer', 
-          email: 'demo@meetmind.ai', 
-          uid: 'demo_guest_evaluator',
-          isGuest: true 
-        }));
-        window.location.href = '/app';
-      });
-    }
   </script>
 </body>
 </html>
