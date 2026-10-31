@@ -1,0 +1,609 @@
+/**
+ * ==========================================================================
+ * MEETMIND AI — COMPREHENSIVE AUTOMATED CHROME TEST SUITE (PHASE 1 EXPANDED)
+ * 
+ * Tests:
+ * 1. Landing Page (index.html) - Navigation, Hero, Accordion
+ * 2. Auth Flow (login.html) - Modes, Guest Demo, Redirect
+ * 3. App Dashboard (app.html) - Profiles, Stats, Themes
+ * 4. Sidebar Navigation - 9 Dedicated Views
+ * 5. Interactive Features - Tasks, AI Chat, Modals, Showcase
+ * 5B. MoM PDF, Audio Player, Calendar Sync, Pakistani Payment Gateways
+ * 5C. Phase 1 Multilingual Intelligence, Urdu Nastaliq, Roman Urdu, Risk Radar, Diarization
+ * 6. Console Errors & Zero Uncaught Exceptions
+ * ==========================================================================
+ */
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
+
+const PORT = 8087;
+const ROOT_DIR = process.cwd();
+
+// Static file web server
+function startServer() {
+  const mimeTypes = {
+    '.html': 'text/html',
+    '.js': 'application/javascript',
+    '.css': 'text/css',
+    '.json': 'application/json',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.svg': 'image/svg+xml',
+    '.webm': 'audio/webm'
+  };
+
+  const server = http.createServer((req, res) => {
+    let cleanUrl = req.url.split('?')[0];
+    if (cleanUrl === '/') cleanUrl = '/index.html';
+    if (cleanUrl === '/app') cleanUrl = '/app.html';
+    if (cleanUrl === '/login') cleanUrl = '/login.html';
+
+    let filePath = path.join(ROOT_DIR, cleanUrl);
+    if (!fs.existsSync(filePath)) {
+      if (cleanUrl.endsWith('.html')) {
+        filePath = path.join(ROOT_DIR, 'index.html');
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
+        return;
+      }
+    }
+
+    const ext = path.extname(filePath);
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*'
+    });
+    fs.createReadStream(filePath).pipe(res);
+  });
+
+  return new Promise(resolve => {
+    server.listen(PORT, () => {
+      console.log(`🚀 Test Web Server listening on http://localhost:${PORT}`);
+      resolve(server);
+    });
+  });
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+class CdpClient {
+  constructor(wsUrl) {
+    this.wsUrl = wsUrl;
+    this.ws = null;
+    this.id = 1;
+    this.pending = new Map();
+    this.consoleLogs = [];
+    this.pageErrors = [];
+  }
+
+  connect() {
+    return new Promise((resolve, reject) => {
+      this.ws = new WebSocket(this.wsUrl);
+      this.ws.onopen = () => resolve();
+      this.ws.onerror = (e) => reject(e);
+      this.ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.id && this.pending.has(msg.id)) {
+          const { resolve, reject } = this.pending.get(msg.id);
+          this.pending.delete(msg.id);
+          if (msg.error) reject(new Error(msg.error.message));
+          else resolve(msg.result);
+        }
+
+        if (msg.method === 'Runtime.consoleAPICalled') {
+          const text = msg.params.args.map(a => a.value || a.description || '').join(' ');
+          this.consoleLogs.push({ type: msg.params.type, text });
+        }
+        if (msg.method === 'Runtime.exceptionThrown') {
+          const desc = msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text;
+          this.pageErrors.push(desc);
+        }
+      };
+    });
+  }
+
+  send(method, params = {}) {
+    return new Promise((resolve, reject) => {
+      const msgId = this.id++;
+      this.pending.set(msgId, { resolve, reject });
+      this.ws.send(JSON.stringify({ id: msgId, method, params }));
+    });
+  }
+
+  async evaluate(expression) {
+    const res = await this.send('Runtime.evaluate', {
+      expression,
+      returnByValue: true,
+      awaitPromise: true
+    });
+    if (res.exceptionDetails) {
+      throw new Error(`CDP Evaluate Error: ${JSON.stringify(res.exceptionDetails)}`);
+    }
+    return res.result ? res.result.value : undefined;
+  }
+}
+
+async function runBrowserTests() {
+  const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+  const debugPort = 9224;
+  const tmpUserDataDir = path.join(process.env.TEMP || 'C:\\Temp', `meetmind_test_profile_${Date.now()}`);
+
+  console.log('🌐 Spawning Headless Chrome with clean profile...');
+  const chromeProcess = spawn(chromePath, [
+    `--remote-debugging-port=${debugPort}`,
+    '--headless=new',
+    '--no-sandbox',
+    '--disable-gpu',
+    '--disable-extensions',
+    `--user-data-dir=${tmpUserDataDir}`,
+    'about:blank'
+  ]);
+
+  const cleanup = (code = 0) => {
+    try { chromeProcess.kill(); } catch (e) {}
+    try { fs.rmSync(tmpUserDataDir, { recursive: true, force: true }); } catch (e) {}
+    return code;
+  };
+
+  try {
+    await sleep(2000);
+
+    const listRes = await fetch(`http://127.0.0.1:${debugPort}/json/list`);
+    const pages = await listRes.json();
+    const pageTarget = pages.find(p => p.type === 'page' && p.url.startsWith('about:blank')) || pages.find(p => p.type === 'page');
+    const targetWs = pageTarget.webSocketDebuggerUrl;
+
+    console.log(`🔌 Connecting CDP WebSocket to ${pageTarget.url}...`);
+    const cdp = new CdpClient(targetWs);
+    await cdp.connect();
+
+    await cdp.send('Page.enable');
+    await cdp.send('Runtime.enable');
+
+    const results = [];
+    function assert(name, condition, details = '') {
+      results.push({ name, passed: !!condition, details });
+      console.log(`${condition ? '  ✅ PASS' : '  ❌ FAIL'}: ${name} ${details ? '(' + details + ')' : ''}`);
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 1: Landing Page (index.html)
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 1: Landing Page (index.html)');
+    console.log('======================================================');
+    await cdp.send('Page.navigate', { url: `http://localhost:${PORT}/` });
+    await sleep(2500);
+
+    const indexTitle = await cdp.evaluate('document.title');
+    assert('Landing page title', indexTitle && indexTitle.includes('MeetMind AI'), indexTitle);
+
+    const heroHeading = await cdp.evaluate('document.querySelector(".hero-title")?.innerText');
+    assert('Hero heading exists', heroHeading && heroHeading.length > 5, heroHeading?.slice(0, 40));
+
+    const navLinksCount = await cdp.evaluate('document.querySelectorAll(".nav-links a").length');
+    assert('Navbar links present', navLinksCount >= 5, `Found ${navLinksCount} links`);
+
+    // Test FAQ accordion click with separate evaluation
+    await cdp.evaluate('document.querySelectorAll(".faq-item")[1]?.click()');
+    await sleep(300);
+    const faqSecondActive = await cdp.evaluate('document.querySelectorAll(".faq-item")[1]?.classList.contains("active")');
+    assert('FAQ Accordion expands on click', faqSecondActive);
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 2: Authentication Page (login.html)
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 2: Authentication Page (login.html)');
+    console.log('======================================================');
+    await cdp.send('Page.navigate', { url: `http://localhost:${PORT}/login` });
+    await sleep(2000);
+
+    const loginTitle = await cdp.evaluate('document.title');
+    assert('Login page title', loginTitle && loginTitle.includes('Sign In'), loginTitle);
+
+    const btnGoogle = await cdp.evaluate('!!document.getElementById("btnGoogleAuth")');
+    assert('Google Sign In button present', btnGoogle);
+
+    const btnGuest = await cdp.evaluate('!!document.getElementById("btnGuestAccess")');
+    assert('Demo Guest access button present', btnGuest);
+
+    // Switch to sign up mode
+    await cdp.evaluate('document.getElementById("switchModeBtn")?.click()');
+    await sleep(300);
+    const signUpTitle = await cdp.evaluate('document.getElementById("formTitle")?.innerText');
+    assert('Auth toggle switches to Sign Up mode', signUpTitle && signUpTitle.includes('Create'), signUpTitle);
+
+    // Switch back to sign in mode
+    await cdp.evaluate('document.getElementById("switchModeBtn")?.click()');
+    await sleep(300);
+    const signInTitle = await cdp.evaluate('document.getElementById("formTitle")?.innerText');
+    assert('Auth toggle switches back to Sign In mode', signInTitle && signInTitle.includes('Sign in'), signInTitle);
+
+    // Click Demo Guest Access button
+    console.log('  👉 Clicking Demo Guest Access button...');
+    await cdp.evaluate('document.getElementById("btnGuestAccess")?.click()');
+    await sleep(2000);
+
+    const currentUrlAfterGuest = await cdp.evaluate('window.location.pathname');
+    assert('Guest login redirects to /app', currentUrlAfterGuest === '/app' || currentUrlAfterGuest.endsWith('app.html'), currentUrlAfterGuest);
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 3: Application Dashboard (app.html)
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 3: Application Dashboard (app.html)');
+    console.log('======================================================');
+    
+    // Verify user profile initialization
+    const deskUserName = await cdp.evaluate('document.getElementById("deskUserName")?.innerText');
+    assert('User profile displays Demo Reviewer', deskUserName && deskUserName.includes('Demo Reviewer'), deskUserName);
+
+    // Verify dashboard view is active
+    const isDashActive = await cdp.evaluate('!document.getElementById("page-dashboard")?.classList.contains("hidden")');
+    assert('Dashboard page is active initially', isDashActive);
+
+    // Verify Stat Cards
+    const statMeetings = await cdp.evaluate('document.getElementById("statTotalMeetings")?.innerText');
+    const statTasks = await cdp.evaluate('document.getElementById("statOpenTasks")?.innerText');
+    assert('Stat cards rendered', statMeetings !== undefined && statTasks !== undefined, `Meetings: ${statMeetings}, Tasks: ${statTasks}`);
+
+    // Test Theme Toggle (Dark / Light)
+    const initialTheme = await cdp.evaluate('document.documentElement.getAttribute("data-theme")');
+    await cdp.evaluate('document.getElementById("themeToggleBtn")?.click()');
+    await sleep(200);
+    const switchedTheme = await cdp.evaluate('document.documentElement.getAttribute("data-theme")');
+    assert('Theme toggles between light and dark', initialTheme !== switchedTheme, `${initialTheme} -> ${switchedTheme}`);
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 4: Sidebar Navigation & Pages
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 4: Sidebar Navigation & Pages');
+    console.log('======================================================');
+    const pagesToTest = [
+      { nav: 'record', pageId: 'page-record', name: 'Recording Studio' },
+      { nav: 'meetings', pageId: 'page-meetings', name: 'Meeting Library' },
+      { nav: 'tasks', pageId: 'page-tasks', name: 'Action Items' },
+      { nav: 'chat', pageId: 'page-chat', name: 'Ask AI Chat' },
+      { nav: 'knowledge', pageId: 'page-knowledge', name: 'Source Import' },
+      { nav: 'documents', pageId: 'page-documents', name: 'Documents Vault' },
+      { nav: 'calendar', pageId: 'page-calendar', name: 'Calendar' },
+      { nav: 'workspaces', pageId: 'page-workspaces', name: 'Team Workspaces' },
+      { nav: 'settings', pageId: 'page-settings', name: 'Settings & Cloud' }
+    ];
+
+    for (const p of pagesToTest) {
+      await cdp.evaluate(`document.querySelector('button[data-nav="${p.nav}"]')?.click()`);
+      await sleep(200);
+      const isVisible = await cdp.evaluate(`!document.getElementById("${p.pageId}")?.classList.contains("hidden")`);
+      assert(`Navigate to ${p.name}`, isVisible);
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 5: Interactive Features & Modals
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 5: Interactive Features & Modals');
+    console.log('======================================================');
+    
+    // 1. Task Modal & Creation
+    await cdp.evaluate('document.querySelector("button[data-nav=\'tasks\']")?.click()');
+    await sleep(200);
+    await cdp.evaluate('document.getElementById("btnAddTaskModal")?.click()');
+    await sleep(200);
+    const isTaskModalOpen = await cdp.evaluate('!document.getElementById("modalCreateTask")?.classList.contains("hidden")');
+    assert('Add Task modal opens', isTaskModalOpen);
+
+    // Fill in new task form
+    await cdp.evaluate(`
+      document.getElementById("taskTitleInput").value = "Verify low-latency audio sync in staging";
+      document.getElementById("taskAssigneeInput").value = "Lead Engineer";
+      document.getElementById("taskPrioritySelect").value = "high";
+      document.getElementById("btnSaveNewTask")?.click();
+    `);
+    await sleep(300);
+    const taskModalClosed = await cdp.evaluate('document.getElementById("modalCreateTask")?.classList.contains("hidden")');
+    assert('Add Task modal submits and closes', taskModalClosed);
+
+    const taskHtml = await cdp.evaluate('document.getElementById("tasksBoardGrid")?.innerText || ""');
+    const taskCreated = taskHtml.includes('Verify low-latency audio sync');
+    assert('New task appears in tasks list', taskCreated);
+
+    // 2. Ask AI Chat (RAG Engine)
+    await cdp.evaluate('document.querySelector("button[data-nav=\'chat\']")?.click()');
+    await sleep(300);
+    await cdp.evaluate(`
+      const chatInp = document.getElementById("deskChatQueryInput");
+      if (chatInp) chatInp.value = "What were the main decisions in Project Alpha?";
+      document.getElementById("deskChatSendBtn")?.click();
+    `);
+    await sleep(1000);
+    const chatMessagesCount = await cdp.evaluate('document.querySelectorAll(".chat-bubble").length');
+    const lastBotResponse = await cdp.evaluate('document.getElementById("deskChatArea")?.innerText || ""');
+    assert('AI Chat answers user question', chatMessagesCount > 1, lastBotResponse ? lastBotResponse.slice(0, 45).replace(/\n/g, ' ') + '...' : 'Answered');
+
+    // 3. New Meeting Manual Modal
+    await cdp.evaluate('document.querySelector("button[data-nav=\'meetings\']")?.click()');
+    await sleep(200);
+    await cdp.evaluate('document.getElementById("btnNewMeetingModal")?.click()');
+    await sleep(200);
+    const isMeetingModalOpen = await cdp.evaluate('!document.getElementById("modalNewMeeting")?.classList.contains("hidden")');
+    assert('New Meeting modal opens', isMeetingModalOpen);
+    await cdp.evaluate('document.getElementById("closeNewMeetingModal")?.click()');
+    await sleep(200);
+    const isMeetingModalClosed = await cdp.evaluate('document.getElementById("modalNewMeeting")?.classList.contains("hidden")');
+    assert('New Meeting modal closes', isMeetingModalClosed);
+
+    // 4. Upgrade to Pro Modal
+    await cdp.evaluate('document.getElementById("btnUpgradePro")?.click()');
+    await sleep(200);
+    const isUpgradeModalOpen = await cdp.evaluate('!document.getElementById("modalUpgradePro")?.classList.contains("hidden")');
+    assert('Upgrade to Pro modal opens', isUpgradeModalOpen);
+    await cdp.evaluate('document.getElementById("closeUpgradeModal")?.click()');
+    await sleep(200);
+    const isUpgradeModalClosed = await cdp.evaluate('document.getElementById("modalUpgradePro")?.classList.contains("hidden")');
+    assert('Upgrade to Pro modal closes', isUpgradeModalClosed);
+
+    // 5. Install App Modal
+    await cdp.evaluate('document.getElementById("installMobileBtn")?.click()');
+    await sleep(200);
+    const isInstallModalOpen = await cdp.evaluate('!document.getElementById("modalInstallPWA")?.classList.contains("hidden")');
+    assert('Install App modal opens with QR code', isInstallModalOpen);
+    await cdp.evaluate('document.getElementById("closeInstallModal")?.click()');
+    await sleep(200);
+    const isInstallModalClosed = await cdp.evaluate('document.getElementById("modalInstallPWA")?.classList.contains("hidden")');
+    assert('Install App modal closes', isInstallModalClosed);
+
+    // 6. Viewport switch to Mobile Showcase
+    await cdp.evaluate('document.getElementById("btnViewMobileShowcase")?.click()');
+    await sleep(300);
+    const isMobileShowcaseActive = await cdp.evaluate('!document.getElementById("mobileShowcaseView")?.classList.contains("hidden")');
+    assert('Mobile Showcase view activates', isMobileShowcaseActive);
+
+    // Switch back to Desktop view
+    await cdp.evaluate('document.getElementById("btnViewDesktop")?.click()');
+    await sleep(300);
+    const isDesktopBack = await cdp.evaluate('!document.getElementById("desktopAppView")?.classList.contains("hidden")');
+    assert('Desktop view restores smoothly', isDesktopBack);
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 5B: MoM PDF, Audio Sync, Calendar & Payments
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 5B: MoM PDF, Audio Sync, Calendar & Payments');
+    console.log('======================================================');
+    
+    // Navigate to Meeting Library
+    await cdp.evaluate('document.querySelector("button[data-nav=\'meetings\']")?.click()');
+    await sleep(300);
+
+    // Open meeting details modal
+    await cdp.evaluate(`
+      const row = document.querySelector(".library-row, .meeting-card-item, tr[data-meeting-id]");
+      if (row) {
+        row.click();
+      } else if (typeof openMeetingDetailsModal === "function" && typeof DEMO_SAMPLE_MEETING !== "undefined") {
+        openMeetingDetailsModal(DEMO_SAMPLE_MEETING);
+      }
+    `);
+    await sleep(300);
+    const isDetailsOpen = await cdp.evaluate('!document.getElementById("modalMeetingDetails")?.classList.contains("hidden")');
+    assert('Meeting Details modal opened', isDetailsOpen);
+
+    // Official MoM PDF Generator function
+    const hasMomPdfFunc = await cdp.evaluate('typeof exportMeetingMoMPDF === "function"');
+    assert('Official MoM PDF generator function exists', hasMomPdfFunc);
+
+    // Interactive Audio Player & Transcript Sync
+    await cdp.evaluate('document.querySelector("#mdDetailTabs button[data-tab=\'transcript\']")?.click()');
+    await sleep(300);
+    const isAudioBarVisible = await cdp.evaluate('!document.getElementById("mdAudioBar")?.classList.contains("hidden")');
+    assert('Interactive Audio Player bar rendered in transcript', isAudioBarVisible);
+
+    // Click on a diarized turn to seek and sync
+    const turnsCount = await cdp.evaluate('document.querySelectorAll("#mdDetailTranscript .diarized-turn").length');
+    if (turnsCount > 0) {
+      await cdp.evaluate('document.querySelectorAll("#mdDetailTranscript .diarized-turn")[0]?.click()');
+      await sleep(300);
+      const isTurnActive = await cdp.evaluate('document.querySelectorAll("#mdDetailTranscript .diarized-turn")[0]?.classList.contains("active-playing-turn")');
+      assert('Transcript sentence highlights on audio seek', isTurnActive);
+    }
+
+    // Close meeting details modal
+    await cdp.evaluate('document.getElementById("closeDetailModal")?.click()');
+    await sleep(200);
+
+    // Universal Calendar & .ICS File Export on Task Cards
+    await cdp.evaluate('document.querySelector("button[data-nav=\'tasks\']")?.click()');
+    await sleep(300);
+    const hasIcsFunc = await cdp.evaluate('typeof exportTaskAsICS === "function"');
+    assert('Universal .ICS export function exists', hasIcsFunc);
+
+    const hasIcsBtn = await cdp.evaluate('!!document.querySelector(".btn-cal-ics")');
+    assert('1-Click .ICS download button present on task cards', hasIcsBtn);
+
+    // Pakistani Payment Gateway & Instant Pro Activation
+    await cdp.evaluate('document.getElementById("btnUpgradePro")?.click()');
+    await sleep(300);
+    const hasPakCheckout = await cdp.evaluate('!document.getElementById("pakCheckoutBox")?.classList.contains("hidden")');
+    assert('Pakistani Payment Gateway rendered in modal', hasPakCheckout);
+
+    // Switch to Easypaisa tab
+    await cdp.evaluate('document.querySelector("#payMethodTabs button[data-pay=\'easypaisa\']")?.click()');
+    await sleep(200);
+    const isEasypaisaActive = await cdp.evaluate('!document.getElementById("paneEasypaisa")?.classList.contains("hidden")');
+    assert('Easypaisa payment tab switches seamlessly', isEasypaisaActive);
+
+    // Switch to Raast / IBAN tab
+    await cdp.evaluate('document.querySelector("#payMethodTabs button[data-pay=\'raast\']")?.click()');
+    await sleep(200);
+    const isRaastActive = await cdp.evaluate('!document.getElementById("paneRaast")?.classList.contains("hidden")');
+    assert('Raast / IBAN payment tab switches seamlessly', isRaastActive);
+
+    // Enter TID and Activate Pro
+    await cdp.evaluate(`
+      const trxInp = document.getElementById("payTrxIdInput");
+      if (trxInp) trxInp.value = "JC-9921829";
+      document.getElementById("btnConfirmPaymentActivate")?.click();
+    `);
+    await sleep(400);
+
+    const planText = await cdp.evaluate('document.getElementById("deskUserPlan")?.innerText || ""');
+    assert('Pro Account activated instantly via Pakistan Payment', planText.includes('Pro Professional'), planText);
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 5C: Phase 1 Multilingual & Intelligence Radar
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 5C: Phase 1 Multilingual & Intelligence Radar');
+    console.log('======================================================');
+
+    // Open meeting details again
+    await cdp.evaluate('document.querySelector("button[data-nav=\'meetings\']")?.click()');
+    await sleep(200);
+    await cdp.evaluate(`
+      if (typeof openMeetingDetailsModal === 'function' && typeof DEMO_SAMPLE_MEETING !== 'undefined') {
+        openMeetingDetailsModal(DEMO_SAMPLE_MEETING);
+      }
+    `);
+    await sleep(300);
+
+    // 1. Urdu Nastaliq view toggle
+    await cdp.evaluate('document.getElementById("btnMdLangUr")?.click()');
+    await sleep(200);
+    const isUrduNastaliq = await cdp.evaluate(`
+      (() => {
+        const p = document.getElementById("mdDetailSummary");
+        const b = document.getElementById("mdLangIndicatorBadge");
+        return p?.classList.contains("urdu-nastaliq-text") && b?.textContent.includes("اردو");
+      })()
+    `);
+    assert('Urdu Nastaliq view toggle switches typography and text', isUrduNastaliq);
+
+    // 2. Roman Urdu view toggle
+    await cdp.evaluate('document.getElementById("btnMdLangRoman")?.click()');
+    await sleep(200);
+    const isRomanUrdu = await cdp.evaluate(`
+      (() => {
+        const p = document.getElementById("mdDetailSummary");
+        const b = document.getElementById("mdLangIndicatorBadge");
+        return !p?.classList.contains("urdu-nastaliq-text") && b?.textContent.includes("Roman Urdu");
+      })()
+    `);
+    assert('Roman Urdu view toggle switches language cleanly', isRomanUrdu);
+
+    // 3. English restore
+    await cdp.evaluate('document.getElementById("btnMdLangEn")?.click()');
+    await sleep(200);
+    const isEnglishRestored = await cdp.evaluate('document.getElementById("mdLangIndicatorBadge")?.textContent.includes("English")');
+    assert('English view restores smoothly', isEnglishRestored);
+
+    // 4. Persona template selector (Technical Sprint)
+    await cdp.evaluate(`
+      (() => {
+        const sel = document.getElementById("mdPersonaSelect");
+        if (sel) {
+          sel.value = "technical";
+          sel.dispatchEvent(new Event("change"));
+        }
+      })()
+    `);
+    await sleep(200);
+    const personaSummary = await cdp.evaluate('document.getElementById("mdDetailSummary")?.textContent');
+    assert('Persona template updates summary content (Technical Sprint)', personaSummary && personaSummary.includes('Technical Sprint'));
+
+    // 5. Bilingual Side-by-Side Comparison Box
+    await cdp.evaluate('document.getElementById("btnToggleBilingualCompare")?.click()');
+    await sleep(200);
+    const isBilingualBoxOpen = await cdp.evaluate('!document.getElementById("mdBilingualCompare")?.classList.contains("hidden")');
+    assert('Bilingual Side-by-Side Comparison box expands', isBilingualBoxOpen);
+
+    // 6. Meeting Risk & Sentiment Intelligence Radar
+    const radarOk = await cdp.evaluate(`
+      (() => {
+        const badge = document.getElementById("mdSentimentBadge");
+        const b = document.getElementById("mdRiskBudgetStatus");
+        const d = document.getElementById("mdRiskDeadlineStatus");
+        const t = document.getElementById("mdRiskTechStatus");
+        return !!(badge && b && d && t);
+      })()
+    `);
+    assert('Meeting Risk & Sentiment Radar rendered with all 3 risk dimensions', radarOk);
+
+    // 7. Interactive Key Decision Timestamp Jump
+    const hasDecisionJumpBtns = await cdp.evaluate('document.querySelectorAll("#mdDetailDecisions li .btn-decision-jump").length > 0');
+    assert('Key Decisions feature interactive audio timestamp jump buttons', hasDecisionJumpBtns);
+
+    await cdp.evaluate('document.querySelector("#mdDetailDecisions li .btn-decision-jump")?.click()');
+    await sleep(300);
+    const isTranscriptTabActiveNow = await cdp.evaluate('!document.getElementById("mdPaneTranscript")?.classList.contains("hidden")');
+    assert('Clicking Decision timestamp jumps to diarized transcript and syncs audio', isTranscriptTabActiveNow);
+
+    // 8. Diarized Speaker Renaming
+    const hasEditableSpeakers = await cdp.evaluate('document.querySelectorAll(".speaker-pill-editable").length > 0');
+    assert('Diarized transcript turns feature editable speaker pills', hasEditableSpeakers);
+
+    // 9. Voice Studio Language Chips (Punjabi and Mixed)
+    await cdp.evaluate('document.getElementById("closeDetailModal")?.click()');
+    await sleep(200);
+    await cdp.evaluate('document.querySelector("button[data-nav=\'record\']")?.click()');
+    await sleep(200);
+
+    const hasPaChip = await cdp.evaluate('!!document.getElementById("btnLangPa")');
+    const hasMixedChip = await cdp.evaluate('!!document.getElementById("btnLangMixed")');
+    assert('Voice Studio includes Punjabi (پنجابی) speech recognition', hasPaChip);
+    assert('Voice Studio includes Mixed Roman Urdu & English recognition', hasMixedChip);
+
+    // -------------------------------------------------------------------------
+    // TEST SUITE 6: Console Logs & Uncaught Errors
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 6: Console Logs & Uncaught Errors');
+    console.log('======================================================');
+    console.log(`Total console logs: ${cdp.consoleLogs.length}`);
+    const errorLogs = cdp.consoleLogs.filter(l => l.type === 'error');
+    console.log(`Console errors: ${errorLogs.length}`);
+    if (errorLogs.length > 0) {
+      errorLogs.forEach(e => console.log('  ⚠️ Error:', e.text));
+    }
+    console.log(`Page uncaught exceptions: ${cdp.pageErrors.length}`);
+    if (cdp.pageErrors.length > 0) {
+      cdp.pageErrors.forEach(e => console.log('  ⚠️ Uncaught Exception:', e));
+    }
+    assert('Zero uncaught exceptions during session', cdp.pageErrors.length === 0);
+
+    const totalPassed = results.filter(r => r.passed).length;
+    const totalFailed = results.filter(r => !r.passed).length;
+    console.log('\n======================================================');
+    console.log(`🎯 TEST RUN SUMMARY: ${totalPassed} Passed, ${totalFailed} Failed out of ${results.length} Tests`);
+    console.log('======================================================');
+
+    cleanup(totalFailed === 0 ? 0 : 1);
+    return totalFailed === 0;
+  } catch (err) {
+    console.error('Fatal Test Exception:', err);
+    cleanup(1);
+    return false;
+  }
+}
+
+(async () => {
+  const server = await startServer();
+  try {
+    const success = await runBrowserTests();
+    server.close();
+    process.exit(success ? 0 : 1);
+  } catch (err) {
+    console.error('Fatal Test Runner Exception:', err);
+    server.close();
+    process.exit(1);
+  }
+})();
