@@ -558,6 +558,25 @@ def test_oauth_persistent_shared_storage_and_concurrent_replay(client, auth_user
             )
             assert res_after_restart["valid"] is False
             assert "already consumed" in res_after_restart["reason"]
+
+            # Test expired state rejection in DB
+            from app.core.config import settings
+            import hmac
+            import hashlib
+            import secrets
+            expired_raw = f"{user_id}:google_calendar:{int(time.time()) - 1000}:{secrets.token_hex(32)}"
+            expired_sig = hmac.new(settings.SECRET_KEY.encode(), expired_raw.encode(), hashlib.sha256).hexdigest()
+            expired_state = base64.urlsafe_b64encode(f"{expired_raw}:{expired_sig}".encode()).decode()
+            res_expired = verify_and_consume_oauth_state(expired_state, expected_user_id=user_id, expected_provider="google_calendar", db=restart_db)
+            assert res_expired["valid"] is False
+            assert "expired" in res_expired["reason"]
+
+            # Test invalid signature rejection in DB
+            fresh_raw = f"{user_id}:google_calendar:{int(time.time())}:{secrets.token_hex(32)}"
+            bad_sig_state = base64.urlsafe_b64encode(f"{fresh_raw}:0000000000000000".encode()).decode()
+            res_bad_sig = verify_and_consume_oauth_state(bad_sig_state, expected_user_id=user_id, expected_provider="google_calendar", db=restart_db)
+            assert res_bad_sig["valid"] is False
+            assert "Invalid HMAC signature" in res_bad_sig["reason"]
         finally:
             restart_db.close()
     finally:
