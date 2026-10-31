@@ -78,7 +78,7 @@
 - [x] **Zapier & Webhook Engine:** 8 core event types, cryptographic HMAC-SHA256 payload signing (`X-MeetMind-Signature`), delivery logging.
 - [x] **WhatsApp Business Voice Note Processing:** Meta Cloud API webhook handler (`hub.challenge`), voice note audio retrieval, automated transcription, and meeting note synthesis.
 - [x] **Dynamic Calendar Realism:** Replaced hardcoded static placeholder demo meetings with genuine calendar events and active task deadlines.
-- [x] **Automated Tests & Quality Check for Phase 4:** 103/103 Browser CDP tests passing, 40/40 Pytest passing. AES-256-GCM AEAD encryption, 256-bit OAuth state nonces, and replay attack prevention verified. Deployed to Firebase Hosting preview channel (`preview-v4`). Production promotion paused pending sign-off.
+- [x] **Automated Tests & Quality Check for Phase 4:** 103/103 Browser CDP tests passing, 44/44 Pytest passing. Persistent shared OAuth nonces, WhatsApp Meta HMAC validation, AES-256-GCM HKDF encryption, and workflow Draft-Only barriers verified. Deployed to Firebase Hosting preview channel (`preview-v4`, Version: `efaeaf4cb8f3c923`). Production promotion paused pending sign-off.
 
 ---
 

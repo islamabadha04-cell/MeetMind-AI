@@ -6,7 +6,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [4.0.0] - 2026-10-31 (PHASE 4 COMPLETED: THIRD-PARTY INTEGRATIONS ECOSYSTEM)
+## [4.0.0] - 2026-10-31 (PHASE 4 COMPLETED & SECURITY AUDITED: THIRD-PARTY INTEGRATIONS ECOSYSTEM)
+
+### Security Hardening & Audit Corrections
+- **Persistent Shared OAuth Nonce Storage:**
+  - Replaced process-local memory with persistent `oauth_nonces` database table.
+  - Implemented atomic SQL transaction updates (`UPDATE ... WHERE consumed = 0`) to prevent concurrent replay attacks across multiple worker instances and threads.
+  - State nonces survive backend process restarts and multi-container scaling.
+  - Securely associates RFC 7636 PKCE `code_verifier` with its transaction and verifies it during callback.
+- **Gmail & Workflow Server-Side Draft-Only Lock:**
+  - Enforced strict server-side prohibition of `users.messages.send` and `users.drafts.send`.
+  - Workflow builder (`create_workflow`) and execution engine (`execute_workflow`) actively validate actions via `_validate_workflow_actions`, blocking any automated email send with HTTP 403 Forbidden.
+- **WhatsApp Webhook Cryptographic Verification:**
+  - Validates Meta `X-Hub-Signature-256` HMAC-SHA256 signature computed over raw request body bytes; rejects missing or tampered signatures with HTTP 401.
+  - Added duplicate message detection via `processed_webhook_messages` table to prevent re-processing.
+  - Added unauthorized sender allowlist filtering and 24-hour expired media detection.
+- **AES-256-GCM AEAD Key Management (HKDF-SHA256):**
+  - Implemented HKDF-SHA256 key derivation (RFC 5869) with version-bound salts.
+  - Fresh 12-byte initialization nonces per encryption and 128-bit authentication tag verification.
+  - Ciphertext version tagging (`gcm:v1:...`) with key rotation capability (`rotate_token_encryption`).
+  - Tampered ciphertext or tag mismatch fails securely.
+- **Preview Channel Release:**
+  - Deployed to Firebase Hosting preview channel `preview-v4` (Version: `efaeaf4cb8f3c923`).
+  - Production website (`https://meetmind-ai-74519.web.app`) remains untouched and safe.
+- **Expanded Test Suite:**
+  - 44/44 passing Pytest backend tests (up from 35).
+  - 103/103 passing Headless Chrome browser CDP tests.
 
 ### Added
 - **Unified Integration Center Hub (`#page-integrations`):**

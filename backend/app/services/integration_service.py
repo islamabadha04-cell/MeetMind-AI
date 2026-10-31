@@ -11,48 +11,82 @@ import httpx
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives import hashes
 from app.core.config import settings
 
 # --------------------------------------------------------------------------
-# AES-256-GCM AEAD Encryption Helper for Token Security
+# AES-256-GCM AEAD Key Management & HKDF Key Derivation (RFC 5869)
 # --------------------------------------------------------------------------
-def _get_aes_key() -> bytes:
-    """Derive deterministic 32-byte (256-bit) key from SECRET_KEY."""
-    return hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+KEY_VERSIONS: Dict[str, str] = {
+    "v1": settings.SECRET_KEY,
+}
+ACTIVE_KEY_VERSION: str = "v1"
+
+def derive_encryption_key(key_version: str = ACTIVE_KEY_VERSION) -> bytes:
+    """
+    Derives a cryptographically strong 256-bit (32 bytes) key using HKDF-SHA256 (RFC 5869).
+    Binds the key to the specific key version and application context.
+    """
+    raw_secret = KEY_VERSIONS.get(key_version) or settings.SECRET_KEY
+    salt = f"meetmind-kdf-salt-{key_version}".encode("utf-8")
+    info = b"meetmind-aes-256-gcm-tokens"
+    hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        info=info,
+    )
+    return hkdf.derive(raw_secret.encode("utf-8"))
 
 def _get_fernet_key() -> bytes:
     """Legacy Fernet 32-byte urlsafe base64 key."""
-    return base64.urlsafe_b64encode(_get_aes_key())
+    digest = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+    return base64.urlsafe_b64encode(digest)
 
-def encrypt_token(token: str) -> str:
+def encrypt_token(token: str, key_version: str = ACTIVE_KEY_VERSION) -> str:
     """
-    Encrypts sensitive OAuth access and refresh tokens using AES-256-GCM (AEAD).
-    Generates a cryptographically random 96-bit (12-byte) initialization nonce per call.
-    Appends a 128-bit authentication tag to prevent ciphertext tampering.
+    Encrypts sensitive OAuth access/refresh tokens using AES-256-GCM (AEAD).
+    - Derives 256-bit key via HKDF-SHA256.
+    - Generates a cryptographically random 96-bit (12-byte) initialization nonce per call.
+    - Appends a 128-bit authentication tag to prevent ciphertext tampering.
+    - Encodes format with version tag: 'gcm:<version>:<base64url(nonce + ciphertext + tag)>'.
     """
     if not token:
         return ""
-    key = _get_aes_key()
+    key = derive_encryption_key(key_version)
     aesgcm = AESGCM(key)
     nonce = os.urandom(12)  # 96-bit random nonce
     ciphertext = aesgcm.encrypt(nonce, token.encode("utf-8"), None)
     encoded = base64.urlsafe_b64encode(nonce + ciphertext).decode("utf-8")
-    return f"gcm:{encoded}"
+    return f"gcm:{key_version}:{encoded}"
 
 def decrypt_token(encrypted_token: str) -> str:
     """
-    Decrypts tokens encrypted with AES-256-GCM with backward compatibility for legacy Fernet.
+    Decrypts tokens encrypted with AES-256-GCM (versioned or unversioned)
+    with automatic backward compatibility for legacy Fernet.
+    Fails securely (returns '') on tampered ciphertext or authentication tag mismatch.
     """
     if not encrypted_token:
         return ""
     try:
         if encrypted_token.startswith("gcm:"):
-            raw = base64.urlsafe_b64decode(encrypted_token[4:].encode("utf-8"))
+            parts = encrypted_token.split(":")
+            if len(parts) == 3:
+                # Format: gcm:v1:<data>
+                version = parts[1]
+                encoded_data = parts[2]
+                key = derive_encryption_key(version)
+            else:
+                # Format: gcm:<data> (unversioned fallback)
+                encoded_data = parts[1]
+                key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+
+            raw = base64.urlsafe_b64decode(encoded_data.encode("utf-8"))
             if len(raw) < 12:
                 return ""
             nonce = raw[:12]
             ciphertext = raw[12:]
-            key = _get_aes_key()
             aesgcm = AESGCM(key)
             return aesgcm.decrypt(nonce, ciphertext, None).decode("utf-8")
         else:
@@ -60,7 +94,17 @@ def decrypt_token(encrypted_token: str) -> str:
             f = Fernet(_get_fernet_key())
             return f.decrypt(encrypted_token.encode("utf-8")).decode("utf-8")
     except Exception:
+        # Invalid tag or corrupted payload
         return ""
+
+def rotate_token_encryption(encrypted_token: str, target_version: str) -> str:
+    """
+    Rotates an encrypted token to a new key version without exposing plaintext outside memory.
+    """
+    plaintext = decrypt_token(encrypted_token)
+    if not plaintext:
+        return encrypted_token
+    return encrypt_token(plaintext, key_version=target_version)
 
 # --------------------------------------------------------------------------
 # Provider Metadata Registry
@@ -187,37 +231,69 @@ def generate_pkce_codes() -> Dict[str, str]:
         "code_challenge_method": "S256"
     }
 
-def generate_oauth_state(user_id: int, provider: str) -> str:
+def generate_oauth_state(
+    user_id: int,
+    provider: str,
+    db: Optional[Any] = None,
+    code_verifier: Optional[str] = None
+) -> str:
     """
     Generates a cryptographically secure, non-guessable OAuth 2.0 state parameter.
     Includes user_id, provider, UTC timestamp, and a 256-bit (32 bytes) random nonce,
     signed with HMAC-SHA256 using the system SECRET_KEY.
+    If database session is provided, persists the nonce to shared SQL storage to ensure
+    cross-worker consistency and resilience across server restarts.
     """
     timestamp = int(time.time())
     random_hex = secrets.token_hex(32)  # 256-bit non-guessable random nonce
     raw = f"{user_id}:{provider}:{timestamp}:{random_hex}"
     sig = hmac.new(settings.SECRET_KEY.encode(), raw.encode(), hashlib.sha256).hexdigest()
     state_payload = f"{raw}:{sig}"
-    return base64.urlsafe_b64encode(state_payload.encode()).decode()
+    encoded_state = base64.urlsafe_b64encode(state_payload.encode()).decode()
+
+    if db is not None:
+        try:
+            from app.models.models import OAuthNonce
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+            record = OAuthNonce(
+                nonce=random_hex,
+                user_id=user_id,
+                provider=provider,
+                code_verifier=code_verifier,
+                consumed=False,
+                expires_at=expires_at
+            )
+            db.add(record)
+            db.commit()
+        except Exception:
+            db.rollback()
+
+    return encoded_state
 
 def verify_and_consume_oauth_state(
     state: str,
     expected_user_id: Optional[int] = None,
-    expected_provider: Optional[str] = None
+    expected_provider: Optional[str] = None,
+    db: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
-    Validates and consumes OAuth state:
+    Validates and atomically consumes OAuth state:
     1. Base64 decodes and unpacks user_id, provider, timestamp, nonce, signature.
     2. Verifies HMAC-SHA256 signature using constant-time comparison.
     3. Checks 15-minute (900s) TTL expiration.
     4. Validates user_id and provider match expected parameters.
-    5. Replay Attack Prevention: rejects if nonce was already consumed.
-    6. Consumes nonce immediately and prunes old entries.
+    5. Replay Attack Prevention:
+       - If DB session is provided, queries/updates `oauth_nonces` table in an atomic transaction.
+         Prevents concurrent duplicate callbacks across separate backend instances/threads.
+         Survives backend restarts and multiple worker processes.
+       - Returns associated PKCE code_verifier for secure token exchange.
+       - If no DB session provided, falls back to in-memory registry.
     """
-    now = int(time.time())
+    now_ts = int(time.time())
+    now_dt = datetime.now(timezone.utc)
 
-    # Prune nonces older than 30 minutes
-    expired_nonces = [n for n, ts in list(CONSUMED_OAUTH_NONCES.items()) if now - ts > 1800]
+    # In-memory prune for fallback
+    expired_nonces = [n for n, ts in list(CONSUMED_OAUTH_NONCES.items()) if now_ts - ts > 1800]
     for n in expired_nonces:
         CONSUMED_OAUTH_NONCES.pop(n, None)
 
@@ -236,7 +312,7 @@ def verify_and_consume_oauth_state(
             return {"valid": False, "reason": "Provider mismatch"}
 
         # 15 minute TTL
-        if now - timestamp > 900 or timestamp > now + 60:
+        if now_ts - timestamp > 900 or timestamp > now_ts + 60:
             return {"valid": False, "reason": "OAuth state expired (15-minute TTL exceeded)"}
 
         expected_raw = f"{user_id_str}:{provider}:{timestamp_str}:{random_hex}"
@@ -247,26 +323,97 @@ def verify_and_consume_oauth_state(
         if not sig_matches:
             return {"valid": False, "reason": "Invalid HMAC signature"}
 
-        # Check replay / one-time consumption
+        # --- Persistent Shared Storage (DB) Atomic Check ---
+        if db is not None:
+            from app.models.models import OAuthNonce
+            
+            # Check expiration first if pre-registered
+            existing = db.query(OAuthNonce).filter(OAuthNonce.nonce == random_hex).first()
+            if existing:
+                if existing.consumed:
+                    return {"valid": False, "reason": "OAuth state already consumed (replay attack prevented)", "replayed": True}
+                if existing.expires_at:
+                    exp_dt = existing.expires_at
+                    if exp_dt.tzinfo is None:
+                        exp_dt = exp_dt.replace(tzinfo=timezone.utc)
+                    if exp_dt < now_dt:
+                        return {"valid": False, "reason": "OAuth state expired (15-minute TTL exceeded)"}
+                if existing.user_id != user_id or existing.provider != provider:
+                    return {"valid": False, "reason": "OAuth state metadata mismatch"}
+
+            # Atomic SQL UPDATE statement (Concurrency & Replay Safe)
+            updated_count = (
+                db.query(OAuthNonce)
+                .filter(
+                    OAuthNonce.nonce == random_hex,
+                    OAuthNonce.consumed == False,
+                    OAuthNonce.user_id == user_id,
+                    OAuthNonce.provider == provider
+                )
+                .update({"consumed": True, "consumed_at": now_dt})
+            )
+            db.commit()
+
+            if updated_count == 1:
+                # Successfully consumed
+                rec = db.query(OAuthNonce).filter(OAuthNonce.nonce == random_hex).first()
+                return {
+                    "valid": True,
+                    "user_id": user_id,
+                    "provider": provider,
+                    "nonce": random_hex,
+                    "code_verifier": rec.code_verifier if rec else None,
+                    "timestamp": timestamp
+                }
+            elif existing:
+                # Row existed but was already consumed concurrently
+                return {"valid": False, "reason": "OAuth state already consumed (replay attack prevented)", "replayed": True}
+            else:
+                # If nonce record was not pre-registered in DB, atomically insert as consumed
+                try:
+                    new_record = OAuthNonce(
+                        nonce=random_hex,
+                        user_id=user_id,
+                        provider=provider,
+                        consumed=True,
+                        consumed_at=now_dt,
+                        expires_at=datetime.fromtimestamp(timestamp + 900, tz=timezone.utc)
+                    )
+                    db.add(new_record)
+                    db.commit()
+                    return {
+                        "valid": True,
+                        "user_id": user_id,
+                        "provider": provider,
+                        "nonce": random_hex,
+                        "code_verifier": None,
+                        "timestamp": timestamp
+                    }
+                except Exception:
+                    db.rollback()
+                    return {"valid": False, "reason": "OAuth state already consumed (concurrent replay prevented)", "replayed": True}
+
+        # Fallback to in-memory check
         if random_hex in CONSUMED_OAUTH_NONCES:
             return {"valid": False, "reason": "OAuth state already consumed (replay attack prevented)", "replayed": True}
 
         # Mark as consumed immediately
-        CONSUMED_OAUTH_NONCES[random_hex] = now
+        CONSUMED_OAUTH_NONCES[random_hex] = now_ts
 
         return {
             "valid": True,
             "user_id": user_id,
             "provider": provider,
             "nonce": random_hex,
+            "code_verifier": None,
             "timestamp": timestamp
         }
     except Exception as e:
         return {"valid": False, "reason": f"Verification error: {str(e)}"}
 
-def verify_oauth_state(state: str, expected_user_id: int, expected_provider: str) -> bool:
+def verify_oauth_state(state: str, expected_user_id: int, expected_provider: str, db: Optional[Any] = None) -> bool:
     """Backward compatible wrapper that calls verify_and_consume_oauth_state"""
-    res = verify_and_consume_oauth_state(state, expected_user_id, expected_provider)
+    res = verify_and_consume_oauth_state(state, expected_user_id, expected_provider, db=db)
     return res.get("valid", False)
 
 # --------------------------------------------------------------------------
@@ -287,14 +434,21 @@ class IntegrationService:
         provider: str,
         user_id: int,
         redirect_uri: Optional[str] = None,
-        code_challenge: Optional[str] = None
+        code_challenge: Optional[str] = None,
+        code_verifier: Optional[str] = None,
+        db: Optional[Any] = None
     ) -> str:
         prov = PROVIDERS.get(provider)
         if not prov:
             return ""
         
-        state = generate_oauth_state(user_id, provider)
+        state = generate_oauth_state(user_id, provider, db=db, code_verifier=code_verifier)
         redir = redirect_uri or "https://meetmind-ai-74519.web.app/api/v1/integrations/oauth/callback/" + provider
+
+        # If PKCE challenge not supplied but verifier is, calculate S256 challenge automatically
+        if not code_challenge and code_verifier:
+            digest = hashlib.sha256(code_verifier.encode("utf-8")).digest()
+            code_challenge = base64.urlsafe_b64encode(digest).decode("utf-8").rstrip("=")
 
         pkce_param = f"&code_challenge={code_challenge}&code_challenge_method=S256" if code_challenge else ""
 

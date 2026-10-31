@@ -31,6 +31,7 @@ class User(Base):
     entity_mappings = relationship("ExternalEntityMapping", back_populates="user", cascade="all, delete-orphan")
     webhook_subscriptions = relationship("WebhookSubscription", back_populates="user", cascade="all, delete-orphan")
     integration_jobs = relationship("IntegrationJob", back_populates="user", cascade="all, delete-orphan")
+    oauth_nonces = relationship("OAuthNonce", back_populates="user", cascade="all, delete-orphan")
 
 class Workspace(Base):
     __tablename__ = "workspaces"
@@ -360,3 +361,41 @@ class IntegrationJob(Base):
     completed_at = Column(DateTime, default=utc_now)
 
     user = relationship("User", back_populates="integration_jobs")
+
+class OAuthNonce(Base):
+    """
+    Persistent shared storage for OAuth 2.0 state nonces and PKCE verifiers.
+    Guarantees:
+    - 256-bit cryptographically unique nonces.
+    - 15-minute expiration enforcement.
+    - Atomic one-time consumption (thread-safe, multi-instance, survives process restarts).
+    - Cryptographic binding to user_id and provider.
+    - Secure storage of the RFC 7636 PKCE code_verifier associated with the transaction.
+    """
+    __tablename__ = "oauth_nonces"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nonce = Column(String(128), unique=True, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    provider = Column(String(50), nullable=False, index=True)
+    code_verifier = Column(String(255), nullable=True) # Secure PKCE association
+    consumed = Column(Boolean, default=False, nullable=False, index=True)
+    consumed_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    created_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="oauth_nonces")
+
+class ProcessedWebhookMessage(Base):
+    """
+    Tracks processed inbound webhook messages (e.g. WhatsApp wamid) to prevent
+    duplicate message processing and replay attempts.
+    """
+    __tablename__ = "processed_webhook_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String(50), nullable=False, index=True) # whatsapp, zapier
+    message_id = Column(String(255), unique=True, index=True, nullable=False)
+    sender = Column(String(255), nullable=True, index=True)
+    processed_at = Column(DateTime, default=utc_now)
+

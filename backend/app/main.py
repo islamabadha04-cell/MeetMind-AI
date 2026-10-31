@@ -11,6 +11,8 @@ import uuid
 import os
 import secrets
 import time
+import hmac
+import hashlib
 
 from app.core.config import settings
 from app.db.session import engine, Base, get_db
@@ -18,7 +20,8 @@ from app.models.models import (
     User, Meeting, MeetingSummary, Task, TaskComment, TaskHistory,
     ApprovalRequest, Notification, Workflow, WorkflowExecution,
     ChatMessage, KnowledgeDocument, DocumentChunk, MeetingMemory, MeetingChunk,
-    Integration, ExternalEntityMapping, WebhookSubscription, WebhookDelivery, IntegrationJob
+    Integration, ExternalEntityMapping, WebhookSubscription, WebhookDelivery, IntegrationJob,
+    OAuthNonce, ProcessedWebhookMessage
 )
 from app.schemas.schemas import (
     UserRegister, UserLogin, Token, UserProfile,
@@ -1241,12 +1244,45 @@ def scan_and_generate_notifications(current_user: User = Depends(get_current_use
     return {"status": "success", "notifications_created": created_count}
 
 # ----------------- PHASE 3: Workflow Automation -----------------
+FORBIDDEN_WORKFLOW_ACTIONS = [
+    "send_email", "gmail_send", "send_mail", "users.messages.send",
+    "users.drafts.send", "outlook_send", "dispatch_email", "mail_send"
+]
+
+def _validate_workflow_actions(actions_json: str):
+    """
+    Enforces Server-Side Draft-Only Security & Restricted Scope Compliance in Workflows.
+    Any attempt to configure or execute an automated email transmission action via workflows
+    is strictly blocked with HTTP 403 Forbidden.
+    """
+    try:
+        actions = json.loads(actions_json or "[]")
+        for act in actions:
+            action_type = ""
+            if isinstance(act, dict):
+                action_type = act.get("type", "") or act.get("action", "") or act.get("name", "")
+            elif isinstance(act, str):
+                action_type = act
+            for forbidden in FORBIDDEN_WORKFLOW_ACTIONS:
+                if forbidden in action_type.lower():
+                    raise HTTPException(
+                        status_code=403,
+                        detail=(
+                            f"Automated email dispatch ('{action_type}') is strictly forbidden in workflows. "
+                            "MeetMind AI enforces Draft-Only mode under Google and Microsoft restricted scope guidelines. "
+                            "Only 'create_draft' or internal notifications are permitted."
+                        )
+                    )
+    except json.JSONDecodeError:
+        pass
+
 @app.get(f"{settings.API_V1_STR}/workflows", response_model=List[WorkflowResponse])
 def get_workflows(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return db.query(Workflow).filter(Workflow.user_id == current_user.id).order_by(Workflow.created_at.desc()).all()
 
 @app.post(f"{settings.API_V1_STR}/workflows", response_model=WorkflowResponse)
 def create_workflow(wf_in: WorkflowCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _validate_workflow_actions(wf_in.actions_json)
     wf = Workflow(
         user_id=current_user.id,
         title=wf_in.title,
@@ -1267,6 +1303,7 @@ def update_workflow(workflow_id: int, wf_in: WorkflowCreate, current_user: User 
     if not wf:
         raise HTTPException(status_code=404, detail="Workflow not found")
 
+    _validate_workflow_actions(wf_in.actions_json)
     wf.title = wf_in.title
     wf.description = wf_in.description or ""
     wf.trigger_type = wf_in.trigger_type
@@ -1292,6 +1329,8 @@ def execute_workflow(workflow_id: int, current_user: User = Depends(get_current_
     wf = db.query(Workflow).filter(Workflow.id == workflow_id, Workflow.user_id == current_user.id).first()
     if not wf:
         raise HTTPException(status_code=404, detail="Workflow not found")
+
+    _validate_workflow_actions(wf.actions_json)
 
     logs = [
         f"Execution started for workflow '{wf.title}'",
@@ -1477,7 +1516,9 @@ def connect_integration(provider: str, req: IntegrationConnectRequest, current_u
         provider,
         current_user.id,
         redirect_uri=req.redirect_uri,
-        code_challenge=req.code_challenge
+        code_challenge=req.code_challenge,
+        code_verifier=req.code_verifier,
+        db=db
     )
     return IntegrationConnectResponse(
         provider=provider,
@@ -1495,12 +1536,13 @@ def oauth_callback(provider: str, req: IntegrationConnectRequest, current_user: 
     if not req.auth_code:
         raise HTTPException(status_code=400, detail="Missing required authorization code")
 
-    # Cryptographic State Verification & One-Time Consumption (Replay Prevention)
+    # Cryptographic State Verification & One-Time Consumption (Replay Prevention via Shared Storage)
     if req.state:
         state_verification = verify_and_consume_oauth_state(
             req.state,
             expected_user_id=current_user.id,
-            expected_provider=provider
+            expected_provider=provider,
+            db=db
         )
         if not state_verification.get("valid"):
             reason = state_verification.get("reason", "Invalid or expired state")
@@ -2110,14 +2152,76 @@ def whatsapp_webhook_verification(
 async def receive_whatsapp_webhook(request: Request, db: Session = Depends(get_db)):
     """
     Receives incoming WhatsApp messages / voice notes from Meta Cloud API.
-    Converts audio into a MeetMind meeting, transcribes, and extracts action items.
+    Enforces:
+    1. Meta X-Hub-Signature-256 HMAC-SHA256 signature verification over raw body bytes.
+    2. Rejection of invalid, tampered, or missing signatures with HTTP 401.
+    3. Duplicate message ID prevention (idempotency via ProcessedWebhookMessage).
+    4. Unauthorized sender filtering (when configured).
+    5. Expired media retention check.
+    6. Synthesis of authenticated voice notes into MeetMind meetings and action items.
     """
-    body = await request.json()
+    app_secret = os.getenv("META_APP_SECRET", "meetmind_meta_app_secret_test_2026")
+    signature_header = request.headers.get("X-Hub-Signature-256")
+    raw_body = await request.body()
+
+    if not signature_header:
+        raise HTTPException(status_code=401, detail="Missing X-Hub-Signature-256 header")
+
+    expected_hash = hmac.new(app_secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    expected_sig = f"sha256={expected_hash}"
+
+    if not hmac.compare_digest(expected_sig, signature_header):
+        raise HTTPException(status_code=401, detail="Invalid X-Hub-Signature-256 signature")
+
+    try:
+        body = json.loads(raw_body.decode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
     
-    # Check if voice note or audio message
     entry = body.get("entry", [])
     if not entry:
         return {"status": "ignored", "reason": "empty entry"}
+
+    messages = entry[0].get("changes", [{}])[0].get("value", {}).get("messages", [])
+    if not messages:
+        return {"status": "ignored", "reason": "no messages in payload"}
+
+    msg = messages[0]
+    message_id = msg.get("id") or f"wamid_{secrets.token_hex(8)}"
+    sender = msg.get("from")
+    timestamp_val = msg.get("timestamp")
+
+    # 1. Duplicate Message Detection
+    existing_processed = db.query(ProcessedWebhookMessage).filter(
+        ProcessedWebhookMessage.provider == "whatsapp",
+        ProcessedWebhookMessage.message_id == message_id
+    ).first()
+    if existing_processed:
+        return {"status": "duplicate", "message_id": message_id, "message": "Message already processed"}
+
+    # 2. Unauthorized Sender Filter
+    allowed_senders = os.getenv("ALLOWED_WHATSAPP_SENDERS", "")
+    if allowed_senders:
+        allowed_list = [s.strip() for s in allowed_senders.split(",") if s.strip()]
+        if sender and sender not in allowed_list:
+            return {"status": "rejected", "reason": "unauthorized_sender", "sender": sender}
+
+    # 3. Expired Media Check (Threshold: 24h = 86400s)
+    if timestamp_val:
+        try:
+            ts = int(timestamp_val)
+            if int(time.time()) - ts > 86400:
+                return {"status": "rejected", "reason": "expired_media", "message": "Media content has expired"}
+        except Exception:
+            pass
+
+    # Record message as processed
+    proc_record = ProcessedWebhookMessage(
+        provider="whatsapp",
+        message_id=message_id,
+        sender=sender
+    )
+    db.add(proc_record)
 
     # Process voice note
     voice_note_title = f"WhatsApp Voice Note - {datetime.now(timezone.utc).strftime('%b %d, %I:%M %p')}"
@@ -2125,6 +2229,7 @@ async def receive_whatsapp_webhook(request: Request, db: Session = Depends(get_d
     # Find user or default to primary user
     first_user = db.query(User).first()
     if not first_user:
+        db.commit()
         return {"status": "ignored", "reason": "no user found"}
 
     m = Meeting(
