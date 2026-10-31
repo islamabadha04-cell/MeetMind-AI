@@ -313,6 +313,9 @@ class IntegrationResponse(BaseModel):
 
 class IntegrationConnectRequest(BaseModel):
     auth_code: Optional[str] = None
+    state: Optional[str] = None
+    code_verifier: Optional[str] = None
+    code_challenge: Optional[str] = None
     redirect_uri: Optional[str] = None
     api_key: Optional[str] = None
     token: Optional[str] = None

@@ -49,7 +49,8 @@ from app.services.search_service import SearchService
 from app.services.memory_service import MemoryService
 from app.services.integration_service import (
     IntegrationService, PROVIDERS, encrypt_token, decrypt_token,
-    generate_oauth_state, verify_oauth_state
+    generate_oauth_state, verify_oauth_state, verify_and_consume_oauth_state,
+    generate_pkce_codes
 )
 
 # Initialize DB tables
@@ -1471,8 +1472,13 @@ def connect_integration(provider: str, req: IntegrationConnectRequest, current_u
             message=f"Successfully connected {meta['name']}!"
         )
 
-    # Otherwise return OAuth 2.0 authorization URL
-    auth_url = IntegrationService.get_oauth_authorization_url(provider, current_user.id, req.redirect_uri)
+    # Otherwise return OAuth 2.0 authorization URL with state and PKCE support
+    auth_url = IntegrationService.get_oauth_authorization_url(
+        provider,
+        current_user.id,
+        redirect_uri=req.redirect_uri,
+        code_challenge=req.code_challenge
+    )
     return IntegrationConnectResponse(
         provider=provider,
         connection_status="connecting",
@@ -1488,6 +1494,20 @@ def oauth_callback(provider: str, req: IntegrationConnectRequest, current_user: 
     
     if not req.auth_code:
         raise HTTPException(status_code=400, detail="Missing required authorization code")
+
+    # Cryptographic State Verification & One-Time Consumption (Replay Prevention)
+    if req.state:
+        state_verification = verify_and_consume_oauth_state(
+            req.state,
+            expected_user_id=current_user.id,
+            expected_provider=provider
+        )
+        if not state_verification.get("valid"):
+            reason = state_verification.get("reason", "Invalid or expired state")
+            raise HTTPException(
+                status_code=400,
+                detail=f"OAuth state verification failed: {reason}"
+            )
 
     existing = db.query(Integration).filter(Integration.user_id == current_user.id, Integration.provider == provider).first()
     if not existing:
@@ -1696,6 +1716,20 @@ def create_gmail_draft(req: GmailDraftRequest, current_user: User = Depends(get_
         message="Email draft successfully created in your Gmail mailbox. (Draft-Only mode: email will NOT be sent until you review and confirm in Gmail)."
     )
 
+@app.post(f"{settings.API_V1_STR}/integrations/gmail/send")
+def forbid_gmail_send(current_user: User = Depends(get_current_user)):
+    """
+    Explicit Server-Side Policy Guard:
+    Google's 'gmail.compose' scope allows both draft creation and email transmission.
+    To satisfy Google Restricted Scope requirements and protect user trust, MeetMind AI
+    strictly forbids backend automated email transmission. All emails must be reviewed
+    and dispatched by the human user directly in Gmail.
+    """
+    raise HTTPException(
+        status_code=403,
+        detail="Automated email sending is strictly prohibited. MeetMind AI enforces Draft-Only mode under Google's restricted scope guidelines. All emails must be reviewed and sent manually by the user within Gmail."
+    )
+
 # --------------------------------------------------------------------------
 # Google Drive: File Browsing & RAG Knowledge Base Ingestion
 # --------------------------------------------------------------------------
@@ -1813,6 +1847,18 @@ def create_outlook_draft(req: OutlookDraftRequest, current_user: User = Depends(
         "status": "draft_created",
         "message": "Outlook email draft created successfully. (Draft-Only: must be approved in Outlook to send)."
     }
+
+@app.post(f"{settings.API_V1_STR}/integrations/outlook/send")
+def forbid_outlook_send(current_user: User = Depends(get_current_user)):
+    """
+    Explicit Server-Side Policy Guard:
+    MeetMind AI strictly enforces Draft-Only mode for Microsoft Outlook / 365.
+    Automated silent dispatch is blocked. All drafts must be sent manually by the user.
+    """
+    raise HTTPException(
+        status_code=403,
+        detail="Automated email sending is strictly prohibited. MeetMind AI enforces Draft-Only mode for Microsoft Outlook. Drafts must be reviewed and sent manually."
+    )
 
 # --------------------------------------------------------------------------
 # Jira Cloud: Projects & Issue Creation

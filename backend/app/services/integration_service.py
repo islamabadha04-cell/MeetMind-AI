@@ -10,28 +10,55 @@ from typing import Dict, Any, List, Optional
 import httpx
 
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from app.core.config import settings
 
 # --------------------------------------------------------------------------
-# Encryption Helper for Token Security
+# AES-256-GCM AEAD Encryption Helper for Token Security
 # --------------------------------------------------------------------------
+def _get_aes_key() -> bytes:
+    """Derive deterministic 32-byte (256-bit) key from SECRET_KEY."""
+    return hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+
 def _get_fernet_key() -> bytes:
-    # Derive deterministic 32-byte urlsafe base64 key from SECRET_KEY
-    digest = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    return base64.urlsafe_b64encode(digest)
+    """Legacy Fernet 32-byte urlsafe base64 key."""
+    return base64.urlsafe_b64encode(_get_aes_key())
 
 def encrypt_token(token: str) -> str:
+    """
+    Encrypts sensitive OAuth access and refresh tokens using AES-256-GCM (AEAD).
+    Generates a cryptographically random 96-bit (12-byte) initialization nonce per call.
+    Appends a 128-bit authentication tag to prevent ciphertext tampering.
+    """
     if not token:
         return ""
-    f = Fernet(_get_fernet_key())
-    return f.encrypt(token.encode()).decode()
+    key = _get_aes_key()
+    aesgcm = AESGCM(key)
+    nonce = os.urandom(12)  # 96-bit random nonce
+    ciphertext = aesgcm.encrypt(nonce, token.encode("utf-8"), None)
+    encoded = base64.urlsafe_b64encode(nonce + ciphertext).decode("utf-8")
+    return f"gcm:{encoded}"
 
 def decrypt_token(encrypted_token: str) -> str:
+    """
+    Decrypts tokens encrypted with AES-256-GCM with backward compatibility for legacy Fernet.
+    """
     if not encrypted_token:
         return ""
     try:
-        f = Fernet(_get_fernet_key())
-        return f.decrypt(encrypted_token.encode()).decode()
+        if encrypted_token.startswith("gcm:"):
+            raw = base64.urlsafe_b64decode(encrypted_token[4:].encode("utf-8"))
+            if len(raw) < 12:
+                return ""
+            nonce = raw[:12]
+            ciphertext = raw[12:]
+            key = _get_aes_key()
+            aesgcm = AESGCM(key)
+            return aesgcm.decrypt(nonce, ciphertext, None).decode("utf-8")
+        else:
+            # Fallback for legacy Fernet-encrypted tokens
+            f = Fernet(_get_fernet_key())
+            return f.decrypt(encrypted_token.encode("utf-8")).decode("utf-8")
     except Exception:
         return ""
 
@@ -142,33 +169,105 @@ PROVIDERS = {
 }
 
 # --------------------------------------------------------------------------
-# State & PKCE Helpers
+# State & PKCE Helpers (RFC 7636 & Cryptographic Replay Protection)
 # --------------------------------------------------------------------------
+# Registry of consumed nonces: nonce -> consumed_at timestamp
+CONSUMED_OAUTH_NONCES: Dict[str, int] = {}
+
+def generate_pkce_codes() -> Dict[str, str]:
+    """
+    Generates RFC 7636 compliant PKCE code_verifier and code_challenge (S256).
+    """
+    code_verifier = secrets.token_urlsafe(64)
+    digest = hashlib.sha256(code_verifier.encode("utf-8")).digest()
+    code_challenge = base64.urlsafe_b64encode(digest).decode("utf-8").rstrip("=")
+    return {
+        "code_verifier": code_verifier,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256"
+    }
+
 def generate_oauth_state(user_id: int, provider: str) -> str:
+    """
+    Generates a cryptographically secure, non-guessable OAuth 2.0 state parameter.
+    Includes user_id, provider, UTC timestamp, and a 256-bit (32 bytes) random nonce,
+    signed with HMAC-SHA256 using the system SECRET_KEY.
+    """
     timestamp = int(time.time())
-    random_hex = secrets.token_hex(16)
+    random_hex = secrets.token_hex(32)  # 256-bit non-guessable random nonce
     raw = f"{user_id}:{provider}:{timestamp}:{random_hex}"
-    sig = hmac.new(settings.SECRET_KEY.encode(), raw.encode(), hashlib.sha256).hexdigest()[:16]
+    sig = hmac.new(settings.SECRET_KEY.encode(), raw.encode(), hashlib.sha256).hexdigest()
     state_payload = f"{raw}:{sig}"
     return base64.urlsafe_b64encode(state_payload.encode()).decode()
 
-def verify_oauth_state(state: str, expected_user_id: int, expected_provider: str) -> bool:
+def verify_and_consume_oauth_state(
+    state: str,
+    expected_user_id: Optional[int] = None,
+    expected_provider: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Validates and consumes OAuth state:
+    1. Base64 decodes and unpacks user_id, provider, timestamp, nonce, signature.
+    2. Verifies HMAC-SHA256 signature using constant-time comparison.
+    3. Checks 15-minute (900s) TTL expiration.
+    4. Validates user_id and provider match expected parameters.
+    5. Replay Attack Prevention: rejects if nonce was already consumed.
+    6. Consumes nonce immediately and prunes old entries.
+    """
+    now = int(time.time())
+
+    # Prune nonces older than 30 minutes
+    expired_nonces = [n for n, ts in list(CONSUMED_OAUTH_NONCES.items()) if now - ts > 1800]
+    for n in expired_nonces:
+        CONSUMED_OAUTH_NONCES.pop(n, None)
+
     try:
         raw_decoded = base64.urlsafe_b64decode(state.encode()).decode()
         parts = raw_decoded.split(":")
         if len(parts) != 5:
-            return False
+            return {"valid": False, "reason": "Malformed state format"}
         user_id_str, provider, timestamp_str, random_hex, sig = parts
-        if int(user_id_str) != expected_user_id or provider != expected_provider:
-            return False
+        user_id = int(user_id_str)
+        timestamp = int(timestamp_str)
+
+        if expected_user_id is not None and user_id != expected_user_id:
+            return {"valid": False, "reason": "User ID mismatch"}
+        if expected_provider is not None and provider != expected_provider:
+            return {"valid": False, "reason": "Provider mismatch"}
+
         # 15 minute TTL
-        if int(time.time()) - int(timestamp_str) > 900:
-            return False
+        if now - timestamp > 900 or timestamp > now + 60:
+            return {"valid": False, "reason": "OAuth state expired (15-minute TTL exceeded)"}
+
         expected_raw = f"{user_id_str}:{provider}:{timestamp_str}:{random_hex}"
-        expected_sig = hmac.new(settings.SECRET_KEY.encode(), expected_raw.encode(), hashlib.sha256).hexdigest()[:16]
-        return hmac.compare_digest(sig, expected_sig)
-    except Exception:
-        return False
+        expected_sig = hmac.new(settings.SECRET_KEY.encode(), expected_raw.encode(), hashlib.sha256).hexdigest()
+        
+        # Compare either full 64-char hex or legacy 16-char prefix
+        sig_matches = hmac.compare_digest(sig, expected_sig) or hmac.compare_digest(sig, expected_sig[:16])
+        if not sig_matches:
+            return {"valid": False, "reason": "Invalid HMAC signature"}
+
+        # Check replay / one-time consumption
+        if random_hex in CONSUMED_OAUTH_NONCES:
+            return {"valid": False, "reason": "OAuth state already consumed (replay attack prevented)", "replayed": True}
+
+        # Mark as consumed immediately
+        CONSUMED_OAUTH_NONCES[random_hex] = now
+
+        return {
+            "valid": True,
+            "user_id": user_id,
+            "provider": provider,
+            "nonce": random_hex,
+            "timestamp": timestamp
+        }
+    except Exception as e:
+        return {"valid": False, "reason": f"Verification error: {str(e)}"}
+
+def verify_oauth_state(state: str, expected_user_id: int, expected_provider: str) -> bool:
+    """Backward compatible wrapper that calls verify_and_consume_oauth_state"""
+    res = verify_and_consume_oauth_state(state, expected_user_id, expected_provider)
+    return res.get("valid", False)
 
 # --------------------------------------------------------------------------
 # Integration Service Class
@@ -184,13 +283,20 @@ class IntegrationService:
         return list(PROVIDERS.values())
 
     @staticmethod
-    def get_oauth_authorization_url(provider: str, user_id: int, redirect_uri: Optional[str] = None) -> str:
+    def get_oauth_authorization_url(
+        provider: str,
+        user_id: int,
+        redirect_uri: Optional[str] = None,
+        code_challenge: Optional[str] = None
+    ) -> str:
         prov = PROVIDERS.get(provider)
         if not prov:
             return ""
         
         state = generate_oauth_state(user_id, provider)
         redir = redirect_uri or "https://meetmind-ai-74519.web.app/api/v1/integrations/oauth/callback/" + provider
+
+        pkce_param = f"&code_challenge={code_challenge}&code_challenge_method=S256" if code_challenge else ""
 
         if provider in ["google_calendar", "gmail", "google_drive"]:
             client_id = os.getenv("GOOGLE_CLIENT_ID", "790778332182-meetmind-demo.apps.googleusercontent.com")
@@ -204,6 +310,7 @@ class IntegrationService:
                 f"access_type=offline&"
                 f"prompt=consent&"
                 f"state={state}"
+                f"{pkce_param}"
             )
         elif provider == "outlook":
             client_id = os.getenv("MICROSOFT_CLIENT_ID", "meetmind-azure-client-id")
@@ -216,6 +323,7 @@ class IntegrationService:
                 f"response_mode=query&"
                 f"scope={scope_str}&"
                 f"state={state}"
+                f"{pkce_param}"
             )
         elif provider == "jira":
             client_id = os.getenv("ATLASSIAN_CLIENT_ID", "meetmind-atlassian-client-id")
@@ -229,6 +337,7 @@ class IntegrationService:
                 f"state={state}&"
                 f"response_type=code&"
                 f"prompt=consent"
+                f"{pkce_param}"
             )
         elif provider == "slack":
             client_id = os.getenv("SLACK_CLIENT_ID", "meetmind-slack-client-id")

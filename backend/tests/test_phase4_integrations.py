@@ -265,3 +265,121 @@ def test_integrations_multi_tenant_isolation(client, auth_users):
     # User B tries to dispatch User A's webhook: must return 404
     hack_res = client.post(f"/api/v1/integrations/webhooks/test-dispatch?subscription_id={sub_id_a}", headers=headers_b)
     assert hack_res.status_code == 404
+
+# --------------------------------------------------------------------------
+# Phase 4 Security Hardening: AES-256-GCM, OAuth Replay, PKCE, Draft-Only
+# --------------------------------------------------------------------------
+
+def test_aes_256_gcm_encryption_and_backward_compatibility():
+    from app.services.integration_service import encrypt_token, decrypt_token, _get_fernet_key
+    from cryptography.fernet import Fernet
+
+    secret_data = "ghp_live_access_token_secure_9999"
+    
+    # 1. AES-256-GCM encryption produces 'gcm:' prefix
+    encrypted_gcm = encrypt_token(secret_data)
+    assert encrypted_gcm.startswith("gcm:")
+    
+    # Decrypt returns original plaintext
+    decrypted_gcm = decrypt_token(encrypted_gcm)
+    assert decrypted_gcm == secret_data
+
+    # Two encryptions produce different ciphertexts due to fresh 96-bit random nonce
+    encrypted_gcm_2 = encrypt_token(secret_data)
+    assert encrypted_gcm != encrypted_gcm_2
+    assert decrypt_token(encrypted_gcm_2) == secret_data
+
+    # 2. Backward compatibility with legacy Fernet encrypted tokens
+    legacy_fernet = Fernet(_get_fernet_key()).encrypt(secret_data.encode()).decode()
+    assert not legacy_fernet.startswith("gcm:")
+    decrypted_legacy = decrypt_token(legacy_fernet)
+    assert decrypted_legacy == secret_data
+
+def test_oauth_state_nonce_and_replay_protection(client, auth_users):
+    from app.services.integration_service import generate_oauth_state, verify_and_consume_oauth_state
+    headers = auth_users["headers_a"]
+
+    # 1. Generate legitimate state
+    state = generate_oauth_state(user_id=1, provider="google_calendar")
+    assert len(state) > 40
+
+    # 2. First verification must succeed and consume the nonce
+    res_1 = verify_and_consume_oauth_state(state, expected_user_id=1, expected_provider="google_calendar")
+    assert res_1["valid"] is True
+    assert "nonce" in res_1
+
+    # 3. Replay attack: Second verification with EXACT same state must be rejected
+    res_2 = verify_and_consume_oauth_state(state, expected_user_id=1, expected_provider="google_calendar")
+    assert res_2["valid"] is False
+    assert res_2.get("replayed") is True
+    assert "already consumed" in res_2["reason"]
+
+    # 4. Tampered state rejected
+    tampered_state = state[:-5] + "AAAAA"
+    res_tampered = verify_and_consume_oauth_state(tampered_state, expected_user_id=1, expected_provider="google_calendar")
+    assert res_tampered["valid"] is False
+
+def test_oauth_callback_with_state_validation_and_replay_rejection(client, auth_users):
+    from app.services.integration_service import generate_oauth_state
+    headers = auth_users["headers_a"]
+
+    # Get actual user_id for User A
+    me_res = client.get("/api/v1/users/me", headers=headers)
+    assert me_res.status_code == 200
+    user_id = me_res.json()["id"]
+
+    # Generate legitimate state for User A
+    valid_state = generate_oauth_state(user_id=user_id, provider="google_calendar")
+
+    # 1. First callback with valid state succeeds
+    cb_payload = {
+        "auth_code": "auth_code_legitimate_12345",
+        "state": valid_state
+    }
+    res_1 = client.post("/api/v1/integrations/google_calendar/callback", json=cb_payload, headers=headers)
+    assert res_1.status_code == 200
+    assert res_1.json()["connection_status"] == "connected"
+
+    # 2. Replay attack: calling callback again with the already-consumed state must return HTTP 400
+    res_2 = client.post("/api/v1/integrations/google_calendar/callback", json=cb_payload, headers=headers)
+    assert res_2.status_code == 400
+    assert "OAuth state verification failed" in res_2.json()["detail"]
+    assert "already consumed" in res_2.json()["detail"]
+
+def test_pkce_generation():
+    from app.services.integration_service import generate_pkce_codes
+    import hashlib
+    import base64
+
+    pkce = generate_pkce_codes()
+    assert "code_verifier" in pkce
+    assert "code_challenge" in pkce
+    assert pkce["code_challenge_method"] == "S256"
+
+    # Verify SHA-256 base64url transformation
+    verifier = pkce["code_verifier"]
+    expected_digest = hashlib.sha256(verifier.encode("utf-8")).digest()
+    expected_challenge = base64.urlsafe_b64encode(expected_digest).decode("utf-8").rstrip("=")
+    assert pkce["code_challenge"] == expected_challenge
+
+def test_server_side_draft_only_enforcement(client, auth_users):
+    headers = auth_users["headers_a"]
+
+    # 1. Gmail draft creation works
+    draft_res = client.post("/api/v1/integrations/gmail/create-draft", json={
+        "recipient": "exec@domain.com",
+        "subject": "Executive Summary",
+        "body": "Meeting notes..."
+    }, headers=headers)
+    assert draft_res.status_code == 200
+    assert draft_res.json()["status"] == "draft_created"
+
+    # 2. Gmail automated send is strictly blocked with HTTP 403 Forbidden
+    send_res = client.post("/api/v1/integrations/gmail/send", headers=headers)
+    assert send_res.status_code == 403
+    assert "Automated email sending is strictly prohibited" in send_res.json()["detail"]
+
+    # 3. Outlook automated send is strictly blocked with HTTP 403 Forbidden
+    outlook_send_res = client.post("/api/v1/integrations/outlook/send", headers=headers)
+    assert outlook_send_res.status_code == 403
+    assert "Automated email sending is strictly prohibited" in outlook_send_res.json()["detail"]
