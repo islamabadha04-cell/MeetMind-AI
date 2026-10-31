@@ -205,6 +205,77 @@ CREATE TABLE chat_messages (
     citations_json TEXT DEFAULT '[]',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- PHASE 4: Third-Party Integrations Ecosystem
+CREATE TABLE integrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL, -- google_calendar, gmail, google_drive, outlook, jira, trello, slack, notion, zapier, whatsapp
+    connection_status VARCHAR(30) DEFAULT 'not_connected', -- not_connected, connecting, connected, expired, permission_required, error, disconnected
+    account_email VARCHAR(255) DEFAULT '',
+    account_name VARCHAR(255) DEFAULT '',
+    external_account_id VARCHAR(255) DEFAULT '',
+    authorized_scopes_json TEXT DEFAULT '[]',
+    encrypted_access_token TEXT DEFAULT '',
+    encrypted_refresh_token TEXT DEFAULT '',
+    token_expiry DATETIME NULL,
+    settings_json TEXT DEFAULT '{}',
+    last_synced_at DATETIME NULL,
+    error_message TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE external_entity_mappings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL, -- task_event, task_issue, task_card, meeting_page, drive_doc
+    internal_id INTEGER NOT NULL,
+    external_id VARCHAR(255) NOT NULL,
+    external_url VARCHAR(500) DEFAULT '',
+    sync_hash VARCHAR(64) DEFAULT '',
+    last_synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE webhook_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) DEFAULT 'Custom Webhook',
+    target_url VARCHAR(500) NOT NULL,
+    secret_key VARCHAR(255) NOT NULL,
+    events_json TEXT DEFAULT '[]',
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE webhook_deliveries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscription_id INTEGER NOT NULL REFERENCES webhook_subscriptions(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_type VARCHAR(100) NOT NULL,
+    payload_json TEXT NOT NULL,
+    status_code INTEGER DEFAULT 0,
+    response_body TEXT DEFAULT '',
+    success BOOLEAN DEFAULT 0,
+    retry_count INTEGER DEFAULT 0,
+    error_message TEXT DEFAULT '',
+    delivered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE integration_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,
+    job_type VARCHAR(50) NOT NULL,
+    status VARCHAR(30) DEFAULT 'completed',
+    details_json TEXT DEFAULT '{}',
+    error_message TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ---

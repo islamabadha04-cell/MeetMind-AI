@@ -27,6 +27,10 @@ class User(Base):
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     workflows = relationship("Workflow", back_populates="user", cascade="all, delete-orphan")
     approval_requests = relationship("ApprovalRequest", back_populates="user", cascade="all, delete-orphan")
+    integrations = relationship("Integration", back_populates="user", cascade="all, delete-orphan")
+    entity_mappings = relationship("ExternalEntityMapping", back_populates="user", cascade="all, delete-orphan")
+    webhook_subscriptions = relationship("WebhookSubscription", back_populates="user", cascade="all, delete-orphan")
+    integration_jobs = relationship("IntegrationJob", back_populates="user", cascade="all, delete-orphan")
 
 class Workspace(Base):
     __tablename__ = "workspaces"
@@ -267,3 +271,92 @@ class ChatMessage(Base):
     role = Column(String(20), nullable=False) # user or assistant
     content = Column(Text, nullable=False)
     citations_json = Column(Text, default="[]")
+
+# --------------------------------------------------------------------------
+# PHASE 4: Third-Party Integrations Ecosystem Models
+# --------------------------------------------------------------------------
+class Integration(Base):
+    __tablename__ = "integrations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    provider = Column(String(50), nullable=False, index=True) # google_calendar, gmail, google_drive, outlook, jira, trello, slack, notion, zapier, whatsapp
+    connection_status = Column(String(30), default="not_connected") # not_connected, connecting, connected, expired, permission_required, error, disconnected
+    account_email = Column(String(255), default="")
+    account_name = Column(String(255), default="")
+    external_account_id = Column(String(255), default="")
+    authorized_scopes_json = Column(Text, default="[]")
+    encrypted_access_token = Column(Text, default="")
+    encrypted_refresh_token = Column(Text, default="")
+    token_expiry = Column(DateTime, nullable=True)
+    settings_json = Column(Text, default="{}")
+    last_synced_at = Column(DateTime, nullable=True)
+    error_message = Column(Text, default="")
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="integrations")
+
+class ExternalEntityMapping(Base):
+    __tablename__ = "external_entity_mappings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    provider = Column(String(50), nullable=False, index=True)
+    entity_type = Column(String(50), nullable=False) # task_event, task_issue, task_card, meeting_page, drive_doc
+    internal_id = Column(Integer, nullable=False, index=True)
+    external_id = Column(String(255), nullable=False)
+    external_url = Column(String(500), default="")
+    sync_hash = Column(String(64), default="")
+    last_synced_at = Column(DateTime, default=utc_now)
+    created_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="entity_mappings")
+
+class WebhookSubscription(Base):
+    __tablename__ = "webhook_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String(255), default="Custom Webhook")
+    target_url = Column(String(500), nullable=False)
+    secret_key = Column(String(255), nullable=False)
+    events_json = Column(Text, default="[]") # JSON list of subscribed events
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="webhook_subscriptions")
+    deliveries = relationship("WebhookDelivery", back_populates="subscription", cascade="all, delete-orphan")
+
+class WebhookDelivery(Base):
+    __tablename__ = "webhook_deliveries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subscription_id = Column(Integer, ForeignKey("webhook_subscriptions.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    event_type = Column(String(100), nullable=False)
+    payload_json = Column(Text, nullable=False)
+    status_code = Column(Integer, default=0)
+    response_body = Column(Text, default="")
+    success = Column(Boolean, default=False)
+    retry_count = Column(Integer, default=0)
+    error_message = Column(Text, default="")
+    delivered_at = Column(DateTime, default=utc_now)
+
+    subscription = relationship("WebhookSubscription", back_populates="deliveries")
+
+class IntegrationJob(Base):
+    __tablename__ = "integration_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    provider = Column(String(50), nullable=False)
+    job_type = Column(String(50), nullable=False) # sync_calendar, create_draft, import_doc, export_page, post_slack
+    status = Column(String(30), default="completed") # pending, in_progress, completed, failed
+    details_json = Column(Text, default="{}")
+    error_message = Column(Text, default="")
+    created_at = Column(DateTime, default=utc_now)
+    completed_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="integration_jobs")

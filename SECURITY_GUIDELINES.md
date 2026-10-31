@@ -116,3 +116,24 @@ service firebase.storage {
 2. **Session Termination:** Clicking **Log Out** immediately wipes `localStorage`, `sessionStorage`, and calls `signOut(auth)` to revoke active Firebase refresh tokens.
 3. **Guest Evaluation Isolation:** Demo/Guest sessions run with temporary local storage and are barred from persisting data to public cloud collections without full credentialed sign-in.
 
+---
+
+## 7. Third-Party Integrations & OAuth Security Standards (Phase 4)
+
+1. **Server-Side AES-256 Token Encryption:**
+   - Raw OAuth access tokens and refresh tokens are strictly encrypted at rest using server-side AES-256 (`cryptography.fernet`).
+   - Tokens are never exposed to browser JavaScript, client-readable Firestore records, or client logs.
+2. **Cryptographic State Parameter Validation:**
+   - Every OAuth 2.0 initiation generates a cryptographically signed, timestamped state token (`HMAC-SHA256` with 15-minute TTL) binding the request to `user_id` and `provider`.
+   - Prevents OAuth CSRF, authorization code interception, and token replay attacks.
+3. **Least-Privilege Scoping:**
+   - MeetMind AI enforces the narrowest possible permission scopes:
+     - Gmail: `https://www.googleapis.com/auth/gmail.compose` (create drafts only; mailbox read access is blocked).
+     - Google Drive: `https://www.googleapis.com/auth/drive.readonly` (read-only document access; cannot delete or modify files).
+     - Microsoft Graph: `Calendars.ReadWrite`, `Mail.ReadWrite` (create calendar items and reviewable drafts).
+4. **Draft-Only Email Safeguard:**
+   - Automated message sending is strictly forbidden. All follow-up emails and MoMs generated for Gmail or Outlook are created strictly as drafts in the user's personal mailbox, requiring human review and explicit confirmation before sending.
+5. **Webhook Payload Signing (HMAC-SHA256):**
+   - Outbound webhook requests include `X-MeetMind-Signature` computed using the user's private webhook signing secret, preventing downstream payload tampering or spoofing.
+
+

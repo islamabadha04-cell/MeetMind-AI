@@ -810,6 +810,75 @@ async function runBrowserTests() {
     await sleep(200);
     assert('Workflow execution trigger executes with 0 errors', true);
 
+    // -------------------------------------------------------------------------
+    // TEST SUITE 5F: Phase 4 Third-Party Integrations Ecosystem
+    // -------------------------------------------------------------------------
+    console.log('\n======================================================');
+    console.log('🧪 TEST SUITE 5F: Phase 4 Third-Party Integrations Ecosystem');
+    console.log('======================================================');
+
+    // 1. Navigate to Integration Center
+    await cdp.evaluate('navigateToPage("integrations")');
+    await sleep(300);
+    const isIntegActive = await cdp.evaluate('!document.getElementById("page-integrations").classList.contains("hidden")');
+    assert('Navigate to Integration Center view', isIntegActive);
+
+    // 2. Verify Integration KPI metrics
+    const provKpi = await cdp.evaluate('document.getElementById("kpiAvailableProviders")?.textContent');
+    assert('Integration Center displays 10 available providers KPI', provKpi === '10');
+
+    // 3. Verify all 10 provider cards rendered in grid
+    const cardsCount = await cdp.evaluate('document.querySelectorAll(".integration-card").length');
+    assert('All 10 enterprise integration cards rendered in grid', cardsCount === 10);
+
+    // 4. Test Category Filter
+    await cdp.evaluate('document.querySelector(\'.btn-integ-filter[data-category="Calendar & Scheduling"]\')?.click()');
+    await sleep(200);
+    const calCardsCount = await cdp.evaluate('document.querySelectorAll(".integration-card").length');
+    assert('Category filter isolates Calendar & Scheduling providers', calCardsCount === 2);
+
+    // 5. Reset to All Providers
+    await cdp.evaluate('document.querySelector(\'.btn-integ-filter[data-category="all"]\')?.click()');
+    await sleep(200);
+    const allCardsCount = await cdp.evaluate('document.querySelectorAll(".integration-card").length');
+    assert('Filter resets smoothly to all 10 providers', allCardsCount === 10);
+
+    // 6. Open Integration Modal for Google Calendar
+    await cdp.evaluate('document.querySelector(\'#integ-card-google_calendar .btn-integ-connect\')?.click()');
+    await sleep(250);
+    const isIntegModalOpen = await cdp.evaluate('!document.getElementById("integrationModal").classList.contains("hidden")');
+    assert('Integration settings modal opens cleanly', isIntegModalOpen);
+
+    // 7. Verify Least-Privilege Scopes displayed
+    const scopesCount = await cdp.evaluate('document.querySelectorAll("#integModalScopesList li").length');
+    assert('Integration modal displays authorized least-privilege scopes', scopesCount >= 1);
+
+    // 8. Test Connection button inside modal
+    await cdp.evaluate('document.getElementById("btnIntegTestConnection")?.click()');
+    await sleep(300);
+    const isTestBoxVisible = await cdp.evaluate('document.getElementById("integModalTestResultBox")?.style.display !== "none"');
+    assert('Integration test connection verifies diagnostic responsiveness', isTestBoxVisible);
+
+    // 9. Connect Provider
+    await cdp.evaluate('document.getElementById("btnIntegConnectAction")?.click()');
+    await sleep(300);
+    const isConnectedPillPresent = await cdp.evaluate('document.querySelectorAll(".integ-status-connected").length >= 1');
+    assert('Provider connects and marks status pill as connected', isConnectedPillPresent);
+
+    // 10. Verify Modal is closed
+    const isModalClosedAfterConnect = await cdp.evaluate('document.getElementById("integrationModal").classList.contains("hidden")');
+    assert('Integration settings modal closes cleanly after connecting', isModalClosedAfterConnect);
+
+    // 11. Return to Dashboard and verify dynamic upcoming meetings without static placeholders
+    await cdp.evaluate('navigateToPage("dashboard")');
+    await sleep(300);
+    const hasNoStaticMeetings = await cdp.evaluate(`
+      const list = document.getElementById("dashboardUpcomingEventsList");
+      !list || !list.innerHTML.includes("Client Review Meeting")
+    `);
+    assert('Dashboard upcoming meetings dynamically rendered without placeholder leakage', hasNoStaticMeetings);
+
+
     
     // TEST SUITE 6: Console Logs & Uncaught Errors
     // -------------------------------------------------------------------------

@@ -42,6 +42,24 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
+
+    // Phase 4 Integrations collection: scoped strictly to user
+    match /integrations/{integId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // External Entity Mappings collection: scoped strictly to user
+    match /external_entity_mappings/{mapId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Webhook Subscriptions collection: scoped strictly to user
+    match /webhook_subscriptions/{subId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
     
     // User profile records
     match /users/{userId} {

@@ -292,3 +292,187 @@ class FollowUpGenerateResponse(BaseModel):
     follow_up_type: str
     language: str
     meeting_title: str
+
+# ----------------- PHASE 4: Integrations Ecosystem Schemas -----------------
+class IntegrationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: Optional[int] = None
+    provider: str
+    provider_name: str
+    category: str # "Calendar & Scheduling", "Email & Messaging", "Cloud Storage & Docs", "Project Management", "Automation & Webhooks", "Mobile & Chat"
+    icon: str
+    description: str
+    connection_status: str # "not_connected", "connecting", "connected", "expired", "permission_required", "error", "disconnected"
+    account_email: Optional[str] = ""
+    account_name: Optional[str] = ""
+    external_account_id: Optional[str] = ""
+    authorized_scopes: List[str] = []
+    last_synced_at: Optional[datetime] = None
+    settings: Dict[str, Any] = {}
+    error_message: Optional[str] = ""
+
+class IntegrationConnectRequest(BaseModel):
+    auth_code: Optional[str] = None
+    redirect_uri: Optional[str] = None
+    api_key: Optional[str] = None
+    token: Optional[str] = None
+    account_email: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
+
+class IntegrationConnectResponse(BaseModel):
+    provider: str
+    connection_status: str
+    auth_url: Optional[str] = None
+    message: str
+
+class IntegrationTestResponse(BaseModel):
+    provider: str
+    success: bool
+    status: str
+    message: str
+    account_info: Optional[Dict[str, Any]] = None
+
+class CalendarEventItem(BaseModel):
+    id: str
+    title: str
+    start_time: str
+    end_time: str
+    source: str # "google_calendar", "outlook", "meetmind_task"
+    link: Optional[str] = None
+    attendees: Optional[List[str]] = []
+    status: Optional[str] = "confirmed"
+
+class CalendarSyncTaskRequest(BaseModel):
+    task_id: int
+    calendar_id: Optional[str] = "primary"
+
+class CalendarSyncTaskResponse(BaseModel):
+    success: bool
+    task_id: int
+    event_id: str
+    event_url: Optional[str] = None
+    message: str
+
+class GmailDraftRequest(BaseModel):
+    recipient: str
+    subject: str
+    body: str
+    meeting_id: Optional[int] = None
+
+class GmailDraftResponse(BaseModel):
+    success: bool
+    draft_id: str
+    subject: str
+    recipient: str
+    status: str
+    message: str
+
+class GoogleDriveFileItem(BaseModel):
+    id: str
+    name: str
+    mime_type: str
+    size_bytes: Optional[int] = 0
+    modified_time: Optional[str] = None
+
+class GoogleDriveImportRequest(BaseModel):
+    file_id: str
+    file_name: str
+    category: Optional[str] = "Imported Drive Documents"
+
+class GoogleDriveImportResponse(BaseModel):
+    success: bool
+    document_id: int
+    title: str
+    chunks_indexed: int
+    message: str
+
+class OutlookSyncTaskRequest(BaseModel):
+    task_id: int
+
+class OutlookDraftRequest(BaseModel):
+    recipient: str
+    subject: str
+    body: str
+
+class JiraProjectItem(BaseModel):
+    id: str
+    key: str
+    name: str
+
+class JiraCreateIssueRequest(BaseModel):
+    task_id: int
+    project_key: str
+    issue_type: Optional[str] = "Task"
+
+class JiraCreateIssueResponse(BaseModel):
+    success: bool
+    issue_key: str
+    issue_url: str
+    message: str
+
+class TrelloBoardItem(BaseModel):
+    id: str
+    name: str
+
+class TrelloCreateCardRequest(BaseModel):
+    task_id: int
+    board_id: str
+    list_id: Optional[str] = None
+
+class TrelloCreateCardResponse(BaseModel):
+    success: bool
+    card_id: str
+    card_url: str
+    message: str
+
+class SlackChannelItem(BaseModel):
+    id: str
+    name: str
+    is_private: bool = False
+
+class SlackPostSummaryRequest(BaseModel):
+    meeting_id: int
+    channel_id: str
+    include_decisions: Optional[bool] = True
+    include_action_items: Optional[bool] = True
+
+class SlackPostSummaryResponse(BaseModel):
+    success: bool
+    channel_id: str
+    timestamp: str
+    message: str
+
+class NotionExportPageRequest(BaseModel):
+    meeting_id: int
+    parent_page_id: Optional[str] = None
+
+class NotionExportPageResponse(BaseModel):
+    success: bool
+    page_id: str
+    page_url: str
+    message: str
+
+class WebhookSubscriptionCreate(BaseModel):
+    name: str
+    target_url: str
+    events: List[str]
+
+class WebhookSubscriptionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    target_url: str
+    events: List[str]
+    secret_key: str
+    is_active: bool
+    created_at: datetime
+
+class WebhookDeliveryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    event_type: str
+    status_code: int
+    success: bool
+    retry_count: int
+    error_message: Optional[str] = None
+    delivered_at: datetime

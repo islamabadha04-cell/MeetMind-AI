@@ -202,3 +202,41 @@ The web client provides unified wrappers through `window.MeetMindFirebase`:
 | `deleteTask(docId)` | `docId` | `Promise<{success, error}>` | Deletes task |
 | `uploadAudioBlob(blob, name)` | `Blob, fileName` | `Promise<{success, downloadUrl, error}>` | Uploads audio to user-scoped Cloud Storage |
 
+---
+
+## 4. Phase 4: Third-Party Integrations REST API
+
+All Phase 4 endpoints require Bearer JWT authentication: `Authorization: Bearer <token>`.
+
+### 4.1. Core Integration Hub
+- `GET /api/v1/integrations`: Returns status, account email, scopes, and sync timestamps for all 10 providers.
+- `GET /api/v1/integrations/{provider}`: Returns single provider status and configuration.
+- `POST /api/v1/integrations/{provider}/connect`: Initiates connection (returns OAuth authorization URL or saves direct API key).
+- `POST /api/v1/integrations/{provider}/callback`: Validates OAuth authorization code and state token; saves encrypted tokens.
+- `POST /api/v1/integrations/{provider}/test`: Executes diagnostic test check against provider endpoint.
+- `POST /api/v1/integrations/{provider}/disconnect`: Safely purges credentials and sets state to `disconnected`.
+- `POST /api/v1/integrations/{provider}/sync`: Triggers manual synchronization.
+- `GET /api/v1/integrations/calendar/upcoming`: Returns genuine upcoming events from calendar and active task deadlines (zero placeholders).
+
+### 4.2. Provider-Specific Actions
+- `POST /api/v1/integrations/google-calendar/sync-task`: Maps task deadline to Google Calendar event ID.
+- `POST /api/v1/integrations/gmail/create-draft`: Creates reviewable email draft in Gmail (**Draft-Only mode**).
+- `GET /api/v1/integrations/google-drive/files`: Lists authorized files in Google Drive.
+- `POST /api/v1/integrations/google-drive/import`: Ingests Drive document into Knowledge Base RAG.
+- `POST /api/v1/integrations/outlook/sync-task`: Syncs task deadline to Outlook Calendar.
+- `POST /api/v1/integrations/outlook/create-draft`: Creates draft email in Microsoft Outlook.
+- `GET /api/v1/integrations/jira/projects`: Lists Jira projects.
+- `POST /api/v1/integrations/jira/create-issue`: Maps task to Jira issue with priority translation.
+- `GET /api/v1/integrations/trello/boards`: Lists Trello boards.
+- `POST /api/v1/integrations/trello/create-card`: Creates card on Trello board/list.
+- `GET /api/v1/integrations/slack/channels`: Lists Slack channels.
+- `POST /api/v1/integrations/slack/post-summary`: Posts Block Kit meeting summary to Slack.
+- `POST /api/v1/integrations/notion/export-page`: Exports meeting notes and checklists to Notion.
+
+### 4.3. Webhooks & WhatsApp
+- `GET /api/v1/integrations/webhooks/subscriptions`: Lists webhook subscriptions for user.
+- `POST /api/v1/integrations/webhooks/subscriptions`: Creates webhook subscription with auto-generated signing secret.
+- `POST /api/v1/integrations/webhooks/test-dispatch`: Dispatches signed test event payload with `X-MeetMind-Signature` (HMAC-SHA256).
+- `GET /api/v1/integrations/whatsapp/webhook`: Meta Cloud API verification challenge handler (`hub.challenge`).
+- `POST /api/v1/integrations/whatsapp/webhook`: Meta Cloud API inbound audio/voice note webhook receiver.
+

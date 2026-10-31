@@ -352,14 +352,26 @@ class AIService:
         q = query.lower().strip()
         citations = []
 
+        STOPWORDS = {
+            "what", "when", "where", "which", "whose", "whom", "will",
+            "with", "from", "that", "this", "there", "their", "about",
+            "have", "been", "does", "your", "some", "into", "than", "then",
+            "tell", "show", "give", "explain", "please"
+        }
+        keywords = [
+            w.strip("?.,!;:\"'()[]{}")
+            for w in q.split()
+            if len(w.strip("?.,!;:\"'()[]{}")) > 3 and w.strip("?.,!;:\"'()[]{}") not in STOPWORDS
+        ]
+
         # 1. Search Meetings if scope permits
         matched_meetings = []
-        if scope in ("meetings", "all"):
+        if scope in ("meetings", "all") and keywords:
             for m in meetings:
                 t = (m.get("title") or "").lower()
                 s = (m.get("summary") or "").lower()
                 tr = (m.get("transcript") or "").lower()
-                if any(w in t or w in s or w in tr for w in q.split() if len(w) > 3):
+                if any(w in t or w in s or w in tr for w in keywords):
                     matched_meetings.append(m)
                     citations.append({
                         "source_type": "meeting",
@@ -371,11 +383,11 @@ class AIService:
 
         # 2. Search Documents if scope permits
         matched_docs = []
-        if scope in ("knowledge", "all"):
+        if scope in ("knowledge", "all") and keywords:
             for d in documents:
                 dt = (d.get("title") or "").lower()
                 dr = (d.get("raw_text") or "").lower()
-                if any(w in dt or w in dr for w in q.split() if len(w) > 3):
+                if any(w in dt or w in dr for w in keywords):
                     matched_docs.append(d)
                     citations.append({
                         "source_type": "document",
