@@ -77,13 +77,15 @@ This final audit report certifies the comprehensive verification and DevSecOps c
 |---|---|---|---|
 | Phase 4 Base Delivery | `db564f4` | (Initial v4.0.0) | Complete 10 enterprise providers |
 | Security Audit Cycle 1 | `9e26fd3` | (Moved v4.0.0) | AES-256-GCM AEAD, OAuth nonces |
-| Security Corrections & Final Audit | Current `HEAD` | `v4.0.0` (Updated) | Persistent nonces, WhatsApp HMAC, HKDF, Draft-Only workflows |
+| Security Corrections & Final Audit | `74b3d1f` | (Moved v4.0.0) | Persistent nonces, WhatsApp HMAC, HKDF, Draft-Only workflows |
+| Verification Test Suite Refinement | `95be107` | `v4.0.0` (Current) | Explicit expired state & invalid signature DB assertions |
 
 ### Git Log Output
 ```
-* (HEAD -> main, tag: v4.0.0) feat(security): Phase 4 Final Security Corrections (persistent nonces, WhatsApp HMAC, HKDF, workflow guards)
+* 95be107 (HEAD -> main, tag: v4.0.0) test: add explicit expired state and invalid signature assertions to DB oauth test
+* 74b3d1f feat(security): Phase 4 Final Security Corrections (persistent nonces, WhatsApp HMAC, HKDF, workflow Draft-Only guards)
 * 9e26fd3 feat(security): Phase 4 Release Readiness Audit, AES-256-GCM AEAD, OAuth state replay protection, and preview channel deployment
-* db564f4 feat(phase-4): Complete Third-Party Integrations Ecosystem across 10 Enterprise Providers (v4.0.0)
+* db564f4 (origin/main, origin/HEAD) feat(phase-4): Complete Third-Party Integrations Ecosystem across 10 Enterprise Providers (v4.0.0)
 ```
 
 ---
