@@ -19,6 +19,8 @@ class User(Base):
 
     meetings = relationship("Meeting", back_populates="user", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
+    knowledge_documents = relationship("KnowledgeDocument", back_populates="user", cascade="all, delete-orphan")
+    memories = relationship("MeetingMemory", back_populates="user", cascade="all, delete-orphan")
 
 class Workspace(Base):
     __tablename__ = "workspaces"
@@ -43,6 +45,7 @@ class Meeting(Base):
 
     user = relationship("User", back_populates="meetings")
     transcripts = relationship("TranscriptSegment", back_populates="meeting", cascade="all, delete-orphan")
+    chunks = relationship("MeetingChunk", back_populates="meeting", cascade="all, delete-orphan")
     summary = relationship("MeetingSummary", back_populates="meeting", uselist=False, cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="meeting", cascade="all, delete-orphan")
 
@@ -57,6 +60,19 @@ class TranscriptSegment(Base):
     text = Column(Text, nullable=False)
 
     meeting = relationship("Meeting", back_populates="transcripts")
+
+class MeetingChunk(Base):
+    __tablename__ = "meeting_chunks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=False)
+    speaker_label = Column(String(100), default="Speaker 1")
+    start_time = Column(String(20), default="00:00")
+    end_time = Column(String(20), default="00:30")
+    text = Column(Text, nullable=False)
+    embedding_json = Column(Text, default="[]")
+
+    meeting = relationship("Meeting", back_populates="chunks")
 
 class MeetingSummary(Base):
     __tablename__ = "meeting_summaries"
@@ -88,6 +104,52 @@ class Task(Base):
     user = relationship("User", back_populates="tasks")
     meeting = relationship("Meeting", back_populates="tasks")
 
+class KnowledgeDocument(Base):
+    __tablename__ = "knowledge_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    file_type = Column(String(20), default="pdf") # pdf, docx, txt, csv
+    file_size = Column(Integer, default=0)
+    category = Column(String(100), default="General Policy")
+    status = Column(String(30), default="indexed") # uploaded, processing, indexed, failed
+    chunk_count = Column(Integer, default=0)
+    raw_text = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="knowledge_documents")
+    chunks = relationship("DocumentChunk", back_populates="document", cascade="all, delete-orphan")
+
+class DocumentChunk(Base):
+    __tablename__ = "document_chunks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("knowledge_documents.id"), nullable=False)
+    chunk_index = Column(Integer, default=0)
+    page_number = Column(Integer, default=1)
+    text = Column(Text, nullable=False)
+    embedding_json = Column(Text, default="[]")
+
+    document = relationship("KnowledgeDocument", back_populates="chunks")
+
+class MeetingMemory(Base):
+    __tablename__ = "meeting_memories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    category = Column(String(100), default="Important Decisions")
+    fact_statement = Column(Text, nullable=False)
+    meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=True)
+    meeting_title = Column(String(255), default="")
+    timestamp = Column(String(20), default="00:00")
+    confidence = Column(String(20), default="0.95")
+    revisions_json = Column(Text, default="[]")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="memories")
+
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
 
@@ -95,5 +157,5 @@ class ChatMessage(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     role = Column(String(20), nullable=False) # user or assistant
     content = Column(Text, nullable=False)
-    citations_json = Column(Text, default="[]") # citations referencing meetings
+    citations_json = Column(Text, default="[]") # citations referencing meetings or documents
     created_at = Column(DateTime, default=datetime.utcnow)

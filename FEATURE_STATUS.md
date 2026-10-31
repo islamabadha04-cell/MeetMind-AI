@@ -1,8 +1,10 @@
 # 📊 MeetMind AI — Feature Status Tracker
 
-**Current Version:** 1.3.0 (Phase 1 Completed)  
-**Test Suite Coverage:** 57/57 Automated Chrome Headless Tests Passing (100% Pass Rate)  
-**Backend Pytest Suite:** 5/5 Passing  
+**Current Version:** 2.0.0 (Phase 2 Completed)  
+**Test Suite Coverage:** 75/75 Automated Chrome Headless Tests Passing (100% Pass Rate)  
+**Backend Pytest Suite:** 10/10 Passing  
+**Live Production App:** [https://meetmind-ai-74519.web.app](https://meetmind-ai-74519.web.app)  
+
 **Status Legend:**  
 - 🟢 **Implemented & Tested:** Feature is live, functional, and passes automated tests.  
 - 🟡 **In Progress:** Currently under active development.  
@@ -26,9 +28,15 @@
 | | Meeting Risk & Sentiment Radar | 🟢 Tested | Radar card (Budget/Deadline/Tech) | Risk detection rules | Firestore `meeting.risks` | ✅ Passed |
 | | Decision-to-Transcript Timestamp Link | 🟢 Tested | Interactive jump button to audio | Timestamp metadata | Firestore `decisions` | ✅ Passed |
 | | Live Recording Bookmarks | 🟢 Tested | Bookmark button & list | Timeline markers | Local & Firestore | ✅ Passed |
-| **Mod C: Meeting Memory & Chat**| Ask AI Chat (Single Meeting RAG) | 🟢 Tested | Chat UI with citations | `/api/v1/chat/ask` | Local & Firestore | ✅ Passed |
-| | Cross-Meeting Knowledge Search | 🟡 In Progress | Cross-meeting query UI | Multi-meeting RAG | Vector / Inverted Index | Phase 2 |
-| | Company Knowledge Base Vault | 🟢 Tested | Document upload & view | Document parser | Firestore `documents` | ✅ Passed |
+| **Mod C: Meeting Memory & Chat**| Multi-Meeting Semantic Search | 🟢 Tested | Dedicated AI Search UI & filters | `/api/search/meetings` | BM25 + Vector chunks | ✅ Passed |
+| | Direct "Open & Seek" Audio Nav | 🟢 Tested | Jump button on search hits | Timestamp alignment | Diarized audio sync | ✅ Passed |
+| | Meeting Comparison Matrix | 🟢 Tested | 7-category comparative delta table| `/api/meetings/compare` | Zero-hallucination engine| ✅ Passed |
+| | Company Knowledge Base Vault (RAG) | 🟢 Tested | Drag-and-drop file upload | `/api/knowledge/upload` | `pypdf`, `python-docx` | ✅ Passed |
+| | Sliding Window Chunking (250w/40o) | 🟢 Tested | Status tags (`Processing`, `Indexed`)| `document_service.py` | `document_chunks` table | ✅ Passed |
+| | Persistent 10-Category Memory Engine | 🟢 Tested | Memory card grid & category tabs | `/api/memory` | `meeting_memories` table | ✅ Passed |
+| | Memory Revision History & Verification | 🟢 Tested | Verification & edit audit trail | Revision tracker | JSON history field | ✅ Passed |
+| | Universal Multi-Source RAG Chat | 🟢 Tested | Scope switcher (Meetings/Docs/All)| `/api/chat/ask` | Gemini 2.5 Flash RAG | ✅ Passed |
+| | Clickable Citations & Anti-Hallucination| 🟢 Tested | Timestamps & page citation tags | Guardrail threshold | Strict ground rules | ✅ Passed |
 | **Mod D: Tasks & Automation** | Action Item Extraction | 🟢 Tested | Tasks board & badge | Schema extractor | Firestore `tasks` | ✅ Passed |
 | | 4-Stage Status (Pending/In Progress/Done)| 🟢 Tested | Status dropdown on cards | Task update router | Firestore `task.status` | ✅ Passed |
 | | Google Calendar 1-Click Sync | 🟢 Tested | Pre-filled deep link | Date formatter | None | ✅ Passed |

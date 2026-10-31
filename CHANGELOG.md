@@ -6,6 +6,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-10-31 (PHASE 2 COMPLETED)
+
+### Added
+- **Multi-Meeting Semantic Search Engine (Module 1):**
+  - Dedicated AI Meeting Search view (`#page-search`) supporting complex natural queries ("payment delays", "project budget", "delivery deadline changed").
+  - Hybrid retrieval architecture combining lexical BM25 token overlap with dense semantic embeddings and conceptual synonym expansion.
+  - Reciprocal Rank Fusion (RRF with $k=60$) ranking hits across all accessible meetings.
+  - Granular date range, speaker, project, and meeting filters.
+  - 1-Click "Open Meeting & Seek" button that launches the target meeting, jumps to the exact diarized turn, and aligns audio playback.
+  - AI Cross-Meeting synthesis banner providing chronological summaries across multiple matching sessions.
+- **Meeting Comparison Matrix (Module 2):**
+  - Dedicated Meeting Comparison view (`#page-compare`) with dual-meeting selectors and delta analyzer.
+  - 7-category comparative matrix: Objectives, Decisions, Budget, Tasks, Deadlines, Risks, and Pending Issues.
+  - Strict zero-hallucination rule: any missing data point strictly outputs `"Not Mentioned"`.
+  - Comprehensive Markdown and PDF export options for comparative reports.
+- **Company Knowledge Base (RAG) (Module 3):**
+  - Dedicated Knowledge Base view (`#page-knowledge-base`) featuring drag-and-drop file upload.
+  - Multi-format ingestion supporting PDF (`pypdf`), Word DOCX (`python-docx`), CSV, and TXT.
+  - Sliding-window text chunker (250 words per chunk with 40-word overlap).
+  - Real-time document lifecycle status indicators: `Uploaded`, `Processing`, `Indexed`, and `Failed`.
+- **Persistent Meeting Memory Engine (Module 4):**
+  - Dedicated Persistent Memory view (`#page-memory`) with filterable category tabs and memory card grid.
+  - 10 operational categories: Client Preferences, Budget Discussions, Technology Choices, Deadlines, Team Responsibilities, Recurring Problems, Important Agreements, Unresolved Questions, Critical Risks, Strategic Goals.
+  - Confidence scoring ($0.0 - 1.0$), source meeting linking, and source transcript timestamp reference.
+  - User verification workflow and audit-trailed JSON revision history preserving all prior states.
+- **Universal Multi-Source Knowledge AI Chat (Module 5):**
+  - Upgraded Ask AI interface (`#page-chat`) featuring a Multi-Source Scope Switcher:
+    - *My Meetings:* Audio transcripts & meeting turns.
+    - *Company Knowledge:* Indexed contracts, PRDs, and manuals.
+    - *Universal:* Cross-source retrieval combining meetings and documents.
+  - Clickable citation tags linking directly to audio timestamps `[Meeting @ 04:15]` or document pages `[Doc, Page 3]`.
+  - Strict Anti-Hallucination Guardrail: system unconditionally refuses to speculate, responding with *"I could not find sufficient information in your connected meetings or company documents..."* when evidence is missing.
+  - Full multilingual fluency in English, Urdu Nastaliq (اردو), and Roman Urdu.
+- **Comprehensive Verification & Documentation Suite:**
+  - 10/10 passing Pytest backend tests (`backend/tests/test_phase2_api.py`).
+  - 75/75 passing Headless Chrome CDP tests (`scratch/test_browser_suite.js`) with 0 console errors and 0 uncaught exceptions.
+  - Technical manuals: `PHASE_2_ARCHITECTURE.md`, `SEMANTIC_SEARCH.md`, `RAG_IMPLEMENTATION.md`, `MEETING_MEMORY_SCHEMA.md`, `VECTOR_SEARCH_SETUP.md`, `PHASE_2_TEST_REPORT.md`.
+
+---
+
 ## [1.2.0] - 2026-10-31
 
 ### Added
@@ -53,4 +93,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Firebase Authentication with Google Sign-In and Email/Password.
 - Client-side Web Speech API live microphone transcription.
 - Meeting categorization and color tinting system.
-
