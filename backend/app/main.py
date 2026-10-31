@@ -51,7 +51,7 @@ from app.services.document_service import DocumentService
 from app.services.search_service import SearchService
 from app.services.memory_service import MemoryService
 from app.services.integration_service import (
-    IntegrationService, PROVIDERS, encrypt_token, decrypt_token,
+    IntegrationService, PROVIDERS, encrypt_token, decrypt_token, TokenDecryptionError,
     generate_oauth_state, verify_oauth_state, verify_and_consume_oauth_state,
     generate_pkce_codes
 )
@@ -1583,7 +1583,16 @@ def test_integration(provider: str, current_user: User = Depends(get_current_use
     raw_token = ""
     settings_dict = {}
     if existing:
-        raw_token = decrypt_token(existing.encrypted_access_token)
+        try:
+            raw_token = decrypt_token(existing.encrypted_access_token, raise_on_error=True)
+        except TokenDecryptionError:
+            return IntegrationTestResponse(
+                provider=provider,
+                success=False,
+                status="reauthorization_required",
+                message="Cryptographic authentication tag mismatch or corrupted credentials. Reauthorization is required.",
+                account_info={"error": "corrupted_token", "reauthorization_required": True}
+            )
         try:
             settings_dict = json.loads(existing.settings_json or "{}")
         except Exception:

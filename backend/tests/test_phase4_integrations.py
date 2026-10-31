@@ -655,12 +655,68 @@ def test_aes_256_gcm_hkdf_key_management_and_tamper_rejection():
     tampered_1 = encrypted[:-4] + "AAAA" # altered tag
     assert decrypt_token(tampered_1) == ""
 
+    # When raise_on_error=True, TokenDecryptionError is raised on tampering
+    from app.services.integration_service import TokenDecryptionError
+    import pytest
+    with pytest.raises(TokenDecryptionError):
+        decrypt_token(tampered_1, raise_on_error=True)
+
     # Corrupted ciphertext
     tampered_2 = "gcm:v1:YWJjZGVmZ2hpams="
     assert decrypt_token(tampered_2) == ""
+    with pytest.raises(TokenDecryptionError):
+        decrypt_token(tampered_2, raise_on_error=True)
 
     # 4. Key rotation support: add v2 key and rotate
     KEY_VERSIONS["v2"] = "secondary_secret_key_rotation_test_2026"
     rotated = rotate_token_encryption(encrypted, target_version="v2")
     assert rotated.startswith("gcm:v2:")
     assert decrypt_token(rotated) == test_token
+
+def test_tampered_token_triggers_reauthorization_required(client, auth_users):
+    """
+    Verifies that when encrypted credentials fail AES-GCM AEAD authentication tag validation,
+    the /test endpoint gracefully returns status='reauthorization_required' with actionable guidance.
+    """
+    from app.db.session import SessionLocal
+    from app.models.models import Integration
+    from app.services.integration_service import encrypt_token
+
+    headers = auth_users["headers_a"]
+    me_res = client.get("/api/v1/users/me", headers=headers)
+    user_id = me_res.json()["id"]
+
+    db = SessionLocal()
+    try:
+        # Create an integration with tampered encrypted token
+        valid_encrypted = encrypt_token("valid_token_12345")
+        tampered_encrypted = valid_encrypted[:-4] + "ZZZZ" # Corrupt the authentication tag
+
+        existing = db.query(Integration).filter(
+            Integration.user_id == user_id,
+            Integration.provider == "notion"
+        ).first()
+
+        if not existing:
+            existing = Integration(
+                user_id=user_id,
+                provider="notion",
+                connection_status="connected",
+                encrypted_access_token=tampered_encrypted
+            )
+            db.add(existing)
+        else:
+            existing.encrypted_access_token = tampered_encrypted
+            existing.connection_status = "connected"
+        db.commit()
+
+        # Call /integrations/notion/test
+        test_res = client.post("/api/v1/integrations/notion/test", headers=headers)
+        assert test_res.status_code == 200
+        data = test_res.json()
+        assert data["success"] is False
+        assert data["status"] == "reauthorization_required"
+        assert "authentication tag mismatch" in data["message"]
+        assert data["account_info"]["reauthorization_required"] is True
+    finally:
+        db.close()

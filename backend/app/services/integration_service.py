@@ -39,6 +39,10 @@ def derive_encryption_key(key_version: str = ACTIVE_KEY_VERSION) -> bytes:
     )
     return hkdf.derive(raw_secret.encode("utf-8"))
 
+class TokenDecryptionError(Exception):
+    """Raised when token decryption or AEAD authentication tag validation fails due to tampering or corruption."""
+    pass
+
 def _get_fernet_key() -> bytes:
     """Legacy Fernet 32-byte urlsafe base64 key."""
     digest = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
@@ -61,11 +65,11 @@ def encrypt_token(token: str, key_version: str = ACTIVE_KEY_VERSION) -> str:
     encoded = base64.urlsafe_b64encode(nonce + ciphertext).decode("utf-8")
     return f"gcm:{key_version}:{encoded}"
 
-def decrypt_token(encrypted_token: str) -> str:
+def decrypt_token(encrypted_token: str, raise_on_error: bool = False) -> str:
     """
     Decrypts tokens encrypted with AES-256-GCM (versioned or unversioned)
     with automatic backward compatibility for legacy Fernet.
-    Fails securely (returns '') on tampered ciphertext or authentication tag mismatch.
+    If raise_on_error=True, raises TokenDecryptionError on tag mismatch or corrupted ciphertext.
     """
     if not encrypted_token:
         return ""
@@ -84,6 +88,8 @@ def decrypt_token(encrypted_token: str) -> str:
 
             raw = base64.urlsafe_b64decode(encoded_data.encode("utf-8"))
             if len(raw) < 12:
+                if raise_on_error:
+                    raise TokenDecryptionError("Ciphertext payload too short to contain 96-bit nonce.")
                 return ""
             nonce = raw[:12]
             ciphertext = raw[12:]
@@ -93,8 +99,9 @@ def decrypt_token(encrypted_token: str) -> str:
             # Fallback for legacy Fernet-encrypted tokens
             f = Fernet(_get_fernet_key())
             return f.decrypt(encrypted_token.encode("utf-8")).decode("utf-8")
-    except Exception:
-        # Invalid tag or corrupted payload
+    except Exception as e:
+        if raise_on_error:
+            raise TokenDecryptionError(f"Cryptographic authentication tag validation failed or token corrupted: {str(e)}")
         return ""
 
 def rotate_token_encryption(encrypted_token: str, target_version: str) -> str:
@@ -341,14 +348,16 @@ def verify_and_consume_oauth_state(
                 if existing.user_id != user_id or existing.provider != provider:
                     return {"valid": False, "reason": "OAuth state metadata mismatch"}
 
-            # Atomic SQL UPDATE statement (Concurrency & Replay Safe)
+            naive_now = now_dt.replace(tzinfo=None)
+            # Atomic SQL UPDATE statement (Concurrency, Replay & Expiration Safe)
             updated_count = (
                 db.query(OAuthNonce)
                 .filter(
                     OAuthNonce.nonce == random_hex,
                     OAuthNonce.consumed == False,
                     OAuthNonce.user_id == user_id,
-                    OAuthNonce.provider == provider
+                    OAuthNonce.provider == provider,
+                    OAuthNonce.expires_at >= naive_now
                 )
                 .update({"consumed": True, "consumed_at": now_dt})
             )
