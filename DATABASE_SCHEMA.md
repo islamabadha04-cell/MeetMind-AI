@@ -276,6 +276,26 @@ CREATE TABLE integration_jobs (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     completed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE oauth_nonces (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nonce VARCHAR(128) UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,
+    code_verifier VARCHAR(255),
+    consumed BOOLEAN DEFAULT 0 NOT NULL,
+    consumed_at DATETIME,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE processed_webhook_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider VARCHAR(50) NOT NULL,
+    message_id VARCHAR(255) UNIQUE NOT NULL,
+    sender VARCHAR(255),
+    processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ---
@@ -290,4 +310,6 @@ CREATE TABLE integration_jobs (
    - `meetings(user_id, created_at)`
    - `tasks(user_id, status)`
    - `transcript_segments(meeting_id)`
+   - `oauth_nonces(nonce, consumed, expires_at)`
+   - `processed_webhook_messages(message_id, provider)`
 

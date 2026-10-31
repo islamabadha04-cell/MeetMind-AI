@@ -54,6 +54,11 @@
 
     <!-- Controls -->
     <div class="u-controls">
+      <!-- Remote Staging Backend Connectivity Badge -->
+      <div id="backendHealthBadge" class="backend-health-pill health-checking" title="FastAPI Remote Staging Backend Connectivity" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 20px; font-size: 11px; font-weight: 600; color: #a5b4fc; margin-right: 4px;">
+        <span class="health-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #10B981; display: inline-block; box-shadow: 0 0 8px #10B981;"></span>
+        <span id="backendHealthText">Staging Cloud API</span>
+      </div>
       <!-- Dark/Light Mode Toggle -->
       <button class="icon-toggle-btn" id="themeToggleBtn" title="Toggle Light / Dark Mode">
         <i class="ri-moon-line" id="themeIcon"></i>
@@ -2188,6 +2193,7 @@
     <span id="uToastMsg">Success</span>
   </div>
 
+  <script src="api-config.js"></script>
   <script type="module" src="firebase-service.js"></script>
   <script src="app.js"></script>
 

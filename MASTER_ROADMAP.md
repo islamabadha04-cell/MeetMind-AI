@@ -78,7 +78,17 @@
 - [x] **Zapier & Webhook Engine:** 8 core event types, cryptographic HMAC-SHA256 payload signing (`X-MeetMind-Signature`), delivery logging.
 - [x] **WhatsApp Business Voice Note Processing:** Meta Cloud API webhook handler (`hub.challenge`), voice note audio retrieval, automated transcription, and meeting note synthesis.
 - [x] **Dynamic Calendar Realism:** Replaced hardcoded static placeholder demo meetings with genuine calendar events and active task deadlines.
-- [x] **Automated Tests & Quality Check for Phase 4:** 103/103 Browser CDP tests passing, 44/44 Pytest passing. Persistent shared OAuth nonces, WhatsApp Meta HMAC validation, AES-256-GCM HKDF encryption, and workflow Draft-Only barriers verified. Deployed to Firebase Hosting preview channel (`preview-v4`, Version: `efaeaf4cb8f3c923`). Production promotion paused pending sign-off.
+
+---
+
+### 📌 PHASE 4B — Remote FastAPI Backend Deployment & Full-Stack Cloud Preview (Completed ✅)
+- [x] **Remote Cloud Ingress & Staging Environment:** Deployed staging FastAPI backend over remote HTTPS via Cloudflare Anycast Edge (`https://supports-incidents-jail-admissions.trycloudflare.com`).
+- [x] **Central Frontend API Gateway (`api-config.js`):** Environment-aware endpoint resolution, automatic Bearer/Firebase token injection, 35s request timeouts, and live health status badge (`#backendHealthBadge`).
+- [x] **Zero Localhost Leaks in Preview:** Remote hosted preview (`preview-v4`) connects to the remote staging backend; localhost fallback strictly prevented on remote hosts.
+- [x] **Verified Database Persistence & Safety:** Verified physical backup (`database_backups/meetmind_backup_20261031_pre_phase4b.db`) and SQL logical dump (`meetmind_dump_20261031.sql`). Zero data loss across backend process restarts.
+- [x] **Ten Security Hardening Controls:** Atomic OAuth nonce update (`expires_at >= naive_now`), PKCE S256, Gmail/Outlook Draft-Only barriers (HTTP 403), WhatsApp Meta HMAC verification (HTTP 401), HKDF AES-256-GCM token encryption (`gcm:v1:...`), `TokenDecryptionError` reauthorization handling, and workflow auto-send blocks.
+- [x] **Full-Stack Verification:** 22/22 Remote HTTPS Staging Tests passing, 50/50 Pytest passing, 103/103 Browser CDP tests passing.
+- [x] **Updated Preview Release:** Deployed to Firebase Hosting channel `preview-v4` (Version ID: `66633a9704b75807`). Production live site remains 100% untouched.
 
 ---
 

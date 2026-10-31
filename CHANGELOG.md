@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.1.0] - 2026-10-31 (PHASE 4B: REMOTE FASTAPI BACKEND DEPLOYMENT & FULL-STACK CLOUD PREVIEW)
+
+### Added & Upgraded
+- **Remote Cloud Staging Ingress:**
+  - Deployed FastAPI backend via secure Cloudflare Anycast Edge ingress (`https://supports-incidents-jail-admissions.trycloudflare.com`).
+  - Added dedicated `/health` and `/ready` probes verifying database connectivity and runtime liveness.
+- **Central Frontend API Gateway (`api-config.js`):**
+  - Modular environment-aware API resolver dynamically identifying `localhost`, Firebase preview channels (`*.web.app`, `*.firebaseapp.com`), and production.
+  - Replaced hardcoded localhost fallbacks: remote preview channels connect directly to the remote staging backend.
+  - Automatic `Authorization: Bearer` injection supporting both internal JWTs and Firebase Auth ID tokens.
+  - Central request timeouts (35s standard, 60s audio uploads) preventing UI lockup.
+  - Real-time DOM health status pill (`#backendHealthBadge`) rendering live backend connectivity.
+- **Backend Architecture & Security Upgrades:**
+  - Strict CORS origin filtering using regular expression `^https://meetmind-ai-74519(--[a-zA-Z0-9_-]+)?\.(web\.app|firebaseapp\.com)$`.
+  - Structured HTTP logging middleware emitting `X-Response-Time`, `X-MeetMind-Version`, and `X-MeetMind-Environment`.
+  - Full-stack persistence verified: zero data loss across backend worker restarts.
+- **Verified Database Preservation & Backups:**
+  - Generated physical verified backup: `database_backups/meetmind_backup_20261031_pre_phase4b.db` (SHA256: `EFCF2873E27EE8D655C96187C5EF431B6DD1F2EA4D58EA6F2EAC4D961694C7BA`).
+  - Generated logical SQL dump: `database_backups/meetmind_dump_20261031.sql` (494 KB).
+  - All 24 tables and 1,328 existing records preserved.
+- **Full-Stack Test Verification:**
+  - 22/22 Remote HTTPS Staging Tests passing across Cloudflare Anycast Edge (including 5-worker concurrent OAuth replay rejection).
+  - 50/50 Pytest backend tests passing.
+  - 103/103 Headless Chrome CDP tests passing with 0 console errors.
+- **Firebase Hosting Preview Channel Release:**
+  - Deployed new release to preview channel `preview-v4` (Version ID: `66633a9704b75807`).
+  - Live production website (`https://meetmind-ai-74519.web.app`) remains 100% untouched.
+
 ## [4.0.1] - 2026-10-31 (DEPLOYMENT CONSISTENCY & SECURITY HARDENING VERIFICATION)
 
 ### Security Hardening & Consistency Updates

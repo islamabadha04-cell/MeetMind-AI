@@ -118,22 +118,24 @@ service firebase.storage {
 
 ---
 
-## 7. Third-Party Integrations & OAuth Security Standards (Phase 4)
+## 7. Third-Party Integrations & OAuth Security Standards (Phase 4 & 4B)
 
-1. **Server-Side AES-256 Token Encryption:**
-   - Raw OAuth access tokens and refresh tokens are strictly encrypted at rest using server-side AES-256 (`cryptography.fernet`).
-   - Tokens are never exposed to browser JavaScript, client-readable Firestore records, or client logs.
-2. **Cryptographic State Parameter Validation:**
-   - Every OAuth 2.0 initiation generates a cryptographically signed, timestamped state token (`HMAC-SHA256` with 15-minute TTL) binding the request to `user_id` and `provider`.
-   - Prevents OAuth CSRF, authorization code interception, and token replay attacks.
-3. **Least-Privilege Scoping:**
+1. **Server-Side AES-256-GCM AEAD Key Management (HKDF-SHA256):**
+   - Access tokens and refresh tokens are encrypted using **AES-256-GCM AEAD** with **HKDF-SHA256 (RFC 5869)** key derivation.
+   - 96-bit fresh initialization nonce and 128-bit authentication tag; versioned ciphertext prefix (`gcm:v1:...`) supporting key rotation.
+   - Tampered ciphertexts trigger explicit `TokenDecryptionError` and require reauthorization (`status="reauthorization_required"`).
+2. **Persistent Shared OAuth Nonces with Atomic Database Consumption:**
+   - 256-bit cryptographically unique nonces stored in `oauth_nonces` table with RFC 7636 PKCE `code_verifier`.
+   - Conditional atomic SQL query (`UPDATE oauth_nonces SET consumed=1 WHERE consumed=0 AND expires_at >= :now`) enforces one-time consumption across concurrent workers and survives server restarts.
+3. **Least-Privilege Scoping & Draft-Only Email Safeguard:**
    - MeetMind AI enforces the narrowest possible permission scopes:
-     - Gmail: `https://www.googleapis.com/auth/gmail.compose` (create drafts only; mailbox read access is blocked).
-     - Google Drive: `https://www.googleapis.com/auth/drive.readonly` (read-only document access; cannot delete or modify files).
-     - Microsoft Graph: `Calendars.ReadWrite`, `Mail.ReadWrite` (create calendar items and reviewable drafts).
-4. **Draft-Only Email Safeguard:**
-   - Automated message sending is strictly forbidden. All follow-up emails and MoMs generated for Gmail or Outlook are created strictly as drafts in the user's personal mailbox, requiring human review and explicit confirmation before sending.
-5. **Webhook Payload Signing (HMAC-SHA256):**
-   - Outbound webhook requests include `X-MeetMind-Signature` computed using the user's private webhook signing secret, preventing downstream payload tampering or spoofing.
+     - Gmail: `https://www.googleapis.com/auth/gmail.compose` (create drafts only).
+     - Automated sending via `/gmail/send` and `/outlook/send` is actively blocked with HTTP 403 Forbidden.
+     - Workflows with automated email send actions are rejected with HTTP 403 Forbidden.
+4. **WhatsApp Webhook Cryptographic Verification (`X-Hub-Signature-256`):**
+   - Meta Cloud API requests require HMAC-SHA256 verification over raw body bytes; missing or mismatched signatures rejected with HTTP 401.
+   - Duplicate message detection via `processed_webhook_messages` table prevents replay attacks.
+5. **Strict CORS Origin Regex Ingress:**
+   - Preflight and cross-origin API calls are strictly filtered by origin regex matching only `*.web.app` and `*.firebaseapp.com` for Project `meetmind-ai-74519`. Arbitrary cross-origin domains are blocked.
 
 

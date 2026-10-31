@@ -933,7 +933,7 @@ if (btnTranscribeUploadedAudio) {
 
     // Call FastAPI Backend Neural Audio Transcription Endpoint if available
     let aiTranscribeResult = null;
-    const BACKEND_API_BASE = window.MEETMIND_BACKEND_URL || 'http://localhost:8000/api/v1';
+    const BACKEND_API_BASE = (window.MeetMindAPI && window.MeetMindAPI.getBackendUrl) ? window.MeetMindAPI.getBackendUrl() : (window.MEETMIND_BACKEND_URL || 'http://localhost:8000/api/v1');
 
     try {
       const formData = new FormData();
@@ -4792,7 +4792,7 @@ async function fetchIntegrations() {
   try {
     const token = localStorage.getItem('meetmind_token');
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-    const res = await fetch('/api/v1/integrations', { headers });
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch('/integrations', { headers }) : fetch('/api/v1/integrations', { headers }));
     if (res.ok) {
       const serverList = await res.json();
       serverList.forEach(srv => {
@@ -4984,10 +4984,7 @@ async function testIntegrationQuick(providerKey) {
   try {
     const token = localStorage.getItem('meetmind_token');
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-    const res = await fetch(`/api/v1/integrations/${providerKey}/test`, {
-      method: 'POST',
-      headers
-    });
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/integrations/${providerKey}/test`, { method: 'POST', headers }) : fetch(`/api/v1/integrations/${providerKey}/test`, { method: 'POST', headers }));
     if (res.ok) {
       const data = await res.json();
       showToast(`✅ ${data.message || 'Connection verified successfully!'}`);
@@ -5015,14 +5012,21 @@ async function handleIntegrationConnect() {
       ...(token ? { 'Authorization': 'Bearer ' + token } : {})
     };
 
-    const res = await fetch(`/api/v1/integrations/${item.provider}/connect`, {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/integrations/${item.provider}/connect`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         token: tokenVal || 'mock_auth_token_' + Date.now(),
         account_email: 'user@meetmind.ai'
       })
-    });
+    }) : fetch(`/api/v1/integrations/${item.provider}/connect`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        token: tokenVal || 'mock_auth_token_' + Date.now(),
+        account_email: 'user@meetmind.ai'
+      })
+    }));
 
     if (res.ok) {
       const data = await res.json();
@@ -5065,10 +5069,7 @@ async function handleIntegrationDisconnect() {
   try {
     const token = localStorage.getItem('meetmind_token');
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-    await fetch(`/api/v1/integrations/${item.provider}/disconnect`, {
-      method: 'POST',
-      headers
-    });
+    await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/integrations/${item.provider}/disconnect`, { method: 'POST', headers }) : fetch(`/api/v1/integrations/${item.provider}/disconnect`, { method: 'POST', headers }));
   } catch (e) {}
 
   item.status = 'disconnected';
@@ -5094,7 +5095,7 @@ async function renderDashboardUpcomingEvents() {
   try {
     const token = localStorage.getItem('meetmind_token');
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-    const res = await fetch('/api/v1/integrations/calendar/upcoming', { headers });
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch('/integrations/calendar/upcoming', { headers }) : fetch('/api/v1/integrations/calendar/upcoming', { headers }));
     if (res.ok) {
       upcomingEvents = await res.json();
     }
@@ -5212,10 +5213,7 @@ function initPhase4IntegrationsUI() {
       try {
         const token = localStorage.getItem('meetmind_token');
         const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-        const res = await fetch(`/api/v1/integrations/${selectedIntegForModal.provider}/test`, {
-          method: 'POST',
-          headers
-        });
+        const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/integrations/${selectedIntegForModal.provider}/test`, { method: 'POST', headers }) : fetch(`/api/v1/integrations/${selectedIntegForModal.provider}/test`, { method: 'POST', headers }));
         const data = await res.json();
         if (testBox) {
           testBox.innerHTML = `<strong style="color:#10b981;">✅ Verified:</strong> ${escapeHtml(data.message || 'API connection active and operational.')}`;

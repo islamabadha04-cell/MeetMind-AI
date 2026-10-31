@@ -1,10 +1,11 @@
 # 📊 MeetMind AI — Feature Status Tracker
 
-**Current Version:** 4.0.1 (Base v4.0.0, Security Hardened & Deployment Consistency Verified)  
+**Current Version:** 4.0.1 (Phase 4B Remote FastAPI Backend & Full-Stack Cloud Preview)  
 **Test Suite Coverage:** 103/103 Automated Chrome Headless Tests Passing (100% Pass Rate)  
-**Backend Pytest Suite:** 45/45 Passing (100% Pass Rate across all test suites)  
-**Security Hardening:** Persistent Shared OAuth Nonces (Atomic SQL), WhatsApp HMAC Signature, HKDF AES-256-GCM, Gmail & Workflow Draft-Only Lock  
-**Firebase Hosting Preview Channel:** [https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app](https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app) (Version: `b1a1e26e93b5a467`)  
+**Backend Pytest Suite:** 50/50 Passing (100% Pass Rate across all unit and API suites)  
+**Remote HTTPS Staging Suite:** 22/22 Passing across Cloudflare Anycast Ingress  
+**Remote Backend URL:** `https://supports-incidents-jail-admissions.trycloudflare.com/api/v1`  
+**Firebase Hosting Preview Channel:** [https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app](https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app) (Version: `66633a9704b75807`)  
 **Live Production App:** [https://meetmind-ai-74519.web.app](https://meetmind-ai-74519.web.app) (Stable & Protected)  
 
 **Status Legend:**  

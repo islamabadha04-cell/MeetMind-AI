@@ -68,20 +68,28 @@ firebase deploy --only firestore:rules,hosting
 
 ## 4. Backend Deployment (FastAPI)
 
-### 4.1 Local Development Server
+### 4.1 Staging Backend Deployment with Cloud Edge Ingress
+The remote staging backend establishes an isolated HTTPS cloud edge:
 ```bash
-cd backend
-python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Linux/macOS:
-# source .venv/bin/activate
+# 1. Start FastAPI backend with app-dir
+cd hasnain
+backend\.venv\Scripts\python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
 
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# 2. Start Cloudflare Anycast Ingress Tunnel (No ports opened, zero cold start)
+cmd.exe /c npx cloudflared tunnel --url http://127.0.0.1:8000
+
+# 3. Test Health & Readiness Probes
+curl https://supports-incidents-jail-admissions.trycloudflare.com/health
+curl https://supports-incidents-jail-admissions.trycloudflare.com/ready
 ```
 
-### 4.2 Production Docker Deployment (Cloud Run / VPS)
+### 4.2 Firebase Hosting Preview Channel Deployment
+```bash
+# Deploy isolated preview frontend linked to remote staging backend
+cmd.exe /c npx firebase-tools hosting:channel:deploy preview-v4 --expires 7d
+```
+
+### 4.3 Production Docker Deployment (Cloud Run / VPS)
 Use the included Dockerfile configuration:
 
 ```dockerfile
