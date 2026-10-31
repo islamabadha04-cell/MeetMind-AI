@@ -1130,6 +1130,41 @@ const closeTaskModal = document.getElementById('closeTaskModal');
 const cancelTaskModalBtn = document.getElementById('cancelTaskModalBtn');
 const btnSaveNewTask = document.getElementById('btnSaveNewTask');
 
+
+// Universal .ICS Calendar File Export (Google, Apple, Outlook, Windows)
+function exportTaskAsICS(task) {
+  const title = task.title || 'MeetMind AI Action Item';
+  const cleanDate = task.deadline ? task.deadline.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const icsLines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//MeetMind AI//Task Manager//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:meetmind-${task.id || Date.now()}@meetmind.ai`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+    `DTSTART;VALUE=DATE:${cleanDate}`,
+    `DTEND;VALUE=DATE:${cleanDate}`,
+    `SUMMARY:${title.replace(/[,;]/g, ' ')}`,
+    `DESCRIPTION:Assignee: ${task.assignee || 'You'} | Priority: ${(task.priority || 'medium').toUpperCase()} | Created via MeetMind AI`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ];
+
+  const blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${title.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)}_task.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Downloaded .ICS Calendar file! 📅');
+}
+
 function renderTasks(filter = 'all') {
   if (!tasksBoardGrid) return;
   tasksBoardGrid.innerHTML = '';
@@ -1171,7 +1206,10 @@ function renderTasks(filter = 'all') {
         <div class="task-deadline ${isOverdue ? 'overdue-alert' : ''}" style="${isOverdue ? 'color: #ef4444; font-weight: 700;' : ''}">
           <i class="ri-calendar-line"></i> <span>${escapeHtml(task.deadline || 'No date')}${isOverdue ? ' (OVERDUE)' : ''}</span>
         </div>
-        <button class="btn-cal-g" title="Add to Google Calendar" style="margin-left: auto; background: none; border: none; color: var(--text-dim); cursor: pointer;">
+        <button class="btn-cal-g" title="Add to Google Calendar" style="margin-left: auto; background: none; border: none; color: var(--primary); cursor: pointer; padding: 4px;">
+          <i class="ri-google-fill"></i>
+        </button>
+        <button class="btn-cal-ics" title="Download .ICS for Apple / Outlook Calendar" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
           <i class="ri-calendar-event-line"></i>
         </button>
         <button class="btn-del-t" title="Delete Task" style="background: none; border: none; color: #ef4444; cursor: pointer; margin-left: 6px;">
@@ -1189,9 +1227,13 @@ function renderTasks(filter = 'all') {
     });
 
     card.querySelector('.btn-cal-g').addEventListener('click', () => {
-      const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(task.title)}&details=${encodeURIComponent('Assigned via MeetMind AI')}`;
+      const cleanDate = task.deadline ? task.deadline.replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(task.title)}&dates=${cleanDate}/${cleanDate}&details=${encodeURIComponent('Assignee: ' + (task.assignee || 'You') + ' | Priority: ' + task.priority + ' | MeetMind AI')}`;
       window.open(gCalUrl, '_blank');
     });
+    if (card.querySelector('.btn-cal-ics')) {
+      card.querySelector('.btn-cal-ics').addEventListener('click', () => exportTaskAsICS(task));
+    }
 
     card.querySelector('.btn-del-t').addEventListener('click', () => {
       tasks = tasks.filter(t => t.id !== task.id);
@@ -1403,6 +1445,93 @@ const btnPrintPdfBtn = document.getElementById('btnPrintPdfBtn');
 const btnExportNotion = document.getElementById('btnExportNotion');
 const btnExportSlack = document.getElementById('btnExportSlack');
 
+
+// ==========================================================================
+// Interactive Audio Playback & Transcript Timestamp Sync
+// ==========================================================================
+let modalAudioInterval = null;
+let modalAudioCurrentTime = 0;
+let modalAudioDuration = 60;
+let isModalAudioPlaying = false;
+
+function initModalAudioSync(totalDurationSec) {
+  modalAudioDuration = totalDurationSec || 60;
+  modalAudioCurrentTime = 0;
+  isModalAudioPlaying = false;
+  
+  const seeker = document.getElementById('mdAudioSeeker');
+  const timer = document.getElementById('mdAudioTimer');
+  const playBtn = document.getElementById('mdAudioPlayBtn');
+  const playIcon = document.getElementById('mdAudioPlayIcon');
+  
+  if (seeker) {
+    seeker.max = modalAudioDuration;
+    seeker.value = 0;
+  }
+  if (timer) timer.textContent = `00:00 / ${formatTime(modalAudioDuration)}`;
+  if (playIcon) playIcon.className = 'ri-play-fill';
+  if (modalAudioInterval) clearInterval(modalAudioInterval);
+
+  if (playBtn) {
+    playBtn.onclick = () => {
+      isModalAudioPlaying = !isModalAudioPlaying;
+      if (isModalAudioPlaying) {
+        if (playIcon) playIcon.className = 'ri-pause-fill';
+        modalAudioInterval = setInterval(() => {
+          modalAudioCurrentTime++;
+          if (modalAudioCurrentTime > modalAudioDuration) {
+            modalAudioCurrentTime = 0;
+            isModalAudioPlaying = false;
+            clearInterval(modalAudioInterval);
+            if (playIcon) playIcon.className = 'ri-play-fill';
+          }
+          updateModalAudioUI();
+        }, 1000);
+      } else {
+        if (playIcon) playIcon.className = 'ri-play-fill';
+        if (modalAudioInterval) clearInterval(modalAudioInterval);
+      }
+    };
+  }
+
+  if (seeker) {
+    seeker.oninput = (e) => {
+      modalAudioCurrentTime = parseInt(e.target.value, 10);
+      updateModalAudioUI();
+    };
+  }
+}
+
+function updateModalAudioUI() {
+  const seeker = document.getElementById('mdAudioSeeker');
+  const timer = document.getElementById('mdAudioTimer');
+  if (seeker) seeker.value = modalAudioCurrentTime;
+  if (timer) timer.textContent = `${formatTime(modalAudioCurrentTime)} / ${formatTime(modalAudioDuration)}`;
+
+  // Highlight active turn based on timestamp
+  const turns = document.querySelectorAll('#mdDetailTranscript .diarized-turn');
+  turns.forEach(t => {
+    const tTime = parseInt(t.dataset.time || '0', 10);
+    if (modalAudioCurrentTime >= tTime && modalAudioCurrentTime < tTime + 10) {
+      t.classList.add('active-playing-turn');
+    } else {
+      t.classList.remove('active-playing-turn');
+    }
+  });
+}
+
+function seekToTranscriptTime(sec) {
+  modalAudioCurrentTime = sec;
+  updateModalAudioUI();
+  const playBtn = document.getElementById('mdAudioPlayBtn');
+  const playIcon = document.getElementById('mdAudioPlayIcon');
+  if (!isModalAudioPlaying && playBtn) {
+    playBtn.click();
+  } else if (playIcon) {
+    playIcon.className = 'ri-pause-fill';
+  }
+}
+
 function openMeetingDetailsModal(meeting) {
   if (!modalMeetingDetails) return;
   selectedMeetingForModal = meeting;
@@ -1453,13 +1582,16 @@ function openMeetingDetailsModal(meeting) {
         const timeSec = idx * 10 + 2;
         const turnDiv = document.createElement('div');
         turnDiv.className = 'diarized-turn';
+        turnDiv.dataset.time = timeSec;
+        turnDiv.title = 'Click to play audio from this point';
         turnDiv.innerHTML = `
           <div class="turn-header">
             <span class="speaker-pill spk-${turnNum}"><i class="ri-user-voice-line"></i> ${turnLabel}</span>
-            <span class="turn-time">${formatTime(timeSec)}</span>
+            <span class="turn-time"><i class="ri-play-circle-line"></i> ${formatTime(timeSec)}</span>
           </div>
           <p class="turn-text">${escapeHtml(s)}.</p>
         `;
+        turnDiv.addEventListener('click', () => seekToTranscriptTime(timeSec));
         mdDetailTranscript.appendChild(turnDiv);
       });
     } else {
@@ -1481,6 +1613,8 @@ function openMeetingDetailsModal(meeting) {
   if (mdPaneTranscript) mdPaneTranscript.classList.add('hidden');
   if (mdPaneActions) mdPaneActions.classList.add('hidden');
 
+  const approxDurationSec = (meeting.duration && meeting.duration.includes('min')) ? parseInt(meeting.duration) * 60 : 120;
+  initModalAudioSync(approxDurationSec);
   modalMeetingDetails.classList.remove('hidden');
 }
 
@@ -1500,7 +1634,11 @@ if (mdDetailTabs) {
 }
 
 if (closeDetailModal) {
-  closeDetailModal.addEventListener('click', () => modalMeetingDetails.classList.add('hidden'));
+  closeDetailModal.addEventListener('click', () => {
+    modalMeetingDetails.classList.add('hidden');
+    if (modalAudioInterval) clearInterval(modalAudioInterval);
+    isModalAudioPlaying = false;
+  });
 }
 
 // Delete Meeting inside Modal
@@ -1560,10 +1698,222 @@ if (btnExportSlack) {
   });
 }
 
+
+// ==========================================================================
+// Official Executive Minutes of Meeting (MoM) PDF Generator
+// ==========================================================================
+function exportMeetingMoMPDF(meeting) {
+  if (!meeting) return;
+  const printWindow = window.open('', '_blank', 'width=900,height=850');
+  if (!printWindow) {
+    showToast('Please allow popups to open the official PDF document');
+    window.print();
+    return;
+  }
+
+  const decisionsHtml = (meeting.decisions && meeting.decisions.length > 0)
+    ? meeting.decisions.map((d, i) => `
+        <li style="display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px dashed #e2e8f0; font-size: 13.5px; color: #1e293b;">
+          <span style="background: #10b981; color: #fff; font-size: 11px; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">${i+1}</span>
+          <span>${escapeHtml(d)}</span>
+        </li>
+      `).join('')
+    : '<li style="color: #64748b; font-size: 13px;">No explicit decisions logged</li>';
+
+  const actionsHtml = (meeting.actionItems && meeting.actionItems.length > 0)
+    ? meeting.actionItems.map((a, i) => `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 10px 12px; width: 24px; text-align: center; color: #6366f1; font-size: 15px;">&#9744;</td>
+          <td style="padding: 10px 12px; font-weight: 600; color: #0f172a;">${escapeHtml(a)}</td>
+          <td style="padding: 10px 12px; font-size: 12px; color: #475569;"><span style="background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Action Item</span></td>
+          <td style="padding: 10px 12px; font-size: 12px; color: #10b981; font-weight: 700;">Pending</td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="4" style="text-align: center; padding: 14px; color: #64748b;">No action items recorded</td></tr>';
+
+  const docHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Executive MoM — ${escapeHtml(meeting.title)}</title>
+  <style>
+    @page { size: A4 portrait; margin: 16mm 14mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      line-height: 1.55;
+      margin: 0;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #6366f1;
+      padding-bottom: 14px;
+      margin-bottom: 22px;
+    }
+    .brand-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1e1b4b;
+      letter-spacing: -0.02em;
+    }
+    .doc-pill {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: #e0e7ff;
+      color: #4338ca;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+    }
+    .meta-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 3px;
+    }
+    .meta-val {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .section-h {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #3730a3;
+      margin: 22px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .summary-card {
+      background: #f1f5f9;
+      border-left: 4px solid #6366f1;
+      padding: 14px 18px;
+      border-radius: 4px 8px 8px 4px;
+      font-size: 13.5px;
+      color: #1e293b;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 13px;
+    }
+    th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 2px solid #cbd5e1;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 14px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="brand-title">&#127908; MeetMind AI</div>
+      <div style="font-size: 11.5px; color: #64748b;">Enterprise Intelligent Meeting Assistant</div>
+    </div>
+    <div class="doc-pill">Executive Minutes of Meeting (MoM)</div>
+  </div>
+
+  <div class="meta-grid">
+    <div>
+      <div class="meta-label">Meeting Title</div>
+      <div class="meta-val">${escapeHtml(meeting.title)}</div>
+    </div>
+    <div>
+      <div class="meta-label">Date & Time</div>
+      <div class="meta-val">${escapeHtml(meeting.date)}</div>
+    </div>
+    <div>
+      <div class="meta-label">Duration</div>
+      <div class="meta-val">${escapeHtml(meeting.duration)}</div>
+    </div>
+    <div>
+      <div class="meta-label">Category / Tag</div>
+      <div class="meta-val">${escapeHtml(meeting.tag || 'Work')}</div>
+    </div>
+  </div>
+
+  <div class="section-h">1. Executive Summary</div>
+  <div class="summary-card">${escapeHtml(meeting.summary || 'Summary generated from session notes.')}</div>
+
+  <div class="section-h">2. Key Decisions Agreed</div>
+  <ul style="list-style: none; padding: 0; margin: 0 0 20px 0;">${decisionsHtml}</ul>
+
+  <div class="section-h">3. Action Items & Deliverables</div>
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Action Item</th>
+        <th style="width: 120px;">Category</th>
+        <th style="width: 100px;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${actionsHtml}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>Confidential &bull; Generated by MeetMind AI (meetmind-ai-74519.web.app)</span>
+    <span>Exported on ${new Date().toLocaleDateString()}</span>
+  </div>
+
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); }, 250);
+    };
+  </script>
+</body>
+</html>`;
+
+  printWindow.document.open();
+  printWindow.document.write(docHtml);
+  printWindow.document.close();
+}
+
 if (btnPrintPdfBtn) {
   btnPrintPdfBtn.addEventListener('click', () => {
-    showToast('Opening PDF Print Preview... 🖨️');
-    window.print();
+    if (!selectedMeetingForModal) return;
+    showToast('Generating Official MoM PDF Document... 📄');
+    exportMeetingMoMPDF(selectedMeetingForModal);
   });
 }
 
@@ -2281,3 +2631,61 @@ renderDocumentsVault();
 renderCalendarAgenda();
 initFirebaseIntegration();
 updateStats();
+
+
+// ==========================================================================
+// Pakistani Payment Gateway Tabs & Instant Pro Activation
+// ==========================================================================
+document.querySelectorAll('#payMethodTabs .pay-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#payMethodTabs .pay-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const payMethod = btn.dataset.pay;
+    const paneJ = document.getElementById('paneJazzCash');
+    const paneE = document.getElementById('paneEasypaisa');
+    const paneR = document.getElementById('paneRaast');
+    if (paneJ) paneJ.classList.toggle('hidden', payMethod !== 'jazzcash');
+    if (paneE) paneE.classList.toggle('hidden', payMethod !== 'easypaisa');
+    if (paneR) paneR.classList.toggle('hidden', payMethod !== 'raast');
+  });
+});
+
+document.querySelectorAll('.pay-copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const val = btn.dataset.copy;
+    if (val) {
+      navigator.clipboard.writeText(val).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="ri-check-line"></i> Copied!';
+        setTimeout(() => btn.innerHTML = orig, 1800);
+        showToast('Payment account details copied to clipboard! 📋');
+      });
+    }
+  });
+});
+
+const btnConfirmPaymentActivate = document.getElementById('btnConfirmPaymentActivate');
+if (btnConfirmPaymentActivate) {
+  btnConfirmPaymentActivate.addEventListener('click', () => {
+    const trxInput = document.getElementById('payTrxIdInput');
+    const trxId = trxInput ? trxInput.value.trim() : '';
+    if (!trxId) {
+      alert('Please enter your JazzCash, Easypaisa, or Raast Transaction ID (TID) to activate your account.');
+      return;
+    }
+    
+    // Activate Pro Account
+    if (currentUser) {
+      currentUser.plan = 'Pro Professional';
+      currentUser.isPro = true;
+      localStorage.setItem('meetmind_user', JSON.stringify(currentUser));
+    }
+    const deskPlan = document.getElementById('deskUserPlan');
+    if (deskPlan) deskPlan.textContent = 'Pro Professional ⭐';
+    const deskUsage = document.getElementById('deskUserUsage');
+    if (deskUsage) deskUsage.textContent = 'Unlimited AI Minutes';
+
+    showToast('🎉 Payment Verified! Pro Professional activated successfully.');
+    if (modalUpgradePro) modalUpgradePro.classList.add('hidden');
+  });
+}

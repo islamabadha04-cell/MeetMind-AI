@@ -1346,6 +1346,14 @@
 
         <!-- TAB B: Multi-Speaker Diarized Transcript -->
         <div class="md-tab-pane hidden" id="mdPaneTranscript">
+          <!-- Interactive Playback Audio Bar -->
+          <div class="interactive-audio-bar" id="mdAudioBar">
+            <button class="btn-audio-ctrl" id="mdAudioPlayBtn" title="Play / Pause Audio Sync">
+              <i class="ri-play-fill" id="mdAudioPlayIcon"></i>
+            </button>
+            <input type="range" class="audio-seeker" id="mdAudioSeeker" min="0" max="100" value="0">
+            <span class="audio-timer" id="mdAudioTimer">00:00 / 00:00</span>
+          </div>
           <div class="diarized-transcript-container" id="mdDetailTranscript">
             <!-- Rendered dynamically with speaker badges -->
           </div>
@@ -1376,8 +1384,8 @@
           <button class="btn-secondary" id="btnCopyMeetingText" title="Copy Plain Text">
             <i class="ri-file-copy-line"></i> Copy
           </button>
-          <button class="btn-primary-purple" id="btnPrintPdfBtn">
-            <i class="ri-printer-line"></i> PDF / Print
+          <button class="btn-primary-purple" id="btnPrintPdfBtn" title="Download Official Executive Minutes of Meeting">
+            <i class="ri-file-pdf-2-line"></i> Official MoM (PDF)
           </button>
         </div>
       </div>
@@ -1440,9 +1448,74 @@
             </a>
           </div>
         </div>
-        <p style="font-size: 12px; color: var(--text-muted); text-align: center;">
-          <i class="ri-secure-payment-line" style="color: var(--primary);"></i> Payments via JazzCash, Easypaisa, Bank Transfer, or Card. Direct owner contact: <strong>islamabad.ha04@gmail.com</strong>
-        </p>
+        
+        <!-- Pakistani Instant Payment Gateway Checkout Box -->
+        <div class="checkout-box" id="pakCheckoutBox">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="font-size: 14px; font-weight: 800; color: var(--primary);">
+              <i class="ri-secure-payment-fill"></i> Instant Pakistan Payment (JazzCash / Easypaisa / Raast)
+            </h4>
+            <span style="font-size: 12px; font-weight: 700; color: var(--success); background: rgba(16, 185, 129, 0.12); padding: 2px 8px; border-radius: 6px;">
+              Rs 2,499 / Month
+            </span>
+          </div>
+
+          <div class="pay-tabs" id="payMethodTabs">
+            <button class="pay-tab-btn active" data-pay="jazzcash">
+              <i class="ri-smartphone-line"></i> JazzCash
+            </button>
+            <button class="pay-tab-btn" data-pay="easypaisa">
+              <i class="ri-wallet-3-line"></i> Easypaisa
+            </button>
+            <button class="pay-tab-btn" data-pay="raast">
+              <i class="ri-bank-card-line"></i> Raast / IBAN
+            </button>
+          </div>
+
+          <!-- Method 1: JazzCash -->
+          <div class="pay-tab-pane" id="paneJazzCash">
+            <div class="pay-detail-row">
+              <div>
+                <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">JazzCash Till / Mobile No:</div>
+                <div style="font-size: 15px; font-weight: 800; font-family: monospace;">0300-1234567</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Account Title: <strong>MeetMind AI Official</strong></div>
+              </div>
+              <button class="pay-copy-btn" data-copy="03001234567"><i class="ri-file-copy-line"></i> Copy</button>
+            </div>
+          </div>
+
+          <!-- Method 2: Easypaisa -->
+          <div class="pay-tab-pane hidden" id="paneEasypaisa">
+            <div class="pay-detail-row">
+              <div>
+                <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Easypaisa Mobile No:</div>
+                <div style="font-size: 15px; font-weight: 800; font-family: monospace;">0345-9876543</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Account Title: <strong>MeetMind AI Payments</strong></div>
+              </div>
+              <button class="pay-copy-btn" data-copy="03459876543"><i class="ri-file-copy-line"></i> Copy</button>
+            </div>
+          </div>
+
+          <!-- Method 3: Raast / Bank IBAN -->
+          <div class="pay-tab-pane hidden" id="paneRaast">
+            <div class="pay-detail-row">
+              <div>
+                <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Bank IBAN (Meezan Bank):</div>
+                <div style="font-size: 13.5px; font-weight: 800; font-family: monospace;">PK92MEZN0001234567890123</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Title: <strong>MeetMind AI Services</strong> | Raast ID: <strong>03001234567</strong></div>
+              </div>
+              <button class="pay-copy-btn" data-copy="PK92MEZN0001234567890123"><i class="ri-file-copy-line"></i> Copy</button>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="payTrxIdInput" placeholder="Enter Transaction ID (e.g. JC-89218)" class="panel-input" style="flex: 1; min-width: 200px; padding: 10px;">
+            <button class="btn-primary-purple" id="btnConfirmPaymentActivate" style="padding: 10px 18px; font-weight: 700; white-space: nowrap;">
+              <i class="ri-checkbox-circle-fill"></i> Activate Pro Account
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
