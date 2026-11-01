@@ -7,7 +7,8 @@
       "**/.*",
       "**/node_modules/**",
       "backend/**",
-      "mobile_flutter/**"
+      "mobile_flutter/**",
+      "backups/**"
     ],
     "rewrites": [
       {
@@ -29,6 +30,14 @@
       {
         "source": "/privacy.html",
         "destination": "/privacy.html"
+      },
+      {
+        "source": "/share",
+        "destination": "/share.html"
+      },
+      {
+        "source": "/share.html",
+        "destination": "/share.html"
       },
       {
         "source": "/terms",
