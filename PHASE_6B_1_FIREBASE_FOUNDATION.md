@@ -119,3 +119,4 @@ We will immediately:
 2. Generate authentic `lib/firebase_options.dart`.
 3. Add `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)` to `main.dart`.
 4. Proceed cleanly to **Phase 6B.2 (Email/Password Authentication & Google Sign-In)**.
+

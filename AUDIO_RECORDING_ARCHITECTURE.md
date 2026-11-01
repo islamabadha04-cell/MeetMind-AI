@@ -55,3 +55,4 @@ The recording engine uses the Flutter `record` package with direct hardware code
 
 ## 3. Moment Bookmarking Feature
 While recording, users can tap the **Bookmark Moment** button. This records the exact second offset in `_bookmarkedTimestamps`. When the meeting is transcribed, these bookmark timestamps map directly to key decision excerpts, enabling 1-click audio seeking.
+

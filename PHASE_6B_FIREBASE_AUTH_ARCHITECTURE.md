@@ -106,3 +106,4 @@ sequenceDiagram
 - [ ] **Step 5:** Update `mobile_flutter/lib/screens/login_screen.dart` with native Google Sign-In and Email/Password buttons.
 - [ ] **Step 6:** Update backend `get_current_user` in `backend/app/main.py` with `firebase_uid` linking.
 - [ ] **Step 7:** Run full regression suite (Flutter tests + Backend tests) to verify 100% pass rate.
+

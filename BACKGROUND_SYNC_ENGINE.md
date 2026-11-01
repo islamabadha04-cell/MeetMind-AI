@@ -81,3 +81,4 @@ The engine emits `SyncStatusEvent` objects over a broadcast stream (`statusStrea
 * `message`: User-facing description (e.g., *"Uploading to MeetMind Cloud..."*).
 
 `VaultNotifier` listens to this stream, allowing the `VaultScreen` and `DashboardScreen` badges to update instantly without polling.
+

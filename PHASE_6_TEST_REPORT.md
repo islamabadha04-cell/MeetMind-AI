@@ -59,3 +59,4 @@
 ## 4. Hardware & Platform Boundaries
 * **Tested Environments:** Windows 10 Host Desktop, Flutter Test Runner, Headless Chrome CDP, Remote Staging HTTPS.
 * **Hardware Disclosure:** Physical iOS and physical Android hardware were simulated via the Flutter Test Runner and headless environment. When deploying to physical production app stores (Google Play & Apple App Store), signed release builds will undergo Google Play Internal App Sharing and Apple TestFlight testing.
+

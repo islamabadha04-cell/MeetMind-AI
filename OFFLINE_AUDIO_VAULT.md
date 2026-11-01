@@ -83,3 +83,4 @@ Before an upload begins, `VaultRecordingModel.computeChecksum()` reads the local
 ## 5. Documented Limitations
 * **Storage Space:** Extended 4-hour meetings at 128 kbps require ~230 MB of device storage. Devices with low storage (<100 MB free) will warn the user before starting.
 * **OS Process Termination:** If a user manually force-quits the app from the multitasking switcher while recording, the audio file up to the last flushed buffer is preserved and marked for recovery on next app launch.
+

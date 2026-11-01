@@ -47,3 +47,4 @@
 * The mobile UI reflects user roles (`Owner`, `Admin`, `Manager`, `Editor`, `Viewer`), but **never relies solely on frontend checks**.
 * Every action (e.g. inviting teammates, modifying notes, deleting meetings) is re-authenticated and validated server-side in `backend/app/main.py`.
 * Cross-tenant access across organizations or outside users returns HTTP 403 Forbidden.
+

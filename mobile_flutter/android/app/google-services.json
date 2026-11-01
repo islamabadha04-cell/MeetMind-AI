@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "790778332182",
+    "project_id": "meetmind-ai-74519",
+    "storage_bucket": "meetmind-ai-74519.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790778332182:android:211a1b9fc7c53e7d1f6137",
+        "android_client_info": {
+          "package_name": "com.meetmind.ai.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "790778332182-oenkf7n34hu6a6ov4k83jn2vc87oi63l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBua8C8xhkywrS6EHbxy9BBuaS5qFCmCa0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "790778332182-oenkf7n34hu6a6ov4k83jn2vc87oi63l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
