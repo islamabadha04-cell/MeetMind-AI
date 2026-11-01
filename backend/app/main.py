@@ -4,6 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
+from pydantic import BaseModel
 from datetime import datetime, timezone, timedelta
 from jose import jwt
 import json
@@ -23,7 +24,7 @@ from app.models.models import (
     ChatMessage, KnowledgeDocument, DocumentChunk, MeetingMemory, MeetingChunk,
     Integration, ExternalEntityMapping, WebhookSubscription, WebhookDelivery, IntegrationJob,
     OAuthNonce, ProcessedWebhookMessage,
-    Workspace, WorkspaceMember, WorkspaceInvite, CollaborativeNote, CollaborativeNoteRevision
+    Workspace, WorkspaceMember, WorkspaceInvite, CollaborativeNote, CollaborativeNoteRevision, SharedMeetingLink
 )
 from app.schemas.schemas import (
     UserRegister, UserLogin, Token, UserProfile,
@@ -674,6 +675,217 @@ def update_meeting(meeting_id: int, item: MeetingUpdate, current_user: User = De
         summary=sum_text,
         action_items=actions
     )
+
+# --------------------------------------------------------------------------
+# PHASE 7: Secure Unguessable Public Share Links (Module H: Sharing & Reporting)
+# --------------------------------------------------------------------------
+class CreateShareLinkRequest(BaseModel):
+    expires_in_days: Optional[int] = 7 # 1, 7, 30, or None for never
+    allow_transcript: bool = True
+    allow_tasks: bool = True
+    allow_summary: bool = True
+    password: Optional[str] = None
+    title: Optional[str] = None
+
+class ShareLinkResponse(BaseModel):
+    id: int
+    share_token: str
+    share_url: str
+    meeting_id: int
+    meeting_title: str
+    expires_at: Optional[datetime] = None
+    is_active: bool
+    access_count: int
+    allow_transcript: bool
+    allow_tasks: bool
+    allow_summary: bool
+    created_at: datetime
+
+class PublicMeetingView(BaseModel):
+    share_token: str
+    meeting_id: int
+    title: str
+    category: str
+    tint: str
+    duration_seconds: int
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    access_count: int
+    summary: Optional[Dict[str, Any]] = None
+    transcripts: Optional[List[Dict[str, Any]]] = None
+    tasks: Optional[List[Dict[str, Any]]] = None
+
+@app.post(f"{settings.API_V1_STR}/meetings/{{meeting_id}}/share", response_model=ShareLinkResponse)
+def create_share_link(
+    meeting_id: int,
+    req: CreateShareLinkRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    m = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    if m.user_id != current_user.id:
+        if not m.workspace_id:
+            raise HTTPException(status_code=403, detail="You do not have permission to share this meeting")
+        mem = db.query(WorkspaceMember).filter(
+            WorkspaceMember.workspace_id == m.workspace_id,
+            WorkspaceMember.user_id == current_user.id
+        ).first()
+        if not mem or mem.role not in ("owner", "admin", "manager", "editor"):
+            raise HTTPException(status_code=403, detail="Insufficient workspace permissions to share meeting")
+
+    token = secrets.token_urlsafe(32)
+    exp = (datetime.now(timezone.utc) + timedelta(days=req.expires_in_days)) if req.expires_in_days else None
+    pwd_hash = get_password_hash(req.password) if req.password else None
+
+    link = SharedMeetingLink(
+        meeting_id=m.id,
+        user_id=current_user.id,
+        share_token=token,
+        title=req.title or m.title,
+        expires_at=exp,
+        is_active=True,
+        access_count=0,
+        allow_transcript=req.allow_transcript,
+        allow_tasks=req.allow_tasks,
+        allow_summary=req.allow_summary,
+        password_hash=pwd_hash,
+        created_at=datetime.now(timezone.utc)
+    )
+    db.add(link)
+    db.commit()
+    db.refresh(link)
+
+    return ShareLinkResponse(
+        id=link.id,
+        share_token=link.share_token,
+        share_url=f"/share.html?token={link.share_token}",
+        meeting_id=m.id,
+        meeting_title=m.title,
+        expires_at=link.expires_at,
+        is_active=link.is_active,
+        access_count=link.access_count,
+        allow_transcript=link.allow_transcript,
+        allow_tasks=link.allow_tasks,
+        allow_summary=link.allow_summary,
+        created_at=link.created_at
+    )
+
+@app.get(f"{settings.API_V1_STR}/meetings/{{meeting_id}}/shares", response_model=List[ShareLinkResponse])
+def list_meeting_shares(
+    meeting_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    m = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    shares = db.query(SharedMeetingLink).filter(SharedMeetingLink.meeting_id == meeting_id).order_by(SharedMeetingLink.created_at.desc()).all()
+    return [
+        ShareLinkResponse(
+            id=s.id,
+            share_token=s.share_token,
+            share_url=f"/share.html?token={s.share_token}",
+            meeting_id=m.id,
+            meeting_title=m.title,
+            expires_at=s.expires_at,
+            is_active=s.is_active,
+            access_count=s.access_count,
+            allow_transcript=s.allow_transcript,
+            allow_tasks=s.allow_tasks,
+            allow_summary=s.allow_summary,
+            created_at=s.created_at
+        )
+        for s in shares
+    ]
+
+@app.get(f"{settings.API_V1_STR}/meetings/share/{{token}}", response_model=PublicMeetingView)
+def get_public_meeting_by_token(
+    token: str,
+    db: Session = Depends(get_db)
+):
+    link = db.query(SharedMeetingLink).filter(SharedMeetingLink.share_token == token, SharedMeetingLink.is_active == True).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Public share link not found or has been revoked")
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    exp = link.expires_at.replace(tzinfo=None) if link.expires_at else None
+    if exp and exp < now:
+        link.is_active = False
+        db.commit()
+        raise HTTPException(status_code=410, detail="This meeting share link has expired")
+
+    link.access_count += 1
+    link.last_accessed_at = now
+    db.commit()
+
+    m = link.meeting
+    summary_data = None
+    if link.allow_summary and m.summary:
+        summary_data = {
+            "executive_summary": m.summary.executive_summary,
+            "key_points": json.loads(m.summary.key_points_json) if m.summary.key_points_json else [],
+            "decisions": json.loads(m.summary.decisions_json) if m.summary.decisions_json else [],
+            "action_items": json.loads(m.summary.action_items_json) if m.summary.action_items_json else [],
+            "risks": json.loads(m.summary.risks_json) if m.summary.risks_json else [],
+        }
+
+    transcripts_data = None
+    if link.allow_transcript and m.transcripts:
+        transcripts_data = [
+            {
+                "speaker_label": t.speaker_label,
+                "start_time": t.start_time,
+                "end_time": t.end_time,
+                "text": t.text
+            }
+            for t in m.transcripts
+        ]
+
+    tasks_data = None
+    if link.allow_tasks and m.tasks:
+        tasks_data = [
+            {
+                "id": t.id,
+                "title": t.title,
+                "assignee": t.assignee,
+                "deadline": t.deadline,
+                "priority": t.priority,
+                "status": t.status
+            }
+            for t in m.tasks
+        ]
+
+    return PublicMeetingView(
+        share_token=link.share_token,
+        meeting_id=m.id,
+        title=link.title or m.title,
+        category=m.category,
+        tint=m.tint,
+        duration_seconds=m.duration_seconds,
+        created_at=m.created_at,
+        expires_at=link.expires_at,
+        access_count=link.access_count,
+        summary=summary_data,
+        transcripts=transcripts_data,
+        tasks=tasks_data
+    )
+
+@app.delete(f"{settings.API_V1_STR}/meetings/share/{{token}}")
+def revoke_share_link(
+    token: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    link = db.query(SharedMeetingLink).filter(SharedMeetingLink.share_token == token).first()
+    if not link:
+        raise HTTPException(status_code=404, detail="Share link not found")
+    if link.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You do not have permission to revoke this link")
+    link.is_active = False
+    db.commit()
+    return {"status": "revoked", "share_token": token}
 
 @app.post(f"{settings.API_V1_STR}/meetings/upload")
 @app.post(f"{settings.API_V1_STR}/meetings/transcribe-audio")

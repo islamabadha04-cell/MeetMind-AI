@@ -152,4 +152,17 @@ class MeetingService {
     return (response is Map ? response['response'] : response.toString()) ??
         'I have reviewed your meeting transcripts.';
   }
+
+  static Future<Map<String, dynamic>> createShareLink(int meetingId, {int? expiresInDays = 7}) async {
+    final response = await ApiClient.post('/meetings/$meetingId/share', body: {
+      'expires_in_days': expiresInDays,
+      'allow_transcript': true,
+      'allow_tasks': true,
+      'allow_summary': true,
+    });
+    if (response is Map<String, dynamic>) {
+      return response;
+    }
+    return {};
+  }
 }

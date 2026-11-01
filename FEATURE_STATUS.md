@@ -72,9 +72,9 @@
 | | Timestamped Note Revisions & Audit Trail | 🟢 Tested | Revisions modal & diff preview | `/notes/{id}/revisions` | `collaborative_note_revisions`| ✅ Passed |
 | **Mod G: Mobile & Recording** | PWA Mobile Standalone Installation | 🟢 Tested | `manifest.json`, `sw.js` | None | Firebase Hosting | ✅ Passed |
 | | Interactive Waveform Oscilloscope | 🟢 Tested | HTML5 Canvas visualizer | None | None | ✅ Passed |
-| | Offline Audio Vault (IndexedDB) | 🟡 In Progress | Local audio buffer | Upload retry queue | IndexedDB | Phase 6 |
+| | Offline Audio Vault (SQLite/Keystore) | 🟢 Tested | Local audio buffer | Upload retry queue | SQLite & Keystore | ✅ Passed |
 | **Mod H: Sharing & Reporting** | Official Executive MoM (PDF) Export | 🟢 Tested | Branded corporate PDF generator | None | None | ✅ Passed |
-| | Secure Unguessable Public Share Links | 🟡 In Progress | Share token generator | Secret token router | Firestore `shared_links`| Phase 7 |
+| | Secure Unguessable Public Share Links | 🟢 Tested | Share token generator | Secret token router | shared_meeting_links | ✅ Passed |
 | **Mod I: Business & Monetization**| Tiered Plan Selector (PKR) | 🟢 Tested | Starter, Pro, Enterprise | Plan limiter | Firestore `users.plan` | ✅ Passed |
 | | Instant Pro Plan Activation | 🟢 Tested | Client & profile update | Account tier upgrade | LocalStorage / Cloud | ✅ Passed |
 | **Mod J: Security & Privacy** | Multi-Account Data Isolation | 🟢 Tested | Strict UID scoping & RLS rules | JWT Auth Bearer | Firestore Rules (Pass)| ✅ Passed |

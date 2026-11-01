@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../core/constants/colors.dart';
 import '../core/localization/language_provider.dart';
+import '../core/services/api_client.dart';
+import '../core/services/meeting_service.dart';
 import '../models/meeting_detail_model.dart';
 
 class MeetingDetailScreen extends ConsumerStatefulWidget {
@@ -38,6 +41,89 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
     Share.share(text, subject: 'MoM: ${m.title}');
   }
 
+
+  void _showShareOptions() {
+    final m = widget.meeting;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Share Meeting Minutes',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFF7C3AED),
+                  child: Icon(Icons.link, color: Colors.white),
+                ),
+                title: const Text('Generate Public Web Share Link'),
+                subtitle: const Text('Viewable by stakeholders without an account (7-day link)'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Generating secure public link...')),
+                    );
+                    final shareData = await MeetingService.createShareLink(m.id);
+                    final shareToken = shareData['share_token'] ?? '';
+                    final baseUrl = await ApiClient.getBaseUrl();
+                    final rootHost = baseUrl.replaceAll(RegExp(r'/api/v1/?$'), '');
+                    final publicUrl = '$rootHost/share.html?token=$shareToken';
+                    await Clipboard.setData(ClipboardData(text: publicUrl));
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Link copied to clipboard!\n$publicUrl'),
+                          duration: const Duration(seconds: 5),
+                          action: SnackBarAction(
+                            label: 'Share',
+                            onPressed: () => Share.share(
+                              'Meeting Minutes for "${m.title}":\n$publicUrl',
+                              subject: 'Public MoM: ${m.title}',
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to generate link: $e')),
+                      );
+                    }
+                  }
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFF06B6D4),
+                  child: Icon(Icons.text_snippet_outlined, color: Colors.white),
+                ),
+                title: const Text('Share Minutes as Text'),
+                subtitle: const Text('Send formatted executive summary via WhatsApp, Email, Slack'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _shareMinutes();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
@@ -53,7 +139,7 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
             IconButton(
               icon: const Icon(Icons.share_outlined),
               tooltip: AppStrings.get('btn_share', lang),
-              onPressed: _shareMinutes,
+              onPressed: _showShareOptions,
             ),
           ],
         ),

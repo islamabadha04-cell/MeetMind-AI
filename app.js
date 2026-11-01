@@ -5912,3 +5912,60 @@ if (document.readyState === 'loading') {
 } else {
   initPhase4IntegrationsUI();
 }
+
+
+// ==============================================================================
+// PHASE 7: SECURE UNGUESSABLE PUBLIC SHARE LINKS (MODULE H)
+// ==============================================================================
+window.openPublicShareModal = async function(meetingId) {
+  const m = (window.state && window.state.meetings) 
+    ? window.state.meetings.find(x => x.id === meetingId) 
+    : null;
+  const meetingTitle = m ? m.title : 'Meeting Minutes';
+
+  try {
+    const baseUrl = (window.MeetMindGateway && window.MeetMindGateway.getApiBaseUrl)
+      ? window.MeetMindGateway.getApiBaseUrl()
+      : 'http://localhost:8000/api/v1';
+
+    const token = localStorage.getItem('token') || localStorage.getItem('meetmind_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const res = await fetch(${baseUrl}/meetings//share, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        expires_in_days: 7,
+        allow_transcript: true,
+        allow_tasks: true,
+        allow_summary: true,
+        title: meetingTitle
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(Failed to generate share link (HTTP ));
+    }
+
+    const data = await res.json();
+    const publicUrl = ${window.location.origin}/share.html?token=;
+    
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(publicUrl);
+    }
+    
+    if (window.showToast) {
+      window.showToast(Public Share Link generated & copied to clipboard! (Expires in 7 days), 'success');
+    } else {
+      alert(Public Share Link created & copied to clipboard:\n\n\n\n(Expires in 7 days));
+    }
+    return publicUrl;
+  } catch (err) {
+    if (window.showToast) {
+      window.showToast(Error creating share link: , 'error');
+    } else {
+      alert(Error creating share link: );
+    }
+  }
+};

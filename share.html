@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeetMind AI — Shared Meeting Minutes</title>
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="api-config.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0b0e1b;
+      --card-bg: rgba(22, 27, 46, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #7c3aed;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .share-header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+    .brand-badge {
+      background: rgba(124, 58, 237, 0.2);
+      color: #a78bfa;
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .share-container {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 20px;
+      width: 100%;
+      box-sizing: border-box;
+      flex: 1;
+    }
+    .meeting-hero {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .meeting-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0 0 12px 0;
+      color: #fff;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      align-items: center;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.8rem;
+    }
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(12px);
+    }
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0 0 16px 0;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .summary-text {
+      line-height: 1.7;
+      color: #cbd5e1;
+      font-size: 1rem;
+    }
+    .decision-item {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 3px solid var(--success);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 10px;
+      color: #e2e8f0;
+    }
+    .task-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .task-table th, .task-table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .task-table th {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .transcript-box {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    .transcript-line {
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+    }
+    .speaker-name {
+      font-weight: 700;
+      color: #38bdf8;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+    .transcript-text {
+      color: #cbd5e1;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .btn-action {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .error-card {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 500px;
+      margin: 80px auto;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+    }
+    .loading-spinner {
+      text-align: center;
+      padding: 100px 0;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header class="share-header">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="#8B5CF6" stroke-width="2"/>
+        <path d="M12 6v6l4 2" stroke="#06B6D4" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>MeetMind AI</span>
+      <span class="brand-badge">Public MoM</span>
+    </div>
+    <div>
+      <button class="btn-action" onclick="window.print()">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+          <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5z"/>
+        </svg>
+        Print / PDF
+      </button>
+    </div>
+  </header>
+
+  <main class="share-container" id="mainContainer">
+    <div class="loading-spinner" id="loadingView">
+      <p>Loading shared meeting record...</p>
+    </div>
+
+    <div id="contentView" style="display: none;">
+      <!-- Hero -->
+      <div class="meeting-hero">
+        <h1 class="meeting-title" id="meetingTitle">Loading...</h1>
+        <div class="meta-row">
+          <span class="pill" id="meetingDate">📅 Date</span>
+          <span class="pill" id="meetingDuration">⏱️ 0m</span>
+          <span class="pill" id="meetingCategory">📁 Category</span>
+          <span class="pill" style="color: #10b981;">👁️ <span id="accessCount">0</span> views</span>
+        </div>
+      </div>
+
+      <!-- Executive Summary -->
+      <div class="section-card" id="summaryCard">
+        <h2 class="section-title">
+          <span>📋</span> Executive Summary
+        </h2>
+        <div class="summary-text" id="executiveSummary">
+          No executive summary available.
+        </div>
+      </div>
+
+      <!-- Key Decisions -->
+      <div class="section-card" id="decisionsCard" style="display: none;">
+        <h2 class="section-title">
+          <span>✅</span> Key Decisions Agreed
+        </h2>
+        <div id="decisionsList"></div>
+      </div>
+
+      <!-- Action Items -->
+      <div class="section-card" id="tasksCard" style="display: none;">
+        <h2 class="section-title">
+          <span>🎯</span> Action Items & Deliverables
+        </h2>
+        <table class="task-table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Assignee</th>
+              <th>Deadline</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tasksTableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Transcript -->
+      <div class="section-card" id="transcriptCard" style="display: none;">
+        <h2 class="section-title">
+          <span>🎙️</span> Verified Meeting Transcript
+        </h2>
+        <div class="transcript-box" id="transcriptBox"></div>
+      </div>
+    </div>
+
+    <!-- Error View -->
+    <div class="error-card" id="errorView" style="display: none;">
+      <h2 id="errorTitle">Link Not Found</h2>
+      <p id="errorMessage" style="color: var(--text-muted); line-height: 1.6;">
+        This meeting share link does not exist, has expired, or has been revoked by the organizer.
+      </p>
+    </div>
+  </main>
+
+  <footer style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--card-border);">
+    Powered by MeetMind AI • Enterprise Bilingual Productivity Platform (2026)
+  </footer>
+
+  <script>
+    async function loadPublicMeeting() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+
+      if (!token) {
+        showError('Missing Share Token', 'Please provide a valid meeting share link.');
+        return;
+      }
+
+      const baseUrl = (window.MeetMindGateway && window.MeetMindGateway.getApiBaseUrl) 
+        ? window.MeetMindGateway.getApiBaseUrl() 
+        : 'http://localhost:8000/api/v1';
+
+      try {
+        const res = await fetch(`${baseUrl}/meetings/share/${encodeURIComponent(token)}`);
+        if (res.status === 404) {
+          showError('Link Not Found', 'This public meeting share link does not exist or was revoked.');
+          return;
+        }
+        if (res.status === 410) {
+          showError('Link Expired', 'This public meeting share link has expired. Please contact the meeting organizer for a fresh link.');
+          return;
+        }
+        if (!res.ok) {
+          showError('Error Loading Meeting', `Failed to load meeting details (HTTP ${res.status}).`);
+          return;
+        }
+
+        const data = await res.json();
+        renderMeeting(data);
+      } catch (err) {
+        showError('Connection Error', 'Could not connect to MeetMind backend. Please check your network connection.');
+      }
+    }
+
+    function renderMeeting(data) {
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('contentView').style.display = 'block';
+
+      document.getElementById('meetingTitle').textContent = data.title || 'Meeting Minutes';
+      document.getElementById('meetingDate').textContent = '📅 ' + (data.created_at ? new Date(data.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'Recent');
+      document.getElementById('meetingDuration').textContent = '⏱️ ' + Math.round((data.duration_seconds || 0) / 60) + 'm';
+      document.getElementById('meetingCategory').textContent = '📁 ' + (data.category || 'General');
+      document.getElementById('accessCount').textContent = data.access_count || 1;
+
+      // Summary
+      if (data.summary && data.summary.executive_summary) {
+        document.getElementById('executiveSummary').textContent = data.summary.executive_summary;
+        if (data.summary.decisions && data.summary.decisions.length > 0) {
+          const decisionsCard = document.getElementById('decisionsCard');
+          decisionsCard.style.display = 'block';
+          const list = document.getElementById('decisionsList');
+          list.innerHTML = data.summary.decisions.map(d => `<div class="decision-item">✓ ${escapeHtml(typeof d === 'string' ? d : d.decision || '')}</div>`).join('');
+        }
+      }
+
+      // Tasks
+      if (data.tasks && data.tasks.length > 0) {
+        document.getElementById('tasksCard').style.display = 'block';
+        const tbody = document.getElementById('tasksTableBody');
+        tbody.innerHTML = data.tasks.map(t => `
+          <tr>
+            <td style="font-weight: 600;">${escapeHtml(t.title)}</td>
+            <td><span class="pill">${escapeHtml(t.assignee || 'Unassigned')}</span></td>
+            <td style="color: var(--text-muted);">${escapeHtml(t.deadline || 'None')}</td>
+            <td><span class="pill" style="color: #38bdf8;">${escapeHtml(t.status || 'Pending')}</span></td>
+          </tr>
+        `).join('');
+      }
+
+      // Transcripts
+      if (data.transcripts && data.transcripts.length > 0) {
+        document.getElementById('transcriptCard').style.display = 'block';
+        const box = document.getElementById('transcriptBox');
+        box.innerHTML = data.transcripts.map(seg => `
+          <div class="transcript-line">
+            <div class="speaker-name">${escapeHtml(seg.speaker_label)} <span style="color: var(--text-muted); font-size: 0.75rem;">[${escapeHtml(seg.start_time || '00:00')}]</span></div>
+            <div class="transcript-text">${escapeHtml(seg.text)}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function showError(title, msg) {
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('contentView').style.display = 'none';
+      document.getElementById('errorView').style.display = 'block';
+      document.getElementById('errorTitle').textContent = title;
+      document.getElementById('errorMessage').textContent = msg;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', loadPublicMeeting);
+  </script>
+</body>
+</html>

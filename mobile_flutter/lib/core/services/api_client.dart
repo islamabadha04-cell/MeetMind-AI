@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'secure_storage_service.dart';
 
@@ -21,6 +22,10 @@ class ApiClient {
     final custom = await SecureStorageService.getCustomApiUrl();
     if (custom != null && custom.trim().isNotEmpty) {
       return custom.trim().replaceAll(RegExp(r'/+$'), '');
+    }
+    // When debugging locally on Android (emulator), loopback to host machine is 10.0.2.2
+    if (kDebugMode && Platform.isAndroid) {
+      return 'http://10.0.2.2:8000/api/v1';
     }
     return defaultRemoteStagingUrl;
   }

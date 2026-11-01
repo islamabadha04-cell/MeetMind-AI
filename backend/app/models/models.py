@@ -137,6 +137,7 @@ class Meeting(Base):
     chunks = relationship("MeetingChunk", back_populates="meeting", cascade="all, delete-orphan")
     summary = relationship("MeetingSummary", back_populates="meeting", uselist=False, cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="meeting", cascade="all, delete-orphan")
+    shared_links = relationship("SharedMeetingLink", back_populates="meeting", cascade="all, delete-orphan")
 
 class TranscriptSegment(Base):
     __tablename__ = "transcript_segments"
@@ -176,6 +177,28 @@ class MeetingSummary(Base):
     created_at = Column(DateTime, default=utc_now)
 
     meeting = relationship("Meeting", back_populates="summary")
+
+
+class SharedMeetingLink(Base):
+    __tablename__ = "shared_meeting_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    share_token = Column(String(128), unique=True, index=True, nullable=False)
+    title = Column(String(255), nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    access_count = Column(Integer, default=0)
+    allow_transcript = Column(Boolean, default=True)
+    allow_tasks = Column(Boolean, default=True)
+    allow_summary = Column(Boolean, default=True)
+    password_hash = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=utc_now)
+    last_accessed_at = Column(DateTime, nullable=True)
+
+    meeting = relationship("Meeting", back_populates="shared_links")
+    user = relationship("User")
 
 # --------------------------------------------------------------------------
 # PHASE 3: Tasks & Automation Models
