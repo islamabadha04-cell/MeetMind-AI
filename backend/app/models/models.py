@@ -14,9 +14,9 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), default="Emily Watson")
     avatar_url = Column(String(500), default="/assets/emily.jpg")
-    plan = Column(String(50), default="Pro") # Free, Pro, Team, Business
-    minutes_used = Column(Integer, default=42)
-    minutes_limit = Column(Integer, default=500)
+    plan = Column(String(50), default="Free") # Free, Pro, Team, Business
+    minutes_used = Column(Integer, default=0)
+    minutes_limit = Column(Integer, default=120)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=utc_now)
 
@@ -34,6 +34,7 @@ class User(Base):
     oauth_nonces = relationship("OAuthNonce", back_populates="user", cascade="all, delete-orphan")
     owned_workspaces = relationship("Workspace", back_populates="owner", foreign_keys="Workspace.owner_id")
     workspace_memberships = relationship("WorkspaceMember", back_populates="user", cascade="all, delete-orphan")
+    upgrade_requests = relationship("UpgradeRequest", back_populates="user", cascade="all, delete-orphan")
 
 class Workspace(Base):
     __tablename__ = "workspaces"
@@ -503,3 +504,30 @@ class ProcessedWebhookMessage(Base):
     sender = Column(String(255), nullable=True, index=True)
     processed_at = Column(DateTime, default=utc_now)
 
+
+
+class UpgradeRequest(Base):
+    """
+    Tracks subscription upgrade requests for audit logging, anti-fraud,
+    and verified payment processing.
+    """
+    __tablename__ = "upgrade_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    reference_id = Column(String(64), unique=True, index=True, nullable=False)
+    requested_plan = Column(String(50), nullable=False) # Pro, Team, Enterprise
+    organization_name = Column(String(255), nullable=True)
+    billing_email = Column(String(255), nullable=False)
+    amount_pkr = Column(Integer, default=2499)
+    status = Column(String(50), default="pending", index=True) # pending, approved, rejected, cancelled
+    payment_method = Column(String(50), default="manual_bank")
+    transaction_reference = Column(String(255), nullable=True)
+    notes = Column(Text, nullable=True)
+    admin_notes = Column(Text, nullable=True)
+    approved_by = Column(String(255), nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now)
+
+    user = relationship("User", back_populates="upgrade_requests")

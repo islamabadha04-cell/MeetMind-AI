@@ -604,3 +604,39 @@ class OllamaChatRequest(BaseModel):
 class OllamaChatResponse(BaseModel):
     model: str
     reply: str
+
+
+# ==========================================
+# SUBSCRIPTION & UPGRADE VERIFICATION SCHEMAS
+# ==========================================
+
+class UpgradeRequestCreate(BaseModel):
+    requested_plan: str = "Pro" # Pro, Team, Enterprise
+    organization_name: Optional[str] = None
+    billing_email: str
+    payment_method: Optional[str] = "manual_bank" # manual_bank, enterprise_invoice
+    notes: Optional[str] = None
+
+class UpgradeRequestResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    reference_id: str
+    user_id: int
+    requested_plan: str
+    organization_name: Optional[str] = None
+    billing_email: str
+    amount_pkr: int
+    status: str
+    payment_method: str
+    created_at: datetime
+
+class SubscriptionStatusResponse(BaseModel):
+    current_plan: str
+    is_pro: bool
+    minutes_used: int
+    minutes_limit: int
+    pending_upgrade: Optional[UpgradeRequestResponse] = None
+
+class AdminApproveUpgradeRequest(BaseModel):
+    reference_id: str
+    admin_notes: Optional[str] = "Approved after verified payment reconciliation"

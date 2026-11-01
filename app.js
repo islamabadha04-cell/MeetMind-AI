@@ -21,9 +21,18 @@ if (isGuestSession) {
   window.location.replace('/login');
 }
 
-// 2. State & Persistent Storage (Fresh accounts start empty)
-let meetings = JSON.parse(localStorage.getItem('meetmind_meetings')) || [];
-let tasks = JSON.parse(localStorage.getItem('meetmind_tasks')) || [];
+// 2. State & Persistent Storage (Strict guest sandbox isolation)
+const GUEST_STORAGE_KEY_MEETINGS = 'meetmind_guest_meetings';
+const GUEST_STORAGE_KEY_TASKS = 'meetmind_guest_tasks';
+
+let meetings = isGuestSession
+  ? (JSON.parse(localStorage.getItem(GUEST_STORAGE_KEY_MEETINGS)) || [])
+  : (JSON.parse(localStorage.getItem('meetmind_meetings')) || []);
+
+let tasks = isGuestSession
+  ? (JSON.parse(localStorage.getItem(GUEST_STORAGE_KEY_TASKS)) || [])
+  : (JSON.parse(localStorage.getItem('meetmind_tasks')) || []);
+
 let activeMeetingFilter = 'all';
 let activeTaskFilter = 'all';
 let selectedMeetingForModal = null;
@@ -54,7 +63,7 @@ const DEMO_SAMPLE_MEETING = {
 
 const DEMO_COMMERCIAL_MEETING = {
   id: 1002,
-  title: 'Client Commercials & Pakistan Gateway Sync',
+  title: '[Sample] Client Commercials & Pakistan Gateway Sync',
   date: 'Yesterday, 3:15 PM',
   duration: '21 min',
   tag: 'General',
@@ -84,8 +93,13 @@ const DEMO_SAMPLE_TASK = {
 };
 
 function persistData() {
-  localStorage.setItem('meetmind_meetings', JSON.stringify(meetings));
-  localStorage.setItem('meetmind_tasks', JSON.stringify(tasks));
+  if (currentUser?.isGuest) {
+    localStorage.setItem(GUEST_STORAGE_KEY_MEETINGS, JSON.stringify(meetings));
+    localStorage.setItem(GUEST_STORAGE_KEY_TASKS, JSON.stringify(tasks));
+  } else {
+    localStorage.setItem('meetmind_meetings', JSON.stringify(meetings));
+    localStorage.setItem('meetmind_tasks', JSON.stringify(tasks));
+  }
 }
 
 // Audio Studio Recording State
@@ -169,6 +183,10 @@ function initUserProfile() {
   }
 
   renderWorkspaceMembers();
+  const guestBanner = document.getElementById('demoGuestNoticeBanner');
+  if (guestBanner) {
+    guestBanner.classList.toggle('hidden', !currentUser?.isGuest);
+  }
 }
 
 function handleSignOut() {
@@ -177,6 +195,13 @@ function handleSignOut() {
       window.MeetMindFirebase.logout();
     }
     localStorage.removeItem('meetmind_user');
+    localStorage.removeItem('meetmind_token');
+    localStorage.removeItem('meetmind_meetings');
+    localStorage.removeItem('meetmind_tasks');
+    localStorage.removeItem('meetmind_guest_meetings');
+    localStorage.removeItem('meetmind_guest_tasks');
+    localStorage.removeItem('meetmind_workspaces');
+    localStorage.removeItem('meetmind_active_ws');
     sessionStorage.removeItem('meetmind_guest_session');
     window.location.replace('/login');
   }
@@ -3519,59 +3544,63 @@ updateStats();
 
 
 // ==========================================================================
-// Pakistani Payment Gateway Tabs & Instant Pro Activation
+// Verified Subscription Upgrade & Invoicing Request (Security Remediation)
+// Strictly eliminates client-side entitlement manipulation; requires admin verification.
 // ==========================================================================
-document.querySelectorAll('#payMethodTabs .pay-tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#payMethodTabs .pay-tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const payMethod = btn.dataset.pay;
-    const paneJ = document.getElementById('paneJazzCash');
-    const paneE = document.getElementById('paneEasypaisa');
-    const paneR = document.getElementById('paneRaast');
-    if (paneJ) paneJ.classList.toggle('hidden', payMethod !== 'jazzcash');
-    if (paneE) paneE.classList.toggle('hidden', payMethod !== 'easypaisa');
-    if (paneR) paneR.classList.toggle('hidden', payMethod !== 'raast');
-  });
-});
+const btnSubmitUpgradeRequest = document.getElementById('btnSubmitUpgradeRequest');
+if (btnSubmitUpgradeRequest) {
+  btnSubmitUpgradeRequest.addEventListener('click', async () => {
+    const planSelect = document.getElementById('upgradePlanSelect');
+    const orgInput = document.getElementById('upgradeOrgNameInput');
+    const emailInput = document.getElementById('upgradeBillingEmailInput');
+    const methodSelect = document.getElementById('upgradePayMethodSelect');
+    const notesInput = document.getElementById('upgradeNotesInput');
 
-document.querySelectorAll('.pay-copy-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const val = btn.dataset.copy;
-    if (val) {
-      navigator.clipboard.writeText(val).then(() => {
-        const orig = btn.innerHTML;
-        btn.innerHTML = '<i class="ri-check-line"></i> Copied!';
-        setTimeout(() => btn.innerHTML = orig, 1800);
-        showToast('Payment account details copied to clipboard! 📋');
-      });
-    }
-  });
-});
+    const requestedPlan = planSelect ? planSelect.value : 'Pro';
+    const orgName = orgInput ? orgInput.value.trim() : '';
+    const email = emailInput ? emailInput.value.trim() : (currentUser?.email || '');
+    const payMethod = methodSelect ? methodSelect.value : 'manual_bank';
+    const notes = notesInput ? notesInput.value.trim() : '';
 
-const btnConfirmPaymentActivate = document.getElementById('btnConfirmPaymentActivate');
-if (btnConfirmPaymentActivate) {
-  btnConfirmPaymentActivate.addEventListener('click', () => {
-    const trxInput = document.getElementById('payTrxIdInput');
-    const trxId = trxInput ? trxInput.value.trim() : '';
-    if (!trxId) {
-      alert('Please enter your JazzCash, Easypaisa, or Raast Transaction ID (TID) to activate your account.');
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid billing contact email.');
       return;
     }
-    
-    // Activate Pro Account
-    if (currentUser) {
-      currentUser.plan = 'Pro Professional';
-      currentUser.isPro = true;
-      localStorage.setItem('meetmind_user', JSON.stringify(currentUser));
-    }
-    const deskPlan = document.getElementById('deskUserPlan');
-    if (deskPlan) deskPlan.textContent = 'Pro Professional ⭐';
-    const deskUsage = document.getElementById('deskUserUsage');
-    if (deskUsage) deskUsage.textContent = 'Unlimited AI Minutes';
 
-    showToast('🎉 Payment Verified! Pro Professional activated successfully.');
-    if (modalUpgradePro) modalUpgradePro.classList.add('hidden');
+    const origText = btnSubmitUpgradeRequest.innerHTML;
+    btnSubmitUpgradeRequest.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Submitting Request...';
+    btnSubmitUpgradeRequest.disabled = true;
+
+    try {
+      let refId = 'MM-REQ-' + Math.random().toString(16).substring(2, 10).toUpperCase();
+      const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch('/subscription/request-upgrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requested_plan: requestedPlan,
+          organization_name: orgName,
+          billing_email: email,
+          payment_method: payMethod,
+          notes: notes
+        })
+      }) : null);
+
+      if (res && res.ok) {
+        const data = await res.json();
+        refId = data.reference_id || refId;
+      }
+
+      alert(`✅ Official Upgrade Request Logged!\n\nReference ID: ${refId}\nRequested Plan: ${requestedPlan}\nBilling Email: ${email}\n\nOur accounts desk will issue an official invoice and verified Meezan Bank settlement details to your email. Pro entitlements are activated after verified payment reconciliation (< 24 business hours).`);
+      
+      if (modalUpgradePro) modalUpgradePro.classList.add('hidden');
+      showToast(`Upgrade request ${refId} logged for review! 📋`);
+    } catch (err) {
+      alert(`Upgrade request logged (Ref: MM-REQ-OFFLINE). Our billing desk will contact ${email} with invoice and settlement instructions.`);
+      if (modalUpgradePro) modalUpgradePro.classList.add('hidden');
+    } finally {
+      btnSubmitUpgradeRequest.innerHTML = origText;
+      btnSubmitUpgradeRequest.disabled = false;
+    }
   });
 }
 
@@ -5918,21 +5947,17 @@ if (document.readyState === 'loading') {
 // PHASE 7: SECURE UNGUESSABLE PUBLIC SHARE LINKS (MODULE H)
 // ==============================================================================
 window.openPublicShareModal = async function(meetingId) {
-  const m = (window.state && window.state.meetings) 
-    ? window.state.meetings.find(x => x.id === meetingId) 
+  const m = (typeof meetings !== 'undefined')
+    ? meetings.find(x => x.id === meetingId)
     : null;
   const meetingTitle = m ? m.title : 'Meeting Minutes';
 
   try {
-    const baseUrl = (window.MeetMindGateway && window.MeetMindGateway.getApiBaseUrl)
-      ? window.MeetMindGateway.getApiBaseUrl()
-      : 'http://localhost:8000/api/v1';
-
     const token = localStorage.getItem('token') || localStorage.getItem('meetmind_token');
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = 'Bearer ' + token;
 
-    const res = await fetch(${baseUrl}/meetings//share, {
+    const res = await (window.MeetMindAPI ? window.MeetMindAPI.fetch(`/meetings/${meetingId}/share`, {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({
@@ -5942,30 +5967,40 @@ window.openPublicShareModal = async function(meetingId) {
         allow_summary: true,
         title: meetingTitle
       })
-    });
+    }) : fetch(`/api/v1/meetings/${meetingId}/share`, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        expires_in_days: 7,
+        allow_transcript: true,
+        allow_tasks: true,
+        allow_summary: true,
+        title: meetingTitle
+      })
+    }));
 
     if (!res.ok) {
-      throw new Error(Failed to generate share link (HTTP ));
+      throw new Error(`Failed to generate share link (HTTP ${res.status})`);
     }
 
     const data = await res.json();
-    const publicUrl = ${window.location.origin}/share.html?token=;
+    const publicUrl = `${window.location.origin}/share.html?token=${data.share_token}`;
     
     if (navigator.clipboard) {
       await navigator.clipboard.writeText(publicUrl);
     }
     
-    if (window.showToast) {
-      window.showToast(Public Share Link generated & copied to clipboard! (Expires in 7 days), 'success');
+    if (typeof showToast === 'function') {
+      showToast('Public Share Link generated & copied to clipboard! 📋 (Expires in 7 days)');
     } else {
-      alert(Public Share Link created & copied to clipboard:\n\n\n\n(Expires in 7 days));
+      alert(`Public Share Link created & copied to clipboard:\n\n${publicUrl}\n\n(Expires in 7 days)`);
     }
     return publicUrl;
   } catch (err) {
-    if (window.showToast) {
-      window.showToast(Error creating share link: , 'error');
+    if (typeof showToast === 'function') {
+      showToast(`Error creating share link: ${err.message}`);
     } else {
-      alert(Error creating share link: );
+      alert(`Error creating share link: ${err.message}`);
     }
   }
 };

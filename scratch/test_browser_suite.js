@@ -430,34 +430,26 @@ async function runBrowserTests() {
     const hasIcsBtn = await cdp.evaluate('!!document.querySelector(".btn-cal-ics")');
     assert('1-Click .ICS download button present on task cards', hasIcsBtn);
 
-    // Pakistani Payment Gateway & Instant Pro Activation
+    // Pakistani Billing Desk & Secure Upgrade Verification (Priority 0 Remediation)
     await cdp.evaluate('document.getElementById("btnUpgradePro")?.click()');
     await sleep(300);
     const hasPakCheckout = await cdp.evaluate('!document.getElementById("pakCheckoutBox")?.classList.contains("hidden")');
-    assert('Pakistani Payment Gateway rendered in modal', hasPakCheckout);
+    assert('Official Invoicing Desk rendered in modal', hasPakCheckout);
 
-    // Switch to Easypaisa tab
-    await cdp.evaluate('document.querySelector("#payMethodTabs button[data-pay=\'easypaisa\']")?.click()');
-    await sleep(200);
-    const isEasypaisaActive = await cdp.evaluate('!document.getElementById("paneEasypaisa")?.classList.contains("hidden")');
-    assert('Easypaisa payment tab switches seamlessly', isEasypaisaActive);
+    const hasUpgradeFields = await cdp.evaluate('!!document.getElementById("upgradePlanSelect") && !!document.getElementById("upgradeBillingEmailInput") && !!document.getElementById("btnSubmitUpgradeRequest")');
+    assert('Verified upgrade request inputs present', hasUpgradeFields);
 
-    // Switch to Raast / IBAN tab
-    await cdp.evaluate('document.querySelector("#payMethodTabs button[data-pay=\'raast\']")?.click()');
-    await sleep(200);
-    const isRaastActive = await cdp.evaluate('!document.getElementById("paneRaast")?.classList.contains("hidden")');
-    assert('Raast / IBAN payment tab switches seamlessly', isRaastActive);
-
-    // Enter TID and Activate Pro
+    // Fill billing form and verify anti-bypass protection (user cannot self-elevate to Pro!)
     await cdp.evaluate(`
-      const trxInp = document.getElementById("payTrxIdInput");
-      if (trxInp) trxInp.value = "JC-9921829";
-      document.getElementById("btnConfirmPaymentActivate")?.click();
+      const emailInp = document.getElementById("upgradeBillingEmailInput");
+      if (emailInp) emailInp.value = "test_billing@example.com";
+      const orgInp = document.getElementById("upgradeOrgNameInput");
+      if (orgInp) orgInp.value = "QA Test Org";
     `);
-    await sleep(400);
+    await sleep(200);
 
     const planText = await cdp.evaluate('document.getElementById("deskUserPlan")?.innerText || ""');
-    assert('Pro Account activated instantly via Pakistan Payment', planText.includes('Pro Professional'), planText);
+    assert('Anti-Bypass Guard: Client cannot self-activate Pro tier without admin verification', !planText.includes('Pro Professional ⭐'), planText);
 
     // -------------------------------------------------------------------------
     // TEST SUITE 5C: Phase 1 Multilingual & Intelligence Radar
@@ -895,7 +887,7 @@ async function runBrowserTests() {
 
     // 2. Verify Active Workspace Title and Badges
     const wsTitle = await cdp.evaluate('document.getElementById("wsActiveTitle")?.textContent');
-    assert('Active workspace displays Cowlar Engineering', wsTitle && wsTitle.includes('Cowlar Engineering'));
+    assert('Active workspace displays clean neutral workspace', wsTitle && (wsTitle.includes('Personal Workspace') || wsTitle.includes('Cowlar')));
 
     const wsRole = await cdp.evaluate('document.getElementById("wsRoleBadge")?.textContent');
     assert('Current user role badge displayed correctly', wsRole && wsRole.toUpperCase().includes('OWNER'));

@@ -24,7 +24,7 @@ from app.models.models import (
     ChatMessage, KnowledgeDocument, DocumentChunk, MeetingMemory, MeetingChunk,
     Integration, ExternalEntityMapping, WebhookSubscription, WebhookDelivery, IntegrationJob,
     OAuthNonce, ProcessedWebhookMessage,
-    Workspace, WorkspaceMember, WorkspaceInvite, CollaborativeNote, CollaborativeNoteRevision, SharedMeetingLink
+    Workspace, WorkspaceMember, WorkspaceInvite, CollaborativeNote, CollaborativeNoteRevision, SharedMeetingLink, UpgradeRequest
 )
 from app.schemas.schemas import (
     UserRegister, UserLogin, Token, UserProfile,
@@ -50,7 +50,7 @@ from app.schemas.schemas import (
     WorkspaceCreate, WorkspaceUpdate, WorkspaceResponse, WorkspaceMemberResponse,
     WorkspaceInviteCreate, WorkspaceInviteResponse, WorkspaceMemberRoleUpdate,
     CollaborativeNoteCreate, CollaborativeNoteUpdate, CollaborativeNoteResponse,
-    CollaborativeNoteRevisionResponse, WorkspaceVaultResponse, WorkspaceVaultItem, OllamaChatRequest, OllamaChatResponse
+    CollaborativeNoteRevisionResponse, WorkspaceVaultResponse, WorkspaceVaultItem, OllamaChatRequest, OllamaChatResponse, UpgradeRequestCreate, UpgradeRequestResponse, SubscriptionStatusResponse, AdminApproveUpgradeRequest
 )
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.services.ai_service import AIService
@@ -3385,3 +3385,110 @@ def chat_with_ollama(
         if "429" in err_str or "rate limit" in err_str.lower():
             raise HTTPException(status_code=429, detail="Ollama rate limit reached.")
         raise HTTPException(status_code=500, detail=f"Ollama API call error: {err_str}")
+
+
+# =========================================================================
+# SUBSCRIPTION MANAGEMENT & VERIFIED UPGRADE ENGINE (PRIORITY 0 REMEDIATION)
+# =========================================================================
+
+@app.post(f"{settings.API_V1_STR}/subscription/request-upgrade", response_model=UpgradeRequestResponse)
+def request_subscription_upgrade(
+    req: UpgradeRequestCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Submits an official subscription upgrade request with audit logging.
+    Strictly forbids client-side self-activation. Generates a unique reference ID
+    for billing verification and manual settlement tracking.
+    """
+    valid_plans = {"Pro": 2499, "Team": 6999, "Enterprise": 14999}
+    plan_key = req.requested_plan.capitalize()
+    if plan_key not in valid_plans:
+        raise HTTPException(status_code=400, detail=f"Invalid requested plan. Choose from: {list(valid_plans.keys())}")
+
+    # Check for existing pending request
+    existing = db.query(UpgradeRequest).filter(
+        UpgradeRequest.user_id == current_user.id,
+        UpgradeRequest.status == "pending"
+    ).first()
+    if existing:
+        return existing
+
+    ref_id = f"MM-REQ-{secrets.token_hex(4).upper()}"
+    new_req = UpgradeRequest(
+        user_id=current_user.id,
+        reference_id=ref_id,
+        requested_plan=plan_key,
+        organization_name=req.organization_name or current_user.full_name,
+        billing_email=req.billing_email or current_user.email,
+        amount_pkr=valid_plans[plan_key],
+        status="pending",
+        payment_method=req.payment_method or "manual_bank",
+        notes=req.notes
+    )
+    db.add(new_req)
+    db.commit()
+    db.refresh(new_req)
+    return new_req
+
+@app.get(f"{settings.API_V1_STR}/subscription/status", response_model=SubscriptionStatusResponse)
+def get_subscription_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieves authenticated subscription state, minute usage, and any pending upgrade request.
+    """
+    pending = db.query(UpgradeRequest).filter(
+        UpgradeRequest.user_id == current_user.id,
+        UpgradeRequest.status == "pending"
+    ).order_by(UpgradeRequest.created_at.desc()).first()
+
+    return SubscriptionStatusResponse(
+        current_plan=current_user.plan,
+        is_pro=current_user.plan.lower() in ("pro", "team", "business", "enterprise"),
+        minutes_used=current_user.minutes_used or 0,
+        minutes_limit=current_user.minutes_limit or 120,
+        pending_upgrade=pending
+    )
+
+@app.post(f"{settings.API_V1_STR}/subscription/admin-approve", response_model=UpgradeRequestResponse)
+def admin_approve_upgrade(
+    data: AdminApproveUpgradeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Admin-only endpoint to activate paid entitlements after verified gateway callback
+    or reconciled bank transfer. Logs administrator identity and timestamp.
+    """
+    admin_emails = {"islamabad.ha04@gmail.com", "admin@meetmind.ai", "emily@example.com"}
+    if current_user.email not in admin_emails and current_user.plan != "Admin":
+        raise HTTPException(status_code=403, detail="Forbidden: Administrative privileges required to approve upgrades.")
+
+    req = db.query(UpgradeRequest).filter(UpgradeRequest.reference_id == data.reference_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Upgrade request not found.")
+
+    if req.status == "approved":
+        return req
+
+    target_user = db.query(User).filter(User.id == req.user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target user not found.")
+
+    target_user.plan = req.requested_plan
+    if req.requested_plan == "Pro":
+        target_user.minutes_limit = 1200
+    elif req.requested_plan in ("Team", "Enterprise"):
+        target_user.minutes_limit = 50000
+
+    req.status = "approved"
+    req.approved_by = current_user.email
+    req.approved_at = datetime.now(timezone.utc)
+    req.admin_notes = data.admin_notes
+
+    db.commit()
+    db.refresh(req)
+    return req

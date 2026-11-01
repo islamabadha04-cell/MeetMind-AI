@@ -26,6 +26,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Demo Guest Sandbox Notification Banner -->
+  <div class="demo-guest-banner hidden" id="demoGuestNoticeBanner" style="background: linear-gradient(90deg, #F59E0B, #D97706); color: #1e1e1e; padding: 7px 16px; font-size: 12.5px; font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; z-index: 9999;">
+    <i class="ri-shield-alert-line" style="font-size: 16px;"></i>
+    <span>Demo Guest Mode Active: You are evaluating MeetMind AI in an isolated local sandbox. Cloud sync is disabled. <a href="/login" style="color: #000; text-decoration: underline; margin-left: 6px; font-weight: 800;">Sign up for a free cloud account &rarr;</a></span>
+  </div>
 
   <!-- Top Universal Header -->
   <header class="universal-header">
@@ -1165,9 +1170,9 @@
           <div class="welcome-stats-row" style="align-items: flex-start; margin-bottom: 20px;">
             <div style="flex: 1;">
               <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
-                <h2 class="welcome-title" style="margin: 0;" id="wsActiveTitle">Cowlar Engineering</h2>
+                <h2 class="welcome-title" style="margin: 0;" id="wsActiveTitle">Personal Workspace</h2>
                 <span class="badge-tag" id="wsTierBadge" style="background: rgba(99, 102, 241, 0.12); color: var(--primary); font-weight: 600;">Team Plan (10 Seats)</span>
-                <span class="badge-tag" id="wsSeatsBadge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 600;">4 / 10 Seats Used</span>
+                <span class="badge-tag" id="wsSeatsBadge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-weight: 600;">1 / 1 Seat Used</span>
                 <span class="badge-tag" id="wsRoleBadge" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-weight: 600;">Your Role: Owner</span>
               </div>
               <p class="welcome-sub" id="wsActiveDesc" style="margin: 0 0 10px 0;">Primary engineering, product architecture, and sprint meeting workspace.</p>
@@ -1368,7 +1373,7 @@
           </div>
 
           <p style="font-size: 12px; color: var(--text-muted); margin-top: 18px;">
-            <i class="ri-shield-user-line" style="color: var(--primary);"></i> <strong>Enterprise Multi-Tenant Isolation:</strong> All meetings, audio, and tasks in this workspace are strictly scoped to authenticated members of <em><span id="wsFooterOrgName">Cowlar Engineering</span></em>.
+            <i class="ri-shield-user-line" style="color: var(--primary);"></i> <strong>Enterprise Multi-Tenant Isolation:</strong> All meetings, audio, and tasks in this workspace are strictly scoped to authenticated members of <em><span id="wsFooterOrgName">Personal Workspace</span></em>.
           </p>
         </div>
       </div>
@@ -2297,69 +2302,63 @@
           </div>
         </div>
         
-        <!-- Pakistani Instant Payment Gateway Checkout Box -->
-        <div class="checkout-box" id="pakCheckoutBox">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h4 style="font-size: 14px; font-weight: 800; color: var(--primary);">
-              <i class="ri-secure-payment-fill"></i> Instant Pakistan Payment (JazzCash / Easypaisa / Raast)
-            </h4>
-            <span style="font-size: 12px; font-weight: 700; color: var(--success); background: rgba(16, 185, 129, 0.12); padding: 2px 8px; border-radius: 6px;">
-              Rs 2,499 / Month
+        <!-- Pakistani Localized Billing & Verified Pro Upgrade Desk -->
+        <div class="checkout-box" id="pakCheckoutBox" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <h4 style="font-size: 14px; font-weight: 800; color: var(--primary); margin: 0 0 4px 0;">
+                <i class="ri-shield-check-fill"></i> Official Subscription Upgrade & Invoicing Desk
+              </h4>
+              <p style="font-size: 12px; color: var(--text-dim); margin: 0;">
+                Direct online gateways (JazzCash / Easypaisa / Raast API) are in sandbox testing. Submit an official request below to receive verified corporate invoice & bank transfer instructions.
+              </p>
+            </div>
+            <span style="font-size: 11px; font-weight: 700; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); padding: 3px 8px; border-radius: 6px; white-space: nowrap;">
+              <i class="ri-lock-2-line"></i> Verified Admin Activation
             </span>
           </div>
 
-          <div class="pay-tabs" id="payMethodTabs">
-            <button class="pay-tab-btn active" data-pay="jazzcash">
-              <i class="ri-smartphone-line"></i> JazzCash
-            </button>
-            <button class="pay-tab-btn" data-pay="easypaisa">
-              <i class="ri-wallet-3-line"></i> Easypaisa
-            </button>
-            <button class="pay-tab-btn" data-pay="raast">
-              <i class="ri-bank-card-line"></i> Raast / IBAN
-            </button>
-          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 14px;">
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Plan</label>
+              <select id="upgradePlanSelect" class="panel-input" style="width: 100%; padding: 8px 10px; font-size: 13px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px;">
+                <option value="Pro" selected>Pro Professional — Rs 2,499 / mo (1,200 mins)</option>
+                <option value="Team">Team Workspace — Rs 6,999 / mo (10 Seats)</option>
+                <option value="Enterprise">Enterprise Custom — Rs 14,999 / mo</option>
+              </select>
+            </div>
 
-          <!-- Method 1: JazzCash -->
-          <div class="pay-tab-pane" id="paneJazzCash">
-            <div class="pay-detail-row">
-              <div>
-                <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">JazzCash Till / Mobile No:</div>
-                <div style="font-size: 15px; font-weight: 800; font-family: monospace;">0300-1234567</div>
-                <div style="font-size: 11px; color: var(--text-muted);">Account Title: <strong>MeetMind AI Official</strong></div>
-              </div>
-              <button class="pay-copy-btn" data-copy="03001234567"><i class="ri-file-copy-line"></i> Copy</button>
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Organization / Company Name</label>
+              <input type="text" id="upgradeOrgNameInput" placeholder="e.g. Acme Studio" class="panel-input" style="width: 100%; padding: 8px 10px; font-size: 13px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px;">
+            </div>
+
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Billing Email</label>
+              <input type="email" id="upgradeBillingEmailInput" placeholder="billing@yourcompany.com" class="panel-input" style="width: 100%; padding: 8px 10px; font-size: 13px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px;">
+            </div>
+
+            <div>
+              <label style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Preferred Settlement Channel</label>
+              <select id="upgradePayMethodSelect" class="panel-input" style="width: 100%; padding: 8px 10px; font-size: 13px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px;">
+                <option value="manual_bank" selected>Meezan Bank / Raast Corporate IBAN (Official Invoice)</option>
+                <option value="jazzcash">JazzCash Business Transfer (Manual Reconciliation)</option>
+                <option value="easypaisa">Easypaisa Business Transfer (Manual Reconciliation)</option>
+              </select>
             </div>
           </div>
 
-          <!-- Method 2: Easypaisa -->
-          <div class="pay-tab-pane hidden" id="paneEasypaisa">
-            <div class="pay-detail-row">
-              <div>
-                <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Easypaisa Mobile No:</div>
-                <div style="font-size: 15px; font-weight: 800; font-family: monospace;">0345-9876543</div>
-                <div style="font-size: 11px; color: var(--text-muted);">Account Title: <strong>MeetMind AI Payments</strong></div>
-              </div>
-              <button class="pay-copy-btn" data-copy="03459876543"><i class="ri-file-copy-line"></i> Copy</button>
-            </div>
+          <div style="margin-top: 10px;">
+            <label style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Purchase Order / Additional Notes (Optional)</label>
+            <input type="text" id="upgradeNotesInput" placeholder="e.g. Q4 Sprint Budget / Need Tax NTN on Invoice" class="panel-input" style="width: 100%; padding: 8px 10px; font-size: 13px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px;">
           </div>
 
-          <!-- Method 3: Raast / Bank IBAN -->
-          <div class="pay-tab-pane hidden" id="paneRaast">
-            <div class="pay-detail-row">
-              <div>
-                <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Bank IBAN (Meezan Bank):</div>
-                <div style="font-size: 13.5px; font-weight: 800; font-family: monospace;">PK92MEZN0001234567890123</div>
-                <div style="font-size: 11px; color: var(--text-muted);">Title: <strong>MeetMind AI Services</strong> | Raast ID: <strong>03001234567</strong></div>
-              </div>
-              <button class="pay-copy-btn" data-copy="PK92MEZN0001234567890123"><i class="ri-file-copy-line"></i> Copy</button>
-            </div>
-          </div>
-
-          <div style="margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <input type="text" id="payTrxIdInput" placeholder="Enter Transaction ID (e.g. JC-89218)" class="panel-input" style="flex: 1; min-width: 200px; padding: 10px;">
-            <button class="btn-primary-purple" id="btnConfirmPaymentActivate" style="padding: 10px 18px; font-weight: 700; white-space: nowrap;">
-              <i class="ri-checkbox-circle-fill"></i> Activate Pro Account
+          <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span style="font-size: 12px; color: var(--text-dim);">
+              <i class="ri-information-line"></i> Entitlement activation occurs after verified administrative reconciliation (&lt; 24h).
+            </span>
+            <button class="btn-primary-purple" id="btnSubmitUpgradeRequest" style="padding: 10px 20px; font-weight: 700;">
+              <i class="ri-mail-send-line"></i> Submit Official Upgrade Request
             </button>
           </div>
         </div>

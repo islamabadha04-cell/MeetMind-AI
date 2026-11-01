@@ -386,6 +386,8 @@
               photo: res.user.photoURL || ''
             };
             sessionStorage.removeItem('meetmind_guest_session');
+            localStorage.removeItem('meetmind_guest_meetings');
+            localStorage.removeItem('meetmind_guest_tasks');
             localStorage.setItem('meetmind_user', JSON.stringify(userObj));
             window.location.href = '/app';
           }
