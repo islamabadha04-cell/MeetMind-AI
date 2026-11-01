@@ -13,6 +13,7 @@
 | Module | Feature Name | Platform | Status | Implementation Details / Tests |
 | :--- | :--- | :---: | :---: | :--- |
 | **6A** | **Flutter Project Audit & Environment** | All | ✅ | Flutter 3.47.8, Dart 3.13.7, `flutter pub get` clean, `flutter analyze` 0 issues. |
+| **6A** | **Android v2 Embedding & Foundation** | Android | ✅ | `<meta-data android:name="flutterEmbedding" android:value="2" />` added; v1 embedding error eliminated. |
 | **6A** | **Pre-Migration Database Backup** | Backend | ✅ | Safe physical copy at `backups/meetmind_phase6_pre_migration_backup.db` (1.09 MB). |
 | **6A** | **Backend Ingress Verification** | Backend | ✅ | `/health`, `/ready`, `/auth/login`, and `/users/me` verified on local & Cloudflare tunnel. |
 | **6B** | **Single Account Login & Registration** | Mobile/Web | ✅ | REST auth client with JWT extraction; unified account `emily@example.com`. |
