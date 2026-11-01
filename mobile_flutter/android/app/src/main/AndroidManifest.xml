@@ -31,5 +31,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- Foreground Service for background microphone audio recording (Android 14+ / API 34 compliant) -->
+        <service
+            android:name="com.meetmind.ai.mobile.RecordingForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
     </application>
 </manifest>

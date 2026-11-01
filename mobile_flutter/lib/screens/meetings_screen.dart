@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import '../core/constants/colors.dart';
 import '../core/localization/language_provider.dart';
 import '../core/services/meeting_service.dart';
@@ -185,7 +186,7 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'May 15, 2024',
+                      DateFormat('MMM d, y').format(DateTime.now()),
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark

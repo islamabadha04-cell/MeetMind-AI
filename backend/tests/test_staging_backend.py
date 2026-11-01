@@ -53,3 +53,16 @@ def test_cors_preflight_for_preview_domain():
     res = client.options("/api/v1/integrations", headers=headers)
     assert res.status_code == 200
     assert res.headers.get("access-control-allow-origin") == "https://meetmind-ai-74519--preview-v4-rj24mmx0.web.app"
+
+
+def test_forged_token_rejected_with_401():
+    headers = {'Authorization': 'Bearer forged_invalid_jwt_token_meetmind'}
+    res = client.get('/api/v1/meetings', headers=headers)
+    assert res.status_code == 401
+    assert 'Could not validate credentials' in res.json()['detail']
+
+
+def test_meetings_upload_route_alias_exists():
+    res = client.post('/api/v1/meetings/upload')
+    assert res.status_code in (401, 422)
+    assert res.status_code != 404

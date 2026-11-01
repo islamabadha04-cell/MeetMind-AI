@@ -72,7 +72,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = authState.user;
     final isUrdu = lang == AppLanguage.urdu;
 
-    final userName = user?.fullName.split(' ').first ?? 'Nathan';
+    final userName = (user?.fullName != null && user!.fullName.trim().isNotEmpty)
+        ? user.fullName.split(' ').first
+        : (user?.email != null && user!.email.contains('@'))
+            ? user.email.split('@').first
+            : 'User';
 
     return Directionality(
       textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -296,8 +300,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildNextMeetingCard(bool isDark, AppLanguage lang) {
     final nextMeeting = _recentMeetings.isNotEmpty ? _recentMeetings.first : null;
+    final hasMeeting = nextMeeting != null;
     final title = nextMeeting?.title ?? 'Product Strategy Sync';
-    final date = nextMeeting?.meetingDate ?? 'Today • 09:00 AM';
+    final date = nextMeeting?.meetingDate ?? 'Upcoming';
 
     return Container(
       decoration: BoxDecoration(
@@ -358,12 +363,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(Icons.schedule,
-                            size: 12, color: Color(0xFF06B6D4)),
+                        Icon(
+                          hasMeeting ? Icons.schedule : Icons.check_circle_outline,
+                          size: 12,
+                          color: const Color(0xFF06B6D4),
+                        ),
                         const SizedBox(width: 4),
-                        const Text(
-                          'Start in 15 min',
-                          style: TextStyle(
+                        Text(
+                          hasMeeting ? 'Recent Session' : 'Ready',
+                          style: const TextStyle(
                             fontSize: 11,
                             color: Color(0xFF06B6D4),
                             fontWeight: FontWeight.bold,
@@ -392,48 +400,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Attendees Row & Platform Tag
+          // Status & Platform Tag
           Row(
             children: [
-              // Overlapping Avatar Cluster
-              SizedBox(
-                width: 76,
-                height: 26,
-                child: Stack(
-                  children: [
-                    _avatarItem(0, 'E', const Color(0xFF6D5AE5)),
-                    _avatarItem(16, 'H', const Color(0xFF06B6D4)),
-                    _avatarItem(32, 'M', const Color(0xFFEC4899)),
-                    Positioned(
-                      left: 48,
-                      child: Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isDark
-                              ? const Color(0xFF262C47)
-                              : Colors.grey.shade300,
-                          border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF141728)
-                                  : Colors.white,
-                              width: 1.5),
-                        ),
-                        child: const Center(
-                          child: Text('+4',
-                              style: TextStyle(
-                                  fontSize: 9, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              Icon(
+                hasMeeting ? Icons.people_outline : Icons.mic_none_outlined,
+                size: 16,
+                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  '8 Participants',
+                  hasMeeting ? 'MeetMind Session' : 'Ready to record new meetings',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -444,7 +422,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const Spacer(),
               // Platform Chip
               Container(
                 padding:
@@ -455,14 +433,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.video_camera_front_outlined,
-                        size: 13, color: Color(0xFF34A853)),
-                    SizedBox(width: 4),
-                    Text('Google Meet',
-                        style: TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.w600)),
+                    Icon(
+                      hasMeeting ? Icons.graphic_eq : Icons.cloud_done_outlined,
+                      size: 13,
+                      color: const Color(0xFF34A853),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      hasMeeting ? 'AI Transcribed' : 'Vault Ready',
+                      style: const TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
               ),
@@ -470,7 +453,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Glowing "Join Meeting ->" CTA Button
+          // Action Button
           Container(
             width: double.infinity,
             height: 44,
@@ -493,9 +476,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              icon: const Text(
-                'Join Meeting',
-                style: TextStyle(
+              icon: Text(
+                hasMeeting ? 'View Meeting Details' : 'Open Meetings',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   color: Colors.white,
@@ -523,28 +506,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _avatarItem(double left, String initial, Color bg) {
-    return Positioned(
-      left: left,
-      child: Container(
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: bg,
-          border: Border.all(color: const Color(0xFF141728), width: 1.5),
-        ),
-        child: Center(
-          child: Text(
-            initial,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-          ),
-        ),
       ),
     );
   }
@@ -698,15 +659,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        color: _recentMeetings.isNotEmpty
+                            ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                            : const Color(0xFF64748B).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        '+20%',
+                      child: Text(
+                        _recentMeetings.isNotEmpty ? 'Active' : 'Idle',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF10B981),
+                          color: _recentMeetings.isNotEmpty
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFF94A3B8),
                         ),
                       ),
                     ),
@@ -714,7 +679,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '${_recentMeetings.isEmpty ? 3 : _recentMeetings.length}',
+                  '${_recentMeetings.length}',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -737,7 +702,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         const SizedBox(width: 12),
 
-        // Metric 2: AI Recaps
+        // Metric 2: Action Tasks
         Expanded(
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -762,22 +727,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         color: const Color(0xFF06B6D4).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.auto_awesome,
+                      child: const Icon(Icons.task_alt_rounded,
                           color: Color(0xFF06B6D4), size: 16),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        color: _totalTasks > 0
+                            ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                            : const Color(0xFF64748B).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        '+40%',
+                      child: Text(
+                        _totalTasks > 0 ? 'Active' : 'Zero',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF10B981),
+                          color: _totalTasks > 0
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFF94A3B8),
                         ),
                       ),
                     ),
@@ -785,7 +754,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '${_totalTasks > 0 ? _totalTasks : 12}',
+                  '$_totalTasks',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -794,7 +763,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'AI Recaps Ready',
+                  'Action Tasks',
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark

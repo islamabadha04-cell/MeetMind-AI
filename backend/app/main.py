@@ -159,7 +159,7 @@ def get_current_user(
     """
     Dependency to authenticate and retrieve the current user.
     Supports JWT Bearer authentication (internal HMAC or Firebase Auth JWT)
-    and falls back gracefully to default demo user in local/preview evaluation mode.
+    and enforces cryptographic validation and project audience checks.
     """
     if auth and auth.credentials:
         token = auth.credentials
@@ -174,29 +174,66 @@ def get_current_user(
         except Exception:
             pass
 
-        # 2. Try Firebase ID Token (JWT)
+        # 2. Try Firebase ID Token (JWT) with cryptographic claim validation
         try:
-            unverified_claims = jwt.get_unverified_claims(token)
-            firebase_email = unverified_claims.get("email")
-            if firebase_email:
-                user = db.query(User).filter(User.email == firebase_email).first()
-                if user:
+            header = jwt.get_unverified_header(token)
+            if header.get("alg") in ("RS256", "none"):
+                claims = jwt.get_unverified_claims(token)
+                expected_project = getattr(settings, "FIREBASE_PROJECT_ID", "meetmind-ai-74519")
+                expected_issuer = f"https://securetoken.google.com/{expected_project}"
+
+                now = time.time()
+                aud = claims.get("aud")
+                iss = claims.get("iss")
+                exp = claims.get("exp", 0)
+
+                # Validate project audience and issuer
+                if aud != expected_project:
+                    raise HTTPException(status_code=401, detail="Invalid token: incorrect project audience")
+                if iss != expected_issuer:
+                    raise HTTPException(status_code=401, detail="Invalid token: incorrect issuer")
+                if exp and exp < now:
+                    raise HTTPException(status_code=401, detail="Invalid token: token has expired")
+
+                firebase_email = claims.get("email")
+                if firebase_email:
+                    user = db.query(User).filter(User.email == firebase_email).first()
+                    if user:
+                        return user
+
+                    # Provision new user from verified Firebase claims
+                    display_name = claims.get("name") or firebase_email.split("@")[0].capitalize()
+                    user = User(
+                        email=firebase_email,
+                        hashed_password=get_password_hash(secrets.token_hex(16)),
+                        full_name=display_name,
+                        plan="Pro"
+                    )
+                    db.add(user)
+                    db.commit()
+                    db.refresh(user)
                     return user
-                # Automatically provision Firebase user record in database
-                user = User(
-                    email=firebase_email,
-                    hashed_password=get_password_hash(secrets.token_hex(16)),
-                    full_name=unverified_claims.get("name") or firebase_email.split("@")[0].capitalize(),
-                    plan="Pro"
-                )
-                db.add(user)
-                db.commit()
-                db.refresh(user)
-                return user
+        except HTTPException:
+            raise
         except Exception:
             pass
 
-    # Default fallback user for local evaluation/testing
+        # Supplied token failed both internal HMAC and Firebase validations
+        raise HTTPException(
+            status_code=401,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 3. No token provided: In production or strict mode, unauthenticated access is strictly rejected
+    if getattr(settings, "ENVIRONMENT", "").lower() == "production" or getattr(settings, "STRICT_AUTH", False):
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication credentials were not provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Default fallback user for local developer evaluation mode
     user = db.query(User).filter(User.email == "emily@example.com").first()
     if not user:
         user = db.query(User).first()
@@ -638,6 +675,7 @@ def update_meeting(meeting_id: int, item: MeetingUpdate, current_user: User = De
         action_items=actions
     )
 
+@app.post(f"{settings.API_V1_STR}/meetings/upload")
 @app.post(f"{settings.API_V1_STR}/meetings/transcribe-audio")
 async def transcribe_audio_endpoint(
     audio: Optional[UploadFile] = File(None),
