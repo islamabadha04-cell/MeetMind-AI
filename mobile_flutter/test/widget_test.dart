@@ -14,6 +14,8 @@ import 'package:meetmind_mobile/models/workspace_model.dart';
 import 'package:meetmind_mobile/core/services/auth_service.dart';
 import 'package:meetmind_mobile/providers/auth_provider.dart';
 import 'package:meetmind_mobile/screens/login_screen.dart';
+import 'package:meetmind_mobile/screens/dashboard_screen.dart';
+import 'package:meetmind_mobile/screens/meetings_screen.dart';
 
 void main() {
   setUpAll(() {
@@ -219,6 +221,63 @@ void main() {
       expect(find.text('Continue with Google'), findsOneWidget);
       expect(find.text('OR CONTINUE WITH'), findsOneWidget);
       expect(find.text('Continue as Guest Reviewer'), findsOneWidget);
+    });
+
+    testWidgets(
+        '11. DashboardScreen Cosmic Next Meeting & AI Prompt Smoke Test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: DashboardScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.text('Product Strategy Sync'), findsWidgets);
+      expect(find.text('Ask MeetMind AI anything...'), findsOneWidget);
+      expect(find.text("Today's Overview"), findsOneWidget);
+      expect(find.text('Recent AI Notes'), findsOneWidget);
+      expect(find.text('Meetings Today'), findsOneWidget);
+    });
+
+    testWidgets('12. MeetingsScreen Timeline & Segmented Tabs Smoke Test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: MeetingsScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(MeetingsScreen), findsOneWidget);
+      expect(find.text('Meetings'), findsOneWidget);
+      expect(find.text('Upcoming'), findsOneWidget);
+      expect(find.text('Past'), findsOneWidget);
+      expect(find.text('Recording'), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
+    });
+
+    testWidgets('13. FloatingFrostedNavBar Active Pill & Navigation Shell Smoke Test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: MainNavigationShell(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(FloatingFrostedNavBar), findsOneWidget);
+      expect(find.text('Home'), findsOneWidget);
     });
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -202,43 +203,179 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
             ],
           ),
         ),
+        extendBody: true,
         body: IndexedStack(
           index: _currentIndex,
           children: _screens,
         ),
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar: FloatingFrostedNavBar(
           selectedIndex: _currentIndex,
           onDestinationSelected: (idx) {
             setState(() => _currentIndex = idx);
           },
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.dashboard_outlined),
-              selectedIcon: const Icon(Icons.dashboard),
-              label: AppStrings.get('nav_home', lang),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.groups_outlined),
-              selectedIcon: const Icon(Icons.groups),
-              label: AppStrings.get('nav_meetings', lang),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.mic_none_outlined),
-              selectedIcon: const Icon(Icons.mic),
-              label: AppStrings.get('nav_record', lang),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.task_alt),
-              selectedIcon: const Icon(Icons.check_circle),
-              label: AppStrings.get('nav_tasks', lang),
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.chat_bubble_outline),
-              selectedIcon: const Icon(Icons.chat_bubble),
-              label: AppStrings.get('nav_ask_ai', lang),
+          lang: lang,
+          isDark: Theme.of(context).brightness == Brightness.dark,
+        ),
+      ),
+    );
+  }
+}
+
+/// Floating Frosted Glass Pill Navigation Bar (Phase 6C Design System)
+class FloatingFrostedNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final AppLanguage lang;
+  final bool isDark;
+
+  const FloatingFrostedNavBar({
+    super.key,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.lang,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        height: 64,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          color: (isDark ? const Color(0xFF141728) : Colors.white)
+              .withValues(alpha: 0.92),
+          border: Border.all(
+            color: isDark ? const Color(0xFF262C47) : const Color(0xFFE2E8F0),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _navItem(
+                    index: 0,
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
+                    label: AppStrings.get('nav_home', lang),
+                  ),
+                  _navItem(
+                    index: 1,
+                    icon: Icons.calendar_today_outlined,
+                    activeIcon: Icons.calendar_today_rounded,
+                    label: AppStrings.get('nav_meetings', lang),
+                  ),
+                  _centerAction(context),
+                  _navItem(
+                    index: 3,
+                    icon: Icons.task_alt_outlined,
+                    activeIcon: Icons.task_alt_rounded,
+                    label: AppStrings.get('nav_tasks', lang),
+                  ),
+                  _navItem(
+                    index: 4,
+                    icon: Icons.auto_awesome_outlined,
+                    activeIcon: Icons.auto_awesome,
+                    label: AppStrings.get('nav_ask_ai', lang),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+  }) {
+    final isSelected = selectedIndex == index;
+    if (isSelected) {
+      return GestureDetector(
+        onTap: () => onDestinationSelected(index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: AppColors.buttonGradient,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7C3AED).withValues(alpha: 0.45),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(activeIcon, color: Colors.white, size: 19),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return IconButton(
+      icon: Icon(
+        icon,
+        size: 22,
+        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+      ),
+      onPressed: () => onDestinationSelected(index),
+      tooltip: label,
+    );
+  }
+
+  Widget _centerAction(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onDestinationSelected(2),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF8B5CF6), Color(0xFF06B6D4)],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF06B6D4).withValues(alpha: 0.45),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.mic, color: Colors.white, size: 22),
       ),
     );
   }

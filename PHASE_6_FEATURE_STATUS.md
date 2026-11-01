@@ -20,9 +20,10 @@
 | **6B** | **Hardware Keystore Secure Storage** | Android/iOS | ✅ | `FlutterSecureStorage` saves JWT tokens, user profile, and custom API gateway. |
 | **6B.1** | **Firebase Flutter Foundation & App Config** | Android/iOS/Web | ✅ | `com.meetmind.ai.mobile` registered in `meetmind-ai-74519`; `google-services.json` & `GoogleService-Info.plist` landed; `firebase_core` & `firebase_options.dart` verified. |
 | **6B.2** | **Firebase Native Auth & Google Sign-In** | Mobile | ✅ | Dual auth architecture: `firebase_auth` & `google_sign_in` wired; token exchange with `/users/me`; glassmorphic UI active. |
-| **6C** | **Hero "Next Meeting" Card** | Mobile | ✅ | Displays upcoming meeting title, time, attendees, and quick "Join Meeting" action. |
-| **6C** | **Multi-Tab Meeting Details** | Mobile | ✅ | 4 Tabs: Executive Summary (EN/UR/Roman), Transcripts, Decisions, and PDF MoM share. |
-| **6C** | **Interactive Calendar Strip** | Mobile | 🟡 | Meeting list filter active; horizontal 7-day strip (Mon–Sun) planned for 6C polish. |
+| **6C** | **Hero "Next Meeting" Card** | Mobile | ✅ | Displays upcoming meeting title, time, attendees, countdown, and glowing "Join Meeting" action. |
+| **6C** | **Multi-Tab Meeting Details** | Mobile | ✅ | 4 Tabs: Executive Summary with insight chips (Decisions/Actions/Risks), Transcripts, Decisions, and PDF MoM share. |
+| **6C** | **Interactive Calendar & Timeline Strip** | Mobile | ✅ | Segmented capsule tabs (Upcoming/Past/Recording), timeline connector dots, and platform badges. |
+| **6C** | **Floating Frosted Glass Navbar** | Mobile | ✅ | Frosted glass pill (18px blur) with active neon capsule glow and elevated center action button. |
 | **6C** | **Urdu Nastaliq & Roman Urdu RTL** | Mobile | ✅ | Native RTL layout switching, custom Nastaliq typography, and trilingual dictionary. |
 | **6D** | **Native AAC-LC Audio Recording** | Mobile | ✅ | High-fidelity recording at 128 kbps, 44.1 kHz via `record` package. |
 | **6D** | **Live Amplitude Waveform Visualizer**| Mobile | ✅ | 24-bar animated real-time soundwave bar based on microphone decibel stream. |
@@ -50,6 +51,6 @@
 
 * **Backend Pytest:** 57 / 57 Tests Passed (100%)
 * **Remote Staging Tests:** 36 / 36 Tests Passed (100%)
-* **Flutter Unit & Widget Tests:** 10 / 10 Tests Passed (100%)
+* **Flutter Unit & Widget Tests:** 13 / 13 Tests Passed (100%)
 * **Browser E2E Tests:** 103 / 103 Tests Passed (100%)
-* **Total Automated Tests:** **206 / 206 Passed (0 Failures)**
+* **Total Automated Tests:** **209 / 209 Passed (0 Failures)**

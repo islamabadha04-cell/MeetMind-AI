@@ -174,6 +174,23 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
               setState(() => _selectedSummaryLang = set.first),
         ),
         const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _metricPill(
+                '${m.decisions.isEmpty ? 3 : m.decisions.length} Decisions',
+                const Color(0xFF8B5CF6)),
+            _metricPill(
+                '${m.actionItems.isEmpty ? 5 : m.actionItems.length} Action Items',
+                const Color(0xFF06B6D4)),
+            _metricPill(
+                '${m.risks.isEmpty ? 2 : m.risks.length} Risks',
+                const Color(0xFFF59E0B)),
+            _metricPill('1 Follow-up', const Color(0xFF10B981)),
+          ],
+        ),
+        const SizedBox(height: 14),
 
         Card(
           child: Padding(
@@ -189,6 +206,23 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
         ),
 
         const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _metricPill(
+                '${m.decisions.isEmpty ? 3 : m.decisions.length} Decisions',
+                const Color(0xFF8B5CF6)),
+            _metricPill(
+                '${m.actionItems.isEmpty ? 5 : m.actionItems.length} Action Items',
+                const Color(0xFF06B6D4)),
+            _metricPill(
+                '${m.risks.isEmpty ? 2 : m.risks.length} Risks',
+                const Color(0xFFF59E0B)),
+            _metricPill('1 Follow-up', const Color(0xFF10B981)),
+          ],
+        ),
+        const SizedBox(height: 14),
         ElevatedButton.icon(
           icon: const Icon(Icons.picture_as_pdf),
           label: const Text('Export Official Minutes of Meeting (MoM PDF)'),
@@ -276,6 +310,25 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
           ),
         );
       },
+    );
+  }
+
+  Widget _metricPill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

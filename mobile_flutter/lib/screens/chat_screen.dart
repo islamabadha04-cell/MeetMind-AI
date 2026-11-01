@@ -19,7 +19,8 @@ class ChatMessage {
 }
 
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  final String? initialPrompt;
+  const ChatScreen({super.key, this.initialPrompt});
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -37,6 +38,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _textController = TextEditingController();
   bool _isSending = false;
   String _selectedProvider = 'gemini'; // 'gemini' or 'ollama'
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialPrompt != null && widget.initialPrompt!.isNotEmpty) {
+      _textController.text = widget.initialPrompt!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _sendMessage();
+      });
+    }
+  }
 
   @override
   void dispose() {
