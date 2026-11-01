@@ -115,20 +115,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                'Good Morning, $userName 👋',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.textMainLight,
+                              Expanded(
+                                child: Text(
+                                  'Good Morning, $userName 👋',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textMainLight,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           Text(
                             AppStrings.get('greeting_subtitle', lang),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: isDark
                                   ? const Color(0xFF94A3B8)
@@ -364,13 +370,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          '• $date',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? const Color(0xFF94A3B8)
-                                : Colors.grey.shade600,
+                        Flexible(
+                          child: Text(
+                            '• $date',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : Colors.grey.shade600,
+                            ),
                           ),
                         ),
                       ],
@@ -421,16 +431,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                '8 Participants',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark
-                      ? const Color(0xFF94A3B8)
-                      : Colors.grey.shade600,
+              Flexible(
+                child: Text(
+                  '8 Participants',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.grey.shade600,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               // Platform Chip
               Container(
                 padding:

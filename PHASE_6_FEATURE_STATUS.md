@@ -42,8 +42,8 @@
 | **6G** | **Team Workspace & RBAC** | Mobile/Backend| ✅ | Cowlar Engineering workspace, member roles (Admin, Editor, Viewer), and invite dialog. |
 | **6G** | **Collaborative Notes Synchronization**| Mobile/Web | ✅ | Real-time notes pad synchronized across mobile and web with optimistic versioning. |
 | **6H** | **Local Notifications System** | Mobile | ✅ | Multi-channel `NotificationService`: recording ongoing alert, vault sync alerts, and action item reminders. |
-| **6I** | **Responsive Viewport Testing** | Mobile/Web | ✅ | Responsive layouts tested on desktop, web viewports, and headless Flutter harness. |
-| **6J** | **Release Keystore & CI/CD** | Android/iOS | ⏳ | Release signing configuration and Google Play / TestFlight bundles scheduled for 6J. |
+| **6I** | **Responsive Viewport Testing** | Mobile/Web | ✅ | Tested across mobile (390x844) & tablet (768x1024); RTL Urdu layout inversion verified with zero overflow. |
+| **6J** | **Release Keystore & CI/CD** | Android/iOS | ✅ | Production Gradle release signing configured via `key.properties`; template, gitignore and instructions delivered. |
 
 ---
 
@@ -51,6 +51,6 @@
 
 * **Backend Pytest:** 57 / 57 Tests Passed (100%)
 * **Remote Staging Tests:** 36 / 36 Tests Passed (100%)
-* **Flutter Unit & Widget Tests:** 16 / 16 Tests Passed (100%)
+* **Flutter Unit & Widget Tests:** 17 / 17 Tests Passed (100%)
 * **Browser E2E Tests:** 103 / 103 Tests Passed (100%)
-* **Total Automated Tests:** **212 / 212 Passed (0 Failures)**
+* **Total Automated Tests:** **213 / 213 Passed (0 Failures)**

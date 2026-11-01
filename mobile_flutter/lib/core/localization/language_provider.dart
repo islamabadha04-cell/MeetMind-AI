@@ -256,7 +256,7 @@ class AppStrings {
 }
 
 class LanguageNotifier extends StateNotifier<AppLanguage> {
-  LanguageNotifier() : super(AppLanguage.english) {
+  LanguageNotifier([super.initial = AppLanguage.english]) {
     _loadSavedLanguage();
   }
 

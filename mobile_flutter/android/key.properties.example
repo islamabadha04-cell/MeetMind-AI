@@ -1,0 +1,12 @@
+# MeetMind AI — Android Production Keystore Configuration Template
+# -----------------------------------------------------------------
+# 1. Generate your production upload keystore:
+#    keytool -genkey -v -keystore meetmind-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias meetmind_upload
+# 2. Copy this file as 'key.properties' in mobile_flutter/android/
+# 3. Ensure 'key.properties' and '*.jks' are listed in .gitignore (never commit private keys).
+# -----------------------------------------------------------------
+
+storePassword=YOUR_SECURE_KEYSTORE_PASSWORD
+keyPassword=YOUR_SECURE_KEY_PASSWORD
+keyAlias=meetmind_upload
+storeFile=meetmind-release-key.jks

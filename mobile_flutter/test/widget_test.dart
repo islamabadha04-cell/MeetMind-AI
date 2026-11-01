@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:meetmind_mobile/main.dart';
 import 'package:meetmind_mobile/firebase_options.dart';
-import 'package:meetmind_mobile/core/localization/app_strings.dart';
 import 'package:meetmind_mobile/core/localization/language_provider.dart';
 import 'package:meetmind_mobile/core/theme/app_theme.dart';
 import 'package:meetmind_mobile/models/vault_recording_model.dart';
@@ -386,6 +385,63 @@ void main() {
       await notificationService.cancelRecordingNotification();
       await notificationService.cancelReminder(15);
       await notificationService.cancelAll();
+    });
+
+    testWidgets(
+        '17. Responsive Multi-Viewport & RTL Urdu Directionality Test',
+        (WidgetTester tester) async {
+      // 1. Mobile Standard Viewport (390 x 844)
+      tester.view.physicalSize = const Size(390 * 2.0, 844 * 2.0);
+      tester.view.devicePixelRatio = 2.0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            languageProvider.overrideWith((ref) => LanguageNotifier(AppLanguage.urdu)),
+          ],
+          child: const MaterialApp(
+            home: DashboardScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(DashboardScreen), findsOneWidget);
+      // Verify RTL Directionality for Urdu language
+      final directionality = tester.widget<Directionality>(
+        find.descendant(
+          of: find.byType(DashboardScreen),
+          matching: find.byType(Directionality),
+        ).first,
+      );
+      expect(directionality.textDirection, TextDirection.rtl);
+
+      // 2. Large Tablet Viewport (768 x 1024)
+      tester.view.physicalSize = const Size(768 * 2.0, 1024 * 2.0);
+      tester.view.devicePixelRatio = 2.0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            languageProvider.overrideWith((ref) => LanguageNotifier(AppLanguage.english)),
+          ],
+          child: const MaterialApp(
+            home: DashboardScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.byType(DashboardScreen), findsOneWidget);
+
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
     });
   });
 }
