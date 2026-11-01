@@ -72,3 +72,4 @@ The following high-resolution screenshots were captured from live authenticated 
 3. `aurora_pro_studio.png` — 1440x900 AI Voice Recording Studio with waveform canvas & tabular timer.
 4. `aurora_pro_meetings_library.png` — 1440x900 Meeting Library with filter tabs & tabular data rows.
 5. `aurora_pro_mobile_dashboard.png` — 390x844 Mobile Smartphone Viewport.
+

@@ -207,20 +207,46 @@ function handleSignOut() {
   }
 }
 
-function updateConnectionStatusUI() {
+async function checkBackendConnectivity() {
+  const healthBadge = document.getElementById('backendHealthBadge');
+  const healthText = document.getElementById('backendHealthText');
   const backendIndicator = document.getElementById('backendStatusIndicator');
-  if (!backendIndicator) return;
 
   if (currentUser && currentUser.isGuest) {
-    backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #F59E0B;"></span> Local Sandbox (Demo Mode)';
-    backendIndicator.style.color = '#F59E0B';
-  } else if (currentUser && !currentUser.isGuest) {
-    backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #10B981;"></span> Connected (Cloud Sync Active)';
-    backendIndicator.style.color = '#10B981';
-  } else {
-    backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #EF4444;"></span> Not Connected';
-    backendIndicator.style.color = '#EF4444';
+    if (healthText) healthText.textContent = 'Sandbox Active';
+    if (backendIndicator) {
+      backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #F59E0B;"></span> Local Sandbox (Demo Mode)';
+      backendIndicator.style.color = '#F59E0B';
+    }
+    return;
   }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2200);
+    const healthUrl = (window.MeetMindAPI && window.MeetMindAPI.baseURL) ? `${window.MeetMindAPI.baseURL}/health` : '/health';
+    const res = await fetch(healthUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      if (healthText) healthText.textContent = 'API Connected';
+      if (backendIndicator) {
+        backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #10B981;"></span> Connected (FastAPI Cloud API)';
+        backendIndicator.style.color = '#10B981';
+      }
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (err) {
+    if (healthText) healthText.textContent = 'Backend Offline';
+    if (backendIndicator) {
+      backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #EF4444;"></span> Backend Offline (Local Mode)';
+      backendIndicator.style.color = '#EF4444';
+    }
+  }
+}
+
+function updateConnectionStatusUI() {
+  checkBackendConnectivity();
 }
 
 if (btnSignOutTop) btnSignOutTop.addEventListener('click', handleSignOut);
@@ -230,17 +256,17 @@ if (topAvatarWrap) topAvatarWrap.addEventListener('click', handleSignOut);
 
 const btnCheckBackendHealth = document.getElementById('btnCheckBackendHealth');
 if (btnCheckBackendHealth) {
-  btnCheckBackendHealth.addEventListener('click', () => {
-    updateConnectionStatusUI();
+  btnCheckBackendHealth.addEventListener('click', async () => {
+    await checkBackendConnectivity();
     if (currentUser?.isGuest) {
       showToast('Sandbox Active: Running locally in Demo Reviewer mode 🔒');
-    } else if (currentUser) {
-      showToast('Backend Connected: Firebase Auth & Firestore live ✨');
     } else {
-      showToast('Backend status: Not authenticated ⚠️');
+      const healthText = document.getElementById('backendHealthText')?.textContent;
+      showToast(`Backend status: ${healthText || 'Offline'} 📡`);
     }
   });
 }
+checkBackendConnectivity();
 
 // ==========================================================================
 // Toast Helper
@@ -2538,11 +2564,15 @@ function updateActiveWorkspaceUI() {
   const roleEl = document.getElementById('wsRoleBadge');
   const footerOrgEl = document.getElementById('wsFooterOrgName');
 
+  const isTeamWs = activeWorkspace.tier === 'Team' || activeWorkspace.tier === 'Enterprise';
+  const maxSeats = activeWorkspace.max_seats || (isTeamWs ? 10 : 1);
+  const activeSeats = (activeWorkspace.members && activeWorkspace.members.length) ? activeWorkspace.members.length : (activeWorkspace.active_seats || 1);
+
   if (titleEl) titleEl.textContent = activeWorkspace.name;
-  if (descEl) descEl.textContent = activeWorkspace.description || 'Enterprise collaboration and team memory vault.';
-  if (tierEl) tierEl.textContent = `${activeWorkspace.tier} Plan (${activeWorkspace.max_seats} Seats)`;
-  if (seatsEl) seatsEl.textContent = `${activeWorkspace.active_seats} / ${activeWorkspace.max_seats} Seats Used`;
-  if (roleEl) roleEl.textContent = `Your Role: ${activeWorkspace.current_user_role.toUpperCase()}`;
+  if (descEl) descEl.textContent = activeWorkspace.description || 'Personal productivity and meeting memory vault.';
+  if (tierEl) tierEl.textContent = isTeamWs ? `Team Plan (${maxSeats} Seats)` : `Personal Plan (${maxSeats} Seat)`;
+  if (seatsEl) seatsEl.textContent = `${activeSeats} / ${maxSeats} Seat${maxSeats > 1 ? 's' : ''} Used`;
+  if (roleEl) roleEl.textContent = `Your Role: ${(activeWorkspace.current_user_role || 'owner').toUpperCase()}`;
   if (footerOrgEl) footerOrgEl.textContent = activeWorkspace.name;
 
   renderWorkspaceMembersTable();
@@ -3275,13 +3305,14 @@ function renderMeetings(filterText = '') {
     filtered.slice(0, 5).forEach(m => {
       const row = document.createElement('div');
       row.className = 'meeting-row-card';
+      const samplePill = m.isSample ? '<span style="font-size: 10px; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 6px; border-radius: 4px; margin-right: 6px;">DEMO SAMPLE</span>' : '';
       row.innerHTML = `
         <div class="meeting-row-left">
           <div class="meeting-row-icon">
             <i class="ri-voiceprint-line"></i>
           </div>
           <div class="meeting-row-info">
-            <h4>${escapeHtml(m.title)}</h4>
+            <h4>${samplePill}${escapeHtml(m.title)}</h4>
             <p class="meeting-row-meta">${m.date} • ${m.duration}</p>
           </div>
         </div>
@@ -3395,20 +3426,40 @@ const closeInstallModal = document.getElementById('closeInstallModal');
 const copyUrlBtn = document.getElementById('copyUrlBtn');
 const btnInstallSelf = document.getElementById('btnInstallSelf');
 
+function updateInstallModalUrls() {
+  const origin = (window.location && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file:'))
+    ? window.location.origin
+    : 'https://meetmind-ai-74519.web.app';
+  const installUrl = `${origin}/app`;
+  const localNetworkUrl = document.getElementById('localNetworkUrl');
+  if (localNetworkUrl) {
+    localNetworkUrl.innerText = installUrl;
+  }
+  const qrImg = document.getElementById('installQrImg') || document.querySelector('.modal-qr-card .qr-image');
+  if (qrImg) {
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(installUrl)}`;
+  }
+}
+
 if (installMobileBtn && modalInstallPWA) {
-  installMobileBtn.addEventListener('click', () => modalInstallPWA.classList.remove('hidden'));
+  installMobileBtn.addEventListener('click', () => {
+    updateInstallModalUrls();
+    modalInstallPWA.classList.remove('hidden');
+  });
 }
 if (closeInstallModal && modalInstallPWA) {
   closeInstallModal.addEventListener('click', () => modalInstallPWA.classList.add('hidden'));
 }
 if (copyUrlBtn) {
   copyUrlBtn.addEventListener('click', () => {
-    const url = 'https://meetmind-ai-74519.web.app/app';
+    const localNetworkUrl = document.getElementById('localNetworkUrl');
+    const url = localNetworkUrl ? localNetworkUrl.innerText : (window.location.origin ? window.location.origin + '/app' : 'https://meetmind-ai-74519.web.app/app');
     navigator.clipboard.writeText(url).then(() => {
-      showToast('Public Web App URL copied! Open in your phone browser 📲');
+      showToast('Current App URL copied! Open in your phone browser 📲');
     });
   });
 }
+updateInstallModalUrls();
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();

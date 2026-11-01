@@ -97,3 +97,4 @@
 - **Desktop (1440px+):** 240px fixed sidebar, 3-column dashboard split (`1.6fr : 1.1fr : 1.1fr`).
 - **Laptop (1024px – 1280px):** 200px sidebar, 2-column action grid, single-column main feed.
 - **Tablet & Mobile (360px – 768px):** Collapsible off-canvas drawer navigation, single-column stacked cards, full-width actions, touch-optimized targets (>= 44px).
+
