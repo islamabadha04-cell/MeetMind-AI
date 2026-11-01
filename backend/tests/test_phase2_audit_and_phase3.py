@@ -12,7 +12,10 @@ def setup_seed():
 
 @pytest.fixture
 def client():
-    return TestClient(app)
+    c = TestClient(app)
+    token = create_access_token(1)
+    c.headers.update({"Authorization": f"Bearer {token}"})
+    return c
 
 # --------------------------------------------------------------------------
 # PART A AUDIT TESTS: Phase 2 Fixes

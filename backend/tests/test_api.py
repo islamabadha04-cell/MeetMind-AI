@@ -1,13 +1,27 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+from app.main import app, startup_db_seed
+from app.core.security import create_access_token
 
+@pytest.fixture(autouse=True, scope="module")
+def setup_seed():
+    startup_db_seed()
+
+token = create_access_token(1)
 client = TestClient(app)
+client.headers.update({"Authorization": f"Bearer {token}"})
 
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
     assert "version" in response.json()
+
+def test_unauthenticated_access_strictly_rejected():
+    raw_client = TestClient(app)
+    res = raw_client.get("/api/v1/meetings")
+    assert res.status_code == 401
+    res_tasks = raw_client.get("/api/v1/tasks")
+    assert res_tasks.status_code == 401
 
 def test_get_meetings():
     response = client.get("/api/v1/meetings")

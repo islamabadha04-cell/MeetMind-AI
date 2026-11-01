@@ -1,12 +1,15 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app, startup_db_seed
+from app.core.security import create_access_token
 
 @pytest.fixture(autouse=True, scope="module")
 def setup_seed():
     startup_db_seed()
 
+token = create_access_token(1)
 client = TestClient(app)
+client.headers.update({"Authorization": f"Bearer {token}"})
 
 def test_semantic_search_meetings():
     response = client.post("/api/v1/search/meetings", json={

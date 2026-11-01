@@ -149,25 +149,29 @@ CREATE TABLE upgrade_requests (
 
 ## 4. Verification & Automated Test Output
 
-An automated regression test suite was authored in `backend/tests/test_subscription_security.py` verifying all 6 stages of the lifecycle.
+An automated regression test suite was authored and expanded in `backend/tests/test_subscription_security.py` verifying all stages of the lifecycle and RBAC protection.
 
 ### Command Execution:
 ```powershell
-cd backend; .\.venv\Scripts\python -m pytest tests/test_subscription_security.py -v
+$env:PYTHONPATH='backend'; backend\.venv\Scripts\python -m pytest backend/tests/test_subscription_security.py -v
 ```
 
 ### Actual Output:
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.4, pytest-9.1.1, pluggy-1.7.0
-rootdir: C:\Users\Hasnain.DESKTOP-80IKSQ9\Desktop\hasnain\backend
+rootdir: C:\Users\Hasnain.DESKTOP-80IKSQ9\Desktop\hasnain
 plugins: anyio-4.15.1
-collected 2 items
+collected 6 items
 
-tests/test_subscription_security.py::test_unauthenticated_request_upgrade_rejected PASSED [ 50%]
-tests/test_subscription_security.py::test_request_subscription_upgrade_lifecycle PASSED [100%]
+backend/tests/test_subscription_security.py::test_unauthenticated_request_upgrade_rejected PASSED [ 16%]
+backend/tests/test_subscription_security.py::test_invalid_plan_rejected PASSED [ 33%]
+backend/tests/test_subscription_security.py::test_fake_reference_id_approval_fails PASSED [ 50%]
+backend/tests/test_subscription_security.py::test_normal_user_cannot_approve_other_user_upgrade PASSED [ 66%]
+backend/tests/test_subscription_security.py::test_request_subscription_upgrade_lifecycle PASSED [ 83%]
+backend/tests/test_subscription_security.py::test_team_plan_upgrade_and_quota_entitlement PASSED [100%]
 
-======================== 2 passed in 2.18s ========================
+======================== 6 passed in 1.90s ========================
 ```
 
 ### Browser Test Suite Execution:

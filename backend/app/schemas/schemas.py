@@ -629,6 +629,9 @@ class UpgradeRequestResponse(BaseModel):
     status: str
     payment_method: str
     created_at: datetime
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    admin_notes: Optional[str] = None
 
 class SubscriptionStatusResponse(BaseModel):
     current_plan: str
