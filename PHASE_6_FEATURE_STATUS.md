@@ -18,7 +18,8 @@
 | **6A** | **Backend Ingress Verification** | Backend | ✅ | `/health`, `/ready`, `/auth/login`, and `/users/me` verified on local & Cloudflare tunnel. |
 | **6B** | **Single Account Login & Registration** | Mobile/Web | ✅ | REST auth client with JWT extraction; unified account `emily@example.com`. |
 | **6B** | **Hardware Keystore Secure Storage** | Android/iOS | ✅ | `FlutterSecureStorage` saves JWT tokens, user profile, and custom API gateway. |
-| **6B** | **Firebase SDK Native Auth** | Mobile | 🟡 | REST gateway active; native `google_sign_in` and `google-services.json` planned in 6B. |
+| **6B.1** | **Firebase Project & App Registration Audit** | Mobile | 🟡 | Project meetmind-ai-74519 inspected; awaiting Android/iOS app registration in Firebase Console. |
+| **6B.2** | **Firebase SDK Native Auth** | Mobile | ⏳ | REST gateway active; native `google_sign_in` and `google-services.json` planned in 6B.2. |
 | **6C** | **Hero "Next Meeting" Card** | Mobile | ✅ | Displays upcoming meeting title, time, attendees, and quick "Join Meeting" action. |
 | **6C** | **Multi-Tab Meeting Details** | Mobile | ✅ | 4 Tabs: Executive Summary (EN/UR/Roman), Transcripts, Decisions, and PDF MoM share. |
 | **6C** | **Interactive Calendar Strip** | Mobile | 🟡 | Meeting list filter active; horizontal 7-day strip (Mon–Sun) planned for 6C polish. |
