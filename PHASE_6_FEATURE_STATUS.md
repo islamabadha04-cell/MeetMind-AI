@@ -28,7 +28,7 @@
 | **6D** | **Native AAC-LC Audio Recording** | Mobile | ✅ | High-fidelity recording at 128 kbps, 44.1 kHz via `record` package. |
 | **6D** | **Live Amplitude Waveform Visualizer**| Mobile | ✅ | 24-bar animated real-time soundwave bar based on microphone decibel stream. |
 | **6D** | **Meeting Moments Bookmarking** | Mobile | ✅ | Timestamped bookmark chips recorded in memory and attached to recording metadata. |
-| **6D** | **Android Foreground Service** | Android | 🟡 | Permissions added in Manifest; notification with Pause/Stop action buttons in 6D. |
+| **6D** | **Android Foreground Service** | Android | ✅ | Foreground service microphone permissions, wake lock & notification channel active. |
 | **6D** | **iOS Background Audio Mode** | iOS | ✅ | `UIBackgroundModes: audio` and `NSMicrophoneUsageDescription` in `Info.plist`. |
 | **6E** | **Offline Audio SQLite Storage** | Mobile | ✅ | Persistent SQLite DB `meetmind_offline_vault.db` with CRUD operations. |
 | **6E** | **Pre-Upload SHA-256 Checksums** | Mobile | ✅ | Pre-upload cryptographic hash verification via `crypto` package. |
@@ -51,6 +51,6 @@
 
 * **Backend Pytest:** 57 / 57 Tests Passed (100%)
 * **Remote Staging Tests:** 36 / 36 Tests Passed (100%)
-* **Flutter Unit & Widget Tests:** 13 / 13 Tests Passed (100%)
+* **Flutter Unit & Widget Tests:** 14 / 14 Tests Passed (100%)
 * **Browser E2E Tests:** 103 / 103 Tests Passed (100%)
-* **Total Automated Tests:** **209 / 209 Passed (0 Failures)**
+* **Total Automated Tests:** **210 / 210 Passed (0 Failures)**

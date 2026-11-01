@@ -16,6 +16,7 @@ import 'package:meetmind_mobile/providers/auth_provider.dart';
 import 'package:meetmind_mobile/screens/login_screen.dart';
 import 'package:meetmind_mobile/screens/dashboard_screen.dart';
 import 'package:meetmind_mobile/screens/meetings_screen.dart';
+import 'package:meetmind_mobile/screens/recording_studio_screen.dart';
 
 void main() {
   setUpAll(() {
@@ -278,6 +279,26 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.byType(FloatingFrostedNavBar), findsOneWidget);
       expect(find.text('Home'), findsOneWidget);
+    });
+
+    testWidgets(
+        '14. RecordingStudioScreen Live Waveform & Bookmarking Smoke Test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: RecordingStudioScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(RecordingStudioScreen), findsOneWidget);
+      expect(find.text('Ready to Record Meeting Audio'), findsOneWidget);
+      expect(find.text('00:00'), findsOneWidget);
+      expect(find.text('Live Meeting Notes & Turns'), findsOneWidget);
+      expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
     });
   });
 }
