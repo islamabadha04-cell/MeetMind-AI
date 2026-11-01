@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../models/vault_recording_model.dart';
 import 'api_client.dart';
+import 'notification_service.dart';
 import 'vault_database.dart';
 
 class SyncStatusEvent {
@@ -124,6 +125,11 @@ class BackgroundSyncEngine {
         progress: 1.0,
         message: 'Synced successfully with MeetMind AI Cloud',
       ));
+
+      await NotificationService().showSyncCompletedNotification(
+        meetingTitle: recording.title,
+        remoteMeetingId: remoteId,
+      );
       return true;
     } catch (e) {
       final newRetryCount = recording.retryCount + 1;
@@ -141,6 +147,11 @@ class BackgroundSyncEngine {
         state: VaultSyncState.retryRequired,
         message: 'Upload failed: Will retry in ${backoffSeconds}s',
       ));
+
+      await NotificationService().showSyncFailedNotification(
+        meetingTitle: recording.title,
+        error: e.toString().replaceAll('ApiException: ', ''),
+      );
       return false;
     }
   }

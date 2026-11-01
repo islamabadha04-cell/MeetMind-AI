@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'core/constants/colors.dart';
 import 'core/localization/language_provider.dart';
 import 'core/services/background_sync_engine.dart';
+import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/meeting_provider.dart';
@@ -33,6 +34,7 @@ void main() async {
     debugPrint('Firebase initialization notice: $e');
   }
   BackgroundSyncEngine().initialize();
+  await NotificationService().initialize();
   runApp(const ProviderScope(child: MeetMindApp()));
 }
 

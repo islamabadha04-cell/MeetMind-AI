@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/vault_recording_model.dart';
+import 'notification_service.dart';
 
 class AudioRecordingService {
   final AudioRecorder _recorder = AudioRecorder();
@@ -62,6 +63,10 @@ class AudioRecordingService {
     );
 
     _stateController.add(true);
+    NotificationService().showRecordingNotification(
+      title: 'MeetMind Live Recording',
+      duration: '00:00',
+    );
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _secondsRecorded++;
@@ -92,6 +97,10 @@ class AudioRecordingService {
   Future<void> resumeRecording() async {
     await _recorder.resume();
     _stateController.add(true);
+    NotificationService().showRecordingNotification(
+      title: 'MeetMind Live Recording',
+      duration: '00:00',
+    );
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _secondsRecorded++;
       _timerController.add(_secondsRecorded);
@@ -105,6 +114,7 @@ class AudioRecordingService {
   Future<VaultRecordingModel?> stopRecording({required String title}) async {
     _timer?.cancel();
     await _amplitudeSubscription?.cancel();
+    await NotificationService().cancelRecordingNotification();
     final path = await _recorder.stop();
     _stateController.add(false);
 
@@ -133,6 +143,7 @@ class AudioRecordingService {
   }
 
   void dispose() {
+    NotificationService().cancelRecordingNotification();
     _timer?.cancel();
     _amplitudeSubscription?.cancel();
     _recorder.dispose();

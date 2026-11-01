@@ -12,6 +12,7 @@ import 'package:meetmind_mobile/models/meeting_detail_model.dart';
 import 'package:meetmind_mobile/models/task_model.dart';
 import 'package:meetmind_mobile/models/workspace_model.dart';
 import 'package:meetmind_mobile/core/services/auth_service.dart';
+import 'package:meetmind_mobile/core/services/notification_service.dart';
 import 'package:meetmind_mobile/providers/auth_provider.dart';
 import 'package:meetmind_mobile/screens/login_screen.dart';
 import 'package:meetmind_mobile/screens/dashboard_screen.dart';
@@ -317,6 +318,74 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.byType(VaultScreen), findsOneWidget);
       expect(find.byIcon(Icons.sync), findsOneWidget);
+    });
+
+    test('16. NotificationService Multi-Channel Setup, Sync Alerts & Reminders Test', () async {
+      final notificationService = NotificationService();
+      expect(notificationService, same(NotificationService()));
+
+      expect(NotificationService.recordingChannelId, 'meetmind_recording_channel');
+      expect(NotificationService.syncChannelId, 'meetmind_sync_channel');
+      expect(NotificationService.reminderChannelId, 'meetmind_reminders_channel');
+
+      await notificationService.initialize();
+      expect(notificationService.isInitialized, isTrue);
+
+      notificationService.clearHistory();
+
+      // 1. Live recording notification
+      await notificationService.showRecordingNotification(
+        title: 'Q4 Product Roadmap Discussion',
+        duration: '12:45',
+      );
+
+      // 2. Background vault sync completed notification
+      await notificationService.showSyncCompletedNotification(
+        meetingTitle: 'Sprint 14 Retrospective',
+        remoteMeetingId: 108,
+      );
+
+      // 3. Vault upload retry notification
+      await notificationService.showSyncFailedNotification(
+        meetingTitle: 'Customer Feedback Session',
+        error: 'Network connection dropped',
+      );
+
+      // 4. Action item reminder
+      final reminderDate = DateTime.now().add(const Duration(hours: 4));
+      await notificationService.scheduleTaskReminder(
+        taskId: 15,
+        taskTitle: 'Prepare slides for leadership review',
+        scheduledDate: reminderDate,
+      );
+
+      final history = notificationService.history;
+      expect(history.length, 4);
+
+      // Verify recording alert
+      expect(history[0]['id'], NotificationService.recordingNotificationId);
+      expect(history[0]['channel'], NotificationService.recordingChannelId);
+      expect(history[0]['title'], contains('Q4 Product Roadmap Discussion'));
+
+      // Verify sync complete alert
+      expect(history[1]['id'], NotificationService.syncNotificationBaseId + 108);
+      expect(history[1]['channel'], NotificationService.syncChannelId);
+      expect(history[1]['title'], contains('Sprint 14 Retrospective'));
+
+      // Verify sync fail alert
+      expect(history[2]['id'], NotificationService.syncNotificationBaseId + 999);
+      expect(history[2]['channel'], NotificationService.syncChannelId);
+      expect(history[2]['body'], contains('Network connection dropped'));
+
+      // Verify task reminder
+      expect(history[3]['id'], NotificationService.reminderNotificationBaseId + 15);
+      expect(history[3]['channel'], NotificationService.reminderChannelId);
+      expect(history[3]['body'], 'Prepare slides for leadership review');
+
+      // Verify cancellations
+      await notificationService.cancelRecordingNotification();
+      await notificationService.cancelReminder(15);
+      await notificationService.cancelAll();
     });
   });
 }
