@@ -76,3 +76,4 @@ The system guarantees **Zero Data Loss** when recording meetings in environments
 
 3. **Backend Health:**
    - FastAPI server running on `http://127.0.0.1:8000/health`: 200 OK (`version 4.0.1`, `database: ok`).
+
