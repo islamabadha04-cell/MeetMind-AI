@@ -10,3 +10,4 @@ storePassword=YOUR_SECURE_KEYSTORE_PASSWORD
 keyPassword=YOUR_SECURE_KEY_PASSWORD
 keyAlias=meetmind_upload
 storeFile=meetmind-release-key.jks
+
