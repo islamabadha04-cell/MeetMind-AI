@@ -100,3 +100,4 @@ def test_request_subscription_upgrade_lifecycle():
     assert data3["current_plan"] == "Pro"
     assert data3["is_pro"] is True
     assert data3["minutes_limit"] == 1200
+

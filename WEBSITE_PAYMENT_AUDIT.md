@@ -193,3 +193,4 @@ node scratch/test_browser_suite.js
 | Anti-bypass guardrail | ❌ Vulnerable | ✅ Enforced | Automated assertion passed |
 
 **P0 Payment Security Verdict:** **PASS / HARDENED**. No user funds can be misdirected, and no unauthorized entitlements can be acquired through client manipulation.
+

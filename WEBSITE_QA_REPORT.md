@@ -142,3 +142,4 @@ firebase hosting:channel:deploy preview-qa-remediation
 URL pattern: `https://meetmind-ai-74519--preview-qa-remediation-XXXXX.web.app`
 
 Do not deploy to production (`meetmind-ai-74519.web.app`) until the owner reviews the preview.
+
