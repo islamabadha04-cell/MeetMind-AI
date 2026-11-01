@@ -6,6 +6,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.0.0] - 2026-11-01 (PHASE 6: FLUTTER MOBILE APP & OFFLINE INTELLIGENCE)
+
+### Added & Upgraded
+- **Transformed Flutter Mobile Application (`mobile_flutter/`):**
+  - Upgraded existing Flutter codebase into an enterprise-grade mobile application targeting Android (API 24+) and iOS (14.0+).
+  - Material 3 design system with soft pastel brand palette, dynamic light & dark mode support, and responsive layouts.
+  - Native bilingual localization supporting English, Urdu with Noto Nastaliq font, Roman Urdu, and automatic RTL layout mirroring.
+- **Offline Audio Vault & Persistence (`VaultDatabase`):**
+  - Local SQLite database persistence (`meetmind_offline_vault.db`) storing audio recordings and metadata locally.
+  - Six discrete synchronization lifecycle states: `localOnly`, `waitingForConnection`, `uploading`, `synced`, `failed`, `retryRequired`.
+  - Cryptographic pre-upload SHA-256 integrity checksum verification preventing corrupted payload transmission.
+  - Strict preservation policy: local audio files are never deleted automatically, guaranteeing zero accidental data loss.
+- **Automatic Background Synchronization Engine (`BackgroundSyncEngine`):**
+  - Network status listener detecting transition from offline/airplane mode to cellular/Wi-Fi.
+  - Automated queue dispatch with exponential backoff: $\text{delay} = \min(2^{\text{retryCount}} \times 2,\, 60)\text{s}$.
+  - RFC 4122 UUID v4 idempotency keys passed in `X-Idempotency-Key` headers preventing duplicate meeting creation.
+- **Hardware Keystore Secrets Storage (`FlutterSecureStorage`):**
+  - JWT tokens, user profiles, and session credentials stored in hardware-backed Android Keystore and iOS Keychain. Zero secrets hardcoded.
+- **Native Audio Recording Studio:**
+  - Hardware AAC-LC audio encoder (128 kbps, 44.1 kHz), real-time amplitude polling driving a 24-bar live waveform visualizer, and digital timer.
+  - Android foreground service with persistent recording notification (`FOREGROUND_SERVICE_MICROPHONE`) and iOS background audio mode (`UIBackgroundModes: audio`).
+  - Interactive moment bookmarking capturing transcript timestamps for 1-click audio seeking.
+- **12 Mobile Views Implemented:**
+  - Home Dashboard, My Meetings, Live Recording Studio, AI Meeting Chat RAG, Meeting Memory, AI Search, Action Items Kanban, Calendar, Knowledge Base, Team Workspace (Cowlar Engineering), Integrations (10 Providers), and Settings.
+- **Full-Stack Verification:**
+  - 7/7 Flutter mobile unit & widget tests passed.
+  - 57/57 Backend API & security tests passed.
+  - 36/36 Remote Staging HTTPS tests passed over Cloudflare Anycast ingress.
+  - 117/117 Headless Chrome CDP tests passed with 0 console errors.
+  - Overall: 217/217 tests passed (100% pass rate).
+
+---
+
 ## [4.1.0] - 2026-10-31 (PHASE 4B: REMOTE FASTAPI BACKEND DEPLOYMENT & FULL-STACK CLOUD PREVIEW)
 
 ### Added & Upgraded

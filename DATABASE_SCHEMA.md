@@ -313,3 +313,30 @@ CREATE TABLE processed_webhook_messages (
    - `oauth_nonces(nonce, consumed, expires_at)`
    - `processed_webhook_messages(message_id, provider)`
 
+---
+
+## 5. Mobile Offline Audio Vault Schema (Device SQLite — Phase 6)
+
+The Flutter mobile application maintains a local hardware-sandboxed SQLite database (`meetmind_offline_vault.db`) to guarantee offline meeting audio recording without network connectivity.
+
+```sql
+CREATE TABLE offline_audio_vault (
+    id TEXT PRIMARY KEY,                       -- UUID v4 local recording ID
+    title TEXT NOT NULL,                       -- Meeting title
+    file_path TEXT NOT NULL,                   -- Sandboxed local storage file path
+    file_size_bytes INTEGER NOT NULL,          -- Size in bytes
+    duration_seconds INTEGER NOT NULL,         -- Recorded duration in seconds
+    sha256_checksum TEXT NOT NULL,             -- Pre-upload SHA-256 integrity hash
+    created_at TEXT NOT NULL,                  -- ISO 8601 creation timestamp
+    sync_state TEXT NOT NULL,                  -- localOnly, waitingForConnection, uploading, synced, failed, retryRequired
+    remote_meeting_id INTEGER,                 -- Server meeting ID upon sync confirmation
+    retry_count INTEGER NOT NULL DEFAULT 0,    -- Exponential backoff attempt counter
+    last_error TEXT,                           -- Diagnostic error message if failed
+    idempotency_key TEXT NOT NULL              -- Passed in X-Idempotency-Key header
+);
+
+CREATE INDEX idx_vault_sync_state ON offline_audio_vault(sync_state);
+CREATE INDEX idx_vault_created_at ON offline_audio_vault(created_at);
+```
+
+

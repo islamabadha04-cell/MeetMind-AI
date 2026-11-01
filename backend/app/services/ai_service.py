@@ -1,3 +1,4 @@
+import os
 import json
 import base64
 import httpx
@@ -661,3 +662,42 @@ class AIService:
             "language": language,
             "meeting_title": meeting_title
         }
+
+    @staticmethod
+    def call_ollama(
+        prompt: str,
+        model: str = "glm-5.3-flash",
+        system_prompt: Optional[str] = None
+    ) -> str:
+        """
+        Calls Ollama Cloud API using the official ollama Python package and glm-5.3-flash model.
+        Base URL: https://ollama.com
+        Authentication: Authorization: Bearer <OLLAMA_API_KEY>
+        """
+        api_key = (getattr(settings, "OLLAMA_API_KEY", "") or os.environ.get("OLLAMA_API_KEY", "")).strip()
+        if not api_key:
+            raise ValueError("OLLAMA_API_KEY is not set. Please set OLLAMA_API_KEY in backend/.env or your environment.")
+
+        from ollama import Client
+
+        client = Client(
+            host="https://ollama.com",
+            headers={"Authorization": f"Bearer {api_key}"}
+        )
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        response = client.chat(
+            model=model,
+            messages=messages,
+            stream=False
+        )
+
+        if hasattr(response, "message") and hasattr(response.message, "content"):
+            return response.message.content
+        elif isinstance(response, dict) and "message" in response:
+            return response["message"]["content"]
+        return str(response)

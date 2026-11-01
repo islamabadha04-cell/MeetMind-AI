@@ -138,3 +138,47 @@ pytest -v
 - [x] Pakistani payment modal provides instant clipboard copy for JazzCash, Easypaisa, and Raast.
 - [x] Firestore security rules block unauthorized cross-user queries.
 
+---
+
+## 6. Flutter Mobile Application Build & Deployment (Phase 6)
+
+The Flutter mobile application (`mobile_flutter/`) supports Android and iOS devices with offline-first audio recording and automatic cloud synchronization.
+
+### 6.1 Running Tests
+```bash
+cd mobile_flutter
+flutter pub get
+flutter test
+```
+
+### 6.2 Running Development Builds
+```bash
+# Web / Chrome preview
+flutter run -d chrome
+
+# Android Emulator
+flutter run -d emulator-5554
+
+# Windows Desktop
+flutter run -d windows
+```
+
+### 6.3 Building Release Artifacts
+```bash
+# Android APK (Release)
+cd mobile_flutter
+flutter build apk --release
+
+# Android App Bundle (for Google Play Store upload)
+flutter build appbundle --release
+
+# iOS IPA (Requires macOS with Xcode)
+flutter build ipa --release
+```
+
+### 6.4 Mobile Ingress & API Gateway Configuration
+The mobile app resolves the backend endpoint dynamically via `mobile_flutter/lib/core/services/api_client.dart`:
+* **Default Staging Ingress:** `https://supports-incidents-jail-admissions.trycloudflare.com/api/v1`
+* **Custom Override:** In-app **Settings > Backend API Gateway Endpoint** allows point-and-click URL testing without rebuilding binaries.
+
+

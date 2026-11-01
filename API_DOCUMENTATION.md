@@ -240,3 +240,41 @@ All Phase 4 endpoints require Bearer JWT authentication: `Authorization: Bearer 
 - `GET /api/v1/integrations/whatsapp/webhook`: Meta Cloud API verification challenge handler (`hub.challenge`).
 - `POST /api/v1/integrations/whatsapp/webhook`: Meta Cloud API inbound audio/voice note webhook receiver.
 
+---
+
+## 5. Mobile & Idempotent Upload Protocol (Phase 6)
+
+### 5.1 Idempotent Meeting Audio Upload
+* **Endpoint:** `POST /api/v1/meetings/upload`
+* **Headers:**
+  * `Authorization: Bearer <jwt_token>`
+  * `X-Idempotency-Key: <uuid-v4>` (Prevents duplicate meetings on cellular retry)
+  * `Content-Type: multipart/form-data`
+* **Form Fields:**
+  * `title` (string, required): Meeting title
+  * `category` (string, optional): Meeting category (e.g. `Engineering`, `Client`, `Team`)
+  * `audio` (file binary, required): AAC-LC `.m4a` or `.wav` audio recording stream
+* **Response `200 OK`:**
+  ```json
+  {
+    "id": 14,
+    "title": "Sprint 15 Kickoff",
+    "status": "processed",
+    "duration_seconds": 1800,
+    "executive_summary": "Reviewed audio pipeline and low-latency offline sync...",
+    "action_items_count": 3
+  }
+  ```
+
+### 5.2 Server-Side Ollama Proxy
+* **Endpoint:** `POST /api/v1/ai/ollama/chat`
+* **Headers:** `Authorization: Bearer <jwt_token>`
+* **Request Body:**
+  ```json
+  {
+    "prompt": "Summarize sprint action items for engineering lead."
+  }
+  ```
+* **Security:** The mobile client never receives or stores `OLLAMA_API_KEY`. Authentication with `https://ollama.com` happens exclusively on the server using the configured Bearer token.
+
+

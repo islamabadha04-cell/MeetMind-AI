@@ -590,3 +590,17 @@ class WorkspaceVaultResponse(BaseModel):
     memories_count: int
     documents_count: int
     items: List[WorkspaceVaultItem] = []
+
+
+# ==========================================
+# OLLAMA CLOUD API INTEGRATION (glm-5.3-flash)
+# ==========================================
+
+class OllamaChatRequest(BaseModel):
+    prompt: str
+    model: Optional[str] = "glm-5.3-flash"
+    system_prompt: Optional[str] = None
+
+class OllamaChatResponse(BaseModel):
+    model: str
+    reply: str

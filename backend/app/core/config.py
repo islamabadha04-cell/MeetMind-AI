@@ -3,6 +3,8 @@ from pydantic import ConfigDict
 from typing import List
 import os
 
+_backend_env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "MeetMind AI — Intelligent Meeting Assistant"
     API_V1_STR: str = "/api/v1"
@@ -19,6 +21,9 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+    OLLAMA_API_KEY: str = ""
+    OLLAMA_MODEL: str = "glm-5.3-flash"
+    OLLAMA_BASE_URL: str = "https://ollama.com"
     WHISPER_MODEL: str = "base"
 
     BACKEND_CORS_ORIGINS: List[str] = [
@@ -31,7 +36,7 @@ class Settings(BaseSettings):
     ]
 
     model_config = ConfigDict(
-        env_file=".env",
+        env_file=(_backend_env_path, ".env"),
         case_sensitive=True,
         extra="allow"
     )

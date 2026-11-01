@@ -49,7 +49,7 @@ from app.schemas.schemas import (
     WorkspaceCreate, WorkspaceUpdate, WorkspaceResponse, WorkspaceMemberResponse,
     WorkspaceInviteCreate, WorkspaceInviteResponse, WorkspaceMemberRoleUpdate,
     CollaborativeNoteCreate, CollaborativeNoteUpdate, CollaborativeNoteResponse,
-    CollaborativeNoteRevisionResponse, WorkspaceVaultResponse, WorkspaceVaultItem
+    CollaborativeNoteRevisionResponse, WorkspaceVaultResponse, WorkspaceVaultItem, OllamaChatRequest, OllamaChatResponse
 )
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.services.ai_service import AIService
@@ -3095,3 +3095,43 @@ def get_note_revisions(
     ).order_by(CollaborativeNoteRevision.created_at.desc()).all()
 
     return revisions
+
+
+# =========================================================================
+# OLLAMA CLOUD API INTEGRATION — glm-5.3-flash
+# =========================================================================
+
+@app.post(f"{settings.API_V1_STR}/ai/ollama/chat", response_model=OllamaChatResponse)
+def chat_with_ollama(
+    data: OllamaChatRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Server-side route connecting MeetMind AI to Ollama Cloud API.
+    Model: glm-5.3-flash
+    Base URL: https://ollama.com
+    OLLAMA_API_KEY is securely used on the server and never exposed to the client/browser.
+    """
+    try:
+        reply = AIService.call_ollama(
+            prompt=data.prompt,
+            model=data.model or "glm-5.3-flash",
+            system_prompt=data.system_prompt
+        )
+        return OllamaChatResponse(
+            model=data.model or "glm-5.3-flash",
+            reply=reply
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=401, detail=str(ve))
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "unauthorized" in err_str.lower():
+            raise HTTPException(status_code=401, detail="Ollama authentication failed: Invalid or missing OLLAMA_API_KEY.")
+        if "402" in err_str or "payment" in err_str.lower():
+            raise HTTPException(status_code=402, detail="Ollama usage limit: account usage credits needed.")
+        if "404" in err_str or "not found" in err_str.lower():
+            raise HTTPException(status_code=404, detail=f"Ollama model '{data.model}' not found.")
+        if "429" in err_str or "rate limit" in err_str.lower():
+            raise HTTPException(status_code=429, detail="Ollama rate limit reached.")
+        raise HTTPException(status_code=500, detail=f"Ollama API call error: {err_str}")
