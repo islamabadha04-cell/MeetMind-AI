@@ -181,3 +181,4 @@ All external QA observations have been investigated and remediated with code evi
 1. Inspect the live preview: `https://meetmind-ai-74519--preview-qa-remediation-ju7iu4p4.web.app`.
 2. Review the invoicing desk and guest warning banner.
 3. When ready, merge `fix/website-qa-remediation` into `main` and deploy to production hosting.
+
