@@ -17,6 +17,7 @@ import 'package:meetmind_mobile/screens/login_screen.dart';
 import 'package:meetmind_mobile/screens/dashboard_screen.dart';
 import 'package:meetmind_mobile/screens/meetings_screen.dart';
 import 'package:meetmind_mobile/screens/recording_studio_screen.dart';
+import 'package:meetmind_mobile/screens/vault_screen.dart';
 
 void main() {
   setUpAll(() {
@@ -299,6 +300,23 @@ void main() {
       expect(find.text('00:00'), findsOneWidget);
       expect(find.text('Live Meeting Notes & Turns'), findsOneWidget);
       expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
+    });
+
+    testWidgets(
+        '15. VaultScreen Smoke & Offline Vault Rendering Test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: VaultScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(VaultScreen), findsOneWidget);
+      expect(find.byIcon(Icons.sync), findsOneWidget);
     });
   });
 }
