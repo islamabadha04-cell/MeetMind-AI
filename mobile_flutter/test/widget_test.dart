@@ -11,6 +11,9 @@ import 'package:meetmind_mobile/models/vault_recording_model.dart';
 import 'package:meetmind_mobile/models/meeting_detail_model.dart';
 import 'package:meetmind_mobile/models/task_model.dart';
 import 'package:meetmind_mobile/models/workspace_model.dart';
+import 'package:meetmind_mobile/core/services/auth_service.dart';
+import 'package:meetmind_mobile/providers/auth_provider.dart';
+import 'package:meetmind_mobile/screens/login_screen.dart';
 
 void main() {
   setUpAll(() {
@@ -162,6 +165,60 @@ void main() {
 
       expect(DefaultFirebaseOptions.web.projectId, 'meetmind-ai-74519');
       expect(DefaultFirebaseOptions.web.appId, '1:790778332182:web:b4a2c8ebbd8720a61f6137');
+    });
+
+    test('9. UserModel & AuthState Multi-Provider Deserialization', () {
+      final json = {
+        'id': 7,
+        'email': 'emily@example.com',
+        'full_name': 'Emily Watson',
+        'plan': 'Enterprise',
+        'minutes_used': 120,
+        'minutes_limit': 1000,
+        'firebase_uid': 'fb-uid-1234567890',
+        'avatar_url': 'https://meetmind.ai/avatars/emily.png',
+      };
+
+      final user = UserModel.fromJson(json);
+      expect(user.id, 7);
+      expect(user.email, 'emily@example.com');
+      expect(user.fullName, 'Emily Watson');
+      expect(user.plan, 'Enterprise');
+      expect(user.firebaseUid, 'fb-uid-1234567890');
+      expect(user.avatarUrl, 'https://meetmind.ai/avatars/emily.png');
+
+      final authInitial = AuthState.initial();
+      expect(authInitial.isLoading, isTrue);
+      expect(authInitial.isAuthenticated, isFalse);
+
+      final authActive = AuthState.authenticated(user);
+      expect(authActive.isLoading, isFalse);
+      expect(authActive.isAuthenticated, isTrue);
+      expect(authActive.user?.fullName, 'Emily Watson');
+
+      final authLoggedOut = AuthState.unauthenticated('Invalid credentials');
+      expect(authLoggedOut.isAuthenticated, isFalse);
+      expect(authLoggedOut.errorMessage, 'Invalid credentials');
+    });
+
+    testWidgets('10. LoginScreen Glassmorphic & Google Sign-In UI Smoke Test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: LoginScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(LoginScreen), findsOneWidget);
+      expect(find.byType(TextField), findsNWidgets(2)); // Email & Password
+      expect(find.byType(GoogleLogoIcon), findsOneWidget);
+      expect(find.text('Continue with Google'), findsOneWidget);
+      expect(find.text('OR CONTINUE WITH'), findsOneWidget);
+      expect(find.text('Continue as Guest Reviewer'), findsOneWidget);
     });
   });
 }

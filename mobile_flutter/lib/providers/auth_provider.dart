@@ -50,6 +50,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> signInWithGoogle() async {
+    state = AuthState.loading();
+    try {
+      final user = await AuthService.signInWithGoogle();
+      state = AuthState.authenticated(user);
+      return true;
+    } catch (e) {
+      state = AuthState.unauthenticated(
+          e.toString().replaceAll('Exception: ', ''));
+      return false;
+    }
+  }
+
   Future<bool> loginAsGuest() async {
     state = AuthState.loading();
     try {

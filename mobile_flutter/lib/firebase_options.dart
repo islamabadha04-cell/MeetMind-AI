@@ -70,3 +70,4 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.meetmind.ai.mobile',
   );
 }
+

@@ -225,6 +225,16 @@ class AppStrings {
       AppLanguage.urdu: 'لاگ ان',
       AppLanguage.romanUrdu: 'Sign In',
     },
+    'btn_google_signin': {
+      AppLanguage.english: 'Continue with Google',
+      AppLanguage.urdu: 'گوگل کے ساتھ جاری رکھیں',
+      AppLanguage.romanUrdu: 'Google ke sath continue karein',
+    },
+    'auth_or_divider': {
+      AppLanguage.english: 'OR CONTINUE WITH',
+      AppLanguage.urdu: 'یا اس کے ساتھ جاری رکھیں',
+      AppLanguage.romanUrdu: 'Ya phir continue karein',
+    },
     'btn_demo_guest': {
       AppLanguage.english: 'Continue as Guest Reviewer',
       AppLanguage.urdu: 'بطور مہمان جائزہ کار جاری رکھیں',
