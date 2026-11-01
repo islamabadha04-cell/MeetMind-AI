@@ -1,4 +1,4 @@
-package com.example.smart_noter_mobile
+package com.meetmind.ai.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
