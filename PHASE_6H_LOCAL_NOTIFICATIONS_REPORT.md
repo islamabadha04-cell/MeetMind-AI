@@ -71,3 +71,4 @@ The architecture leverages `flutter_local_notifications` and `timezone` to provi
 
 3. **Backend Health Check:**
    - `http://127.0.0.1:8000/health`: 200 OK (`version 4.0.1`, `database: ok`).
+
