@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_core: ^3.6.0
   flutter_riverpod: ^2.5.1
   http: ^1.2.1
   intl: ^0.19.0
@@ -24,13 +25,16 @@ dependencies:
   sqflite_common_ffi: ^2.3.3
   uuid: ^4.4.0
   crypto: ^3.0.3
-  share_plus: ^9.0.0
+  share_plus: ^10.0.0
   flutter_local_notifications: ^17.2.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+
+dependency_overrides:
+  sqlite3: ^2.4.5
 
 flutter:
   uses-material-design: true

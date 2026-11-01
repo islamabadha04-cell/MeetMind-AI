@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:meetmind_mobile/main.dart';
+import 'package:meetmind_mobile/firebase_options.dart';
 import 'package:meetmind_mobile/core/localization/app_strings.dart';
 import 'package:meetmind_mobile/core/localization/language_provider.dart';
 import 'package:meetmind_mobile/core/theme/app_theme.dart';
@@ -148,6 +149,19 @@ void main() {
 
       await tester.pump();
       expect(find.byType(MaterialApp), findsOneWidget);
+    });
+
+    test('8. DefaultFirebaseOptions Project & Platform Alignment', () {
+      expect(DefaultFirebaseOptions.android.projectId, 'meetmind-ai-74519');
+      expect(DefaultFirebaseOptions.android.appId, '1:790778332182:android:211a1b9fc7c53e7d1f6137');
+      expect(DefaultFirebaseOptions.android.messagingSenderId, '790778332182');
+
+      expect(DefaultFirebaseOptions.ios.projectId, 'meetmind-ai-74519');
+      expect(DefaultFirebaseOptions.ios.appId, '1:790778332182:ios:137f95ef50fc1efc1f6137');
+      expect(DefaultFirebaseOptions.ios.iosBundleId, 'com.meetmind.ai.mobile');
+
+      expect(DefaultFirebaseOptions.web.projectId, 'meetmind-ai-74519');
+      expect(DefaultFirebaseOptions.web.appId, '1:790778332182:web:b4a2c8ebbd8720a61f6137');
     });
   });
 }

@@ -18,7 +18,7 @@
 | **6A** | **Backend Ingress Verification** | Backend | ✅ | `/health`, `/ready`, `/auth/login`, and `/users/me` verified on local & Cloudflare tunnel. |
 | **6B** | **Single Account Login & Registration** | Mobile/Web | ✅ | REST auth client with JWT extraction; unified account `emily@example.com`. |
 | **6B** | **Hardware Keystore Secure Storage** | Android/iOS | ✅ | `FlutterSecureStorage` saves JWT tokens, user profile, and custom API gateway. |
-| **6B.1** | **Mobile Identity & Package Finalization** | Android/iOS | ✅ | Permanent ID `com.meetmind.ai.mobile` active on Android & iOS; ready for Firebase Console registration. |
+| **6B.1** | **Firebase Flutter Foundation & App Config** | Android/iOS/Web | ✅ | `com.meetmind.ai.mobile` registered in `meetmind-ai-74519`; `google-services.json` & `GoogleService-Info.plist` landed; `firebase_core` & `firebase_options.dart` verified. |
 | **6B.2** | **Firebase SDK Native Auth** | Mobile | ⏳ | REST gateway active; native `google_sign_in` and `google-services.json` planned in 6B.2. |
 | **6C** | **Hero "Next Meeting" Card** | Mobile | ✅ | Displays upcoming meeting title, time, attendees, and quick "Join Meeting" action. |
 | **6C** | **Multi-Tab Meeting Details** | Mobile | ✅ | 4 Tabs: Executive Summary (EN/UR/Roman), Transcripts, Decisions, and PDF MoM share. |
@@ -50,6 +50,6 @@
 
 * **Backend Pytest:** 57 / 57 Tests Passed (100%)
 * **Remote Staging Tests:** 36 / 36 Tests Passed (100%)
-* **Flutter Unit & Widget Tests:** 7 / 7 Tests Passed (100%)
+* **Flutter Unit & Widget Tests:** 8 / 8 Tests Passed (100%)
 * **Browser E2E Tests:** 103 / 103 Tests Passed (100%)
-* **Total Automated Tests:** **203 / 203 Passed (0 Failures)**
+* **Total Automated Tests:** **204 / 204 Passed (0 Failures)**

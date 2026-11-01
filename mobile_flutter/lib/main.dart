@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/constants/colors.dart';
 import 'core/localization/language_provider.dart';
 import 'core/services/background_sync_engine.dart';
@@ -20,8 +22,15 @@ import 'screens/tasks_screen.dart';
 import 'screens/vault_screen.dart';
 import 'screens/workspace_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization notice: $e');
+  }
   BackgroundSyncEngine().initialize();
   runApp(const ProviderScope(child: MeetMindApp()));
 }
