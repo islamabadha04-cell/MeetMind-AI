@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -89,9 +88,11 @@ class AppStrings {
       AppLanguage.romanUrdu: 'Meeting ki audio record karein',
     },
     'hero_record_desc': {
-      AppLanguage.english: 'Offline-ready audio vault with live speech transcription and AI summaries.',
+      AppLanguage.english:
+          'Offline-ready audio vault with live speech transcription and AI summaries.',
       AppLanguage.urdu: 'آف لائن والٹ، فوری ٹرانسکرپشن اور خودکار اے آئی سمری۔',
-      AppLanguage.romanUrdu: 'Offline audio vault, live transcription aur AI summary.',
+      AppLanguage.romanUrdu:
+          'Offline audio vault, live transcription aur AI summary.',
     },
     'btn_start_recording': {
       AppLanguage.english: 'Start Live Recording',
@@ -275,6 +276,7 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
   }
 }
 
-final languageProvider = StateNotifierProvider<LanguageNotifier, AppLanguage>((ref) {
+final languageProvider =
+    StateNotifierProvider<LanguageNotifier, AppLanguage>((ref) {
   return LanguageNotifier();
 });

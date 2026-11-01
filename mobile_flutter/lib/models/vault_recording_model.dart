@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'dart:io';
 
@@ -72,7 +71,8 @@ class VaultRecordingModel {
       fileSizeBytes: (map['file_size_bytes'] as int?) ?? 0,
       durationSeconds: (map['duration_seconds'] as int?) ?? 0,
       sha256Checksum: (map['sha256_checksum'] as String?) ?? '',
-      createdAt: DateTime.tryParse(map['created_at'] as String) ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse(map['created_at'] as String) ?? DateTime.now(),
       syncState: VaultSyncState.values.firstWhere(
         (e) => e.name == map['sync_state'],
         orElse: () => VaultSyncState.localOnly,
@@ -80,7 +80,8 @@ class VaultRecordingModel {
       remoteMeetingId: map['remote_meeting_id'] as int?,
       retryCount: (map['retry_count'] as int?) ?? 0,
       lastError: map['last_error'] as String?,
-      idempotencyKey: (map['idempotency_key'] as String?) ?? map['id'] as String,
+      idempotencyKey:
+          (map['idempotency_key'] as String?) ?? map['id'] as String,
     );
   }
 

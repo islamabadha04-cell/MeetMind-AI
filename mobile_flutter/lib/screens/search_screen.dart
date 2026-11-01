@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/colors.dart';
-import '../core/localization/app_strings.dart';
 import '../core/localization/language_provider.dart';
 import '../core/services/meeting_service.dart';
 
@@ -80,7 +79,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
-                    style: IconButton.styleFrom(backgroundColor: AppColors.primary),
+                    style: IconButton.styleFrom(
+                        backgroundColor: AppColors.primary),
                     icon: const Icon(Icons.arrow_forward, color: Colors.white),
                     onPressed: _performSearch,
                   ),
@@ -91,21 +91,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               const LinearProgressIndicator()
             else if (_results.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Found ${_results.length} ranked results for "$_lastQuery":',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-
             Expanded(
               child: _results.isEmpty && !_isSearching
                   ? Center(
                       child: Text(
-                        _lastQuery.isEmpty ? 'Type a question or query above to search.' : 'No matching meeting transcripts found.',
+                        _lastQuery.isEmpty
+                            ? 'Type a question or query above to search.'
+                            : 'No matching meeting transcripts found.',
                         style: TextStyle(color: Colors.grey.shade500),
                       ),
                     )
@@ -122,18 +127,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(hit.meetingTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                    Text(hit.meetingTitle,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14)),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: AppColors.success.withValues(alpha: 0.15),
+                                        color: AppColors.success
+                                            .withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         'Score: ${(hit.score * 100).toStringAsFixed(0)}%',
-                                        style: const TextStyle(color: AppColors.success, fontSize: 10, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                            color: AppColors.success,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                   ],
@@ -141,7 +155,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 const SizedBox(height: 8),
                                 Text(
                                   hit.excerpt,
-                                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13, height: 1.4),
+                                  style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 13,
+                                      height: 1.4),
                                 ),
                               ],
                             ),

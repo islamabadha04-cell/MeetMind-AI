@@ -125,3 +125,4 @@ class AuthService {
     await SecureStorageService.clearSession();
   }
 }
+

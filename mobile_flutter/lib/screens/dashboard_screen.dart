@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/colors.dart';
-import '../core/localization/app_strings.dart';
 import '../core/localization/language_provider.dart';
 import '../core/services/meeting_service.dart';
 import '../models/meeting_detail_model.dart';
@@ -15,7 +14,6 @@ import 'meetings_screen.dart';
 import 'memory_screen.dart';
 import 'recording_studio_screen.dart';
 import 'search_screen.dart';
-import 'settings_screen.dart';
 import 'tasks_screen.dart';
 import 'vault_screen.dart';
 import 'workspace_screen.dart';

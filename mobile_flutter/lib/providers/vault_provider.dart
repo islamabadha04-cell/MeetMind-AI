@@ -98,3 +98,4 @@ class VaultNotifier extends StateNotifier<VaultState> {
 final vaultProvider = StateNotifierProvider<VaultNotifier, VaultState>((ref) {
   return VaultNotifier();
 });
+

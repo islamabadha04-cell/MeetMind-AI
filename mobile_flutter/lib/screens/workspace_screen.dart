@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/colors.dart';
-import '../core/localization/app_strings.dart';
 import '../core/localization/language_provider.dart';
 import '../core/services/workspace_service.dart';
 
@@ -74,13 +73,17 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       setState(() => _activeNoteVersion = updated.version);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Collaborative Note saved (v${updated.version})! Synced to Web.')),
+          SnackBar(
+              content: Text(
+                  'Collaborative Note saved (v${updated.version})! Synced to Web.')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save note: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+              content: Text('Failed to save note: $e'),
+              backgroundColor: AppColors.error),
         );
       }
     }
@@ -92,7 +95,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => Padding(
           padding: EdgeInsets.only(
@@ -105,21 +109,31 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Invite Teammate', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Invite Teammate',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email Address', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: 'Email Address', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: role,
-                decoration: const InputDecoration(labelText: 'Role Permission', border: OutlineInputBorder()),
+                initialValue: role,
+                decoration: const InputDecoration(
+                    labelText: 'Role Permission', border: OutlineInputBorder()),
                 items: const [
-                  DropdownMenuItem(value: 'admin', child: Text('Admin (Manage Team & Settings)')),
-                  DropdownMenuItem(value: 'manager', child: Text('Manager (Approve Action Items)')),
-                  DropdownMenuItem(value: 'editor', child: Text('Editor (Create & Edit Notes)')),
-                  DropdownMenuItem(value: 'viewer', child: Text('Viewer (Read Only)')),
+                  DropdownMenuItem(
+                      value: 'admin',
+                      child: Text('Admin (Manage Team & Settings)')),
+                  DropdownMenuItem(
+                      value: 'manager',
+                      child: Text('Manager (Approve Action Items)')),
+                  DropdownMenuItem(
+                      value: 'editor',
+                      child: Text('Editor (Create & Edit Notes)')),
+                  DropdownMenuItem(
+                      value: 'viewer', child: Text('Viewer (Read Only)')),
                 ],
                 onChanged: (val) => setModalState(() => role = val ?? 'editor'),
               ),
@@ -127,6 +141,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               ElevatedButton(
                 onPressed: () async {
                   if (emailController.text.trim().isEmpty) return;
+                  final messenger = ScaffoldMessenger.of(context);
                   Navigator.pop(ctx);
                   try {
                     await WorkspaceService.inviteTeammate(
@@ -135,17 +150,16 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                       role: role,
                     );
                     _fetchWorkspaceData();
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Invitation sent successfully!')),
-                      );
-                    }
+                    messenger.showSnackBar(
+                      const SnackBar(
+                          content: Text('Invitation sent successfully!')),
+                    );
                   } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Invite failed: $e'), backgroundColor: AppColors.error),
-                      );
-                    }
+                    messenger.showSnackBar(
+                      SnackBar(
+                          content: Text('Invite failed: $e'),
+                          backgroundColor: AppColors.error),
+                    );
                   }
                 },
                 child: const Text('Send Invitation'),
@@ -178,10 +192,30 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             activeSeats: 4,
             maxSeats: 10,
             members: [
-              WorkspaceMemberModel(id: 1, userId: 1, email: 'emily@example.com', fullName: 'Emily Watson', role: 'owner'),
-              WorkspaceMemberModel(id: 2, userId: 2, email: 'sarah@example.com', fullName: 'Sarah Jenkins', role: 'admin'),
-              WorkspaceMemberModel(id: 3, userId: 3, email: 'ali@example.com', fullName: 'Hasnain Ali', role: 'editor'),
-              WorkspaceMemberModel(id: 4, userId: 4, email: 'usman@example.com', fullName: 'Usman Tariq', role: 'viewer'),
+              WorkspaceMemberModel(
+                  id: 1,
+                  userId: 1,
+                  email: 'emily@example.com',
+                  fullName: 'Emily Watson',
+                  role: 'owner'),
+              WorkspaceMemberModel(
+                  id: 2,
+                  userId: 2,
+                  email: 'sarah@example.com',
+                  fullName: 'Sarah Jenkins',
+                  role: 'admin'),
+              WorkspaceMemberModel(
+                  id: 3,
+                  userId: 3,
+                  email: 'ali@example.com',
+                  fullName: 'Hasnain Ali',
+                  role: 'editor'),
+              WorkspaceMemberModel(
+                  id: 4,
+                  userId: 4,
+                  email: 'usman@example.com',
+                  fullName: 'Usman Tariq',
+                  role: 'viewer'),
             ],
           );
 
@@ -216,17 +250,24 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     children: [
                       Text(
                         ws.name,
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.white24,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           ws.tier.toUpperCase(),
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -247,7 +288,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             const SizedBox(height: 20),
 
             // Collaborative Notes Pad
-            const Text('Collaborative Note Pad', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('Collaborative Note Pad (${_notes.length})',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -286,7 +328,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             const SizedBox(height: 20),
 
             // Teammates Roster
-            const Text('Team Members & RBAC Roles', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text('Team Members & RBAC Roles',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             ...ws.members.map((m) {
               return Card(
@@ -294,19 +337,25 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                    child: Text(m.fullName.substring(0, 1), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    child: Text(m.fullName.substring(0, 1),
+                        style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold)),
                   ),
-                  title: Text(m.fullName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  title: Text(m.fullName,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(m.email, style: const TextStyle(fontSize: 12)),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.grey.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       m.role.toUpperCase(),
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

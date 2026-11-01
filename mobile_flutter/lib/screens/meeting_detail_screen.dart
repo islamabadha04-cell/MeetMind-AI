@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../core/constants/colors.dart';
-import '../core/localization/app_strings.dart';
 import '../core/localization/language_provider.dart';
 import '../models/meeting_detail_model.dart';
 
@@ -12,7 +11,8 @@ class MeetingDetailScreen extends ConsumerStatefulWidget {
   const MeetingDetailScreen({super.key, required this.meeting});
 
   @override
-  ConsumerState<MeetingDetailScreen> createState() => _MeetingDetailScreenState();
+  ConsumerState<MeetingDetailScreen> createState() =>
+      _MeetingDetailScreenState();
 }
 
 class _MeetingDetailScreenState extends ConsumerState<MeetingDetailScreen> {
@@ -68,24 +68,34 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
+                      const Icon(Icons.calendar_today,
+                          size: 14, color: AppColors.primary),
                       const SizedBox(width: 6),
-                      Text(m.meetingDate, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text(m.meetingDate,
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 14),
-                      const Icon(Icons.timer_outlined, size: 14, color: AppColors.primary),
+                      const Icon(Icons.timer_outlined,
+                          size: 14, color: AppColors.primary),
                       const SizedBox(width: 6),
-                      Text('${m.durationSeconds ~/ 60}m', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text('${m.durationSeconds ~/ 60}m',
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       m.category,
-                      style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -160,7 +170,8 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
             ButtonSegment(value: 2, label: Text('Roman Urdu')),
           ],
           selected: {_selectedSummaryLang},
-          onSelectionChanged: (set) => setState(() => _selectedSummaryLang = set.first),
+          onSelectionChanged: (set) =>
+              setState(() => _selectedSummaryLang = set.first),
         ),
         const SizedBox(height: 16),
 
@@ -189,7 +200,8 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
 
   Widget _buildTranscriptTab(MeetingDetailModel m) {
     if (m.transcript.isEmpty) {
-      return const Center(child: Text('Transcript processing complete. Full audio indexed.'));
+      return const Center(
+          child: Text('Transcript processing complete. Full audio indexed.'));
     }
 
     return ListView.builder(
@@ -207,8 +219,13 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(t.speaker, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
-                    Text(t.timestamp, style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+                    Text(t.speaker,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary)),
+                    Text(t.timestamp,
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 11)),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -223,7 +240,8 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
 
   Widget _buildDecisionsTab(MeetingDetailModel m) {
     if (m.decisions.isEmpty) {
-      return const Center(child: Text('No explicit decisions recorded for this meeting.'));
+      return const Center(
+          child: Text('No explicit decisions recorded for this meeting.'));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -232,7 +250,8 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            leading: const Icon(Icons.check_circle_outline, color: AppColors.success),
+            leading: const Icon(Icons.check_circle_outline,
+                color: AppColors.success),
             title: Text(m.decisions[i], style: const TextStyle(fontSize: 14)),
           ),
         );
@@ -251,7 +270,8 @@ ${m.actionItems.map((a) => '• $a').join('\n')}
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            leading: const Icon(Icons.assignment_turned_in_outlined, color: AppColors.primary),
+            leading: const Icon(Icons.assignment_turned_in_outlined,
+                color: AppColors.primary),
             title: Text(m.actionItems[i], style: const TextStyle(fontSize: 14)),
           ),
         );

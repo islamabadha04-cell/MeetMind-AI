@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/colors.dart';
-import '../core/localization/app_strings.dart';
 import '../core/localization/language_provider.dart';
 import '../core/services/audio_recording_service.dart';
 import '../providers/vault_provider.dart';
@@ -11,7 +10,8 @@ class RecordingStudioScreen extends ConsumerStatefulWidget {
   const RecordingStudioScreen({super.key});
 
   @override
-  ConsumerState<RecordingStudioScreen> createState() => _RecordingStudioScreenState();
+  ConsumerState<RecordingStudioScreen> createState() =>
+      _RecordingStudioScreenState();
 }
 
 class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
@@ -56,7 +56,8 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+            SnackBar(
+                content: Text(e.toString()), backgroundColor: AppColors.error),
           );
         }
       }
@@ -88,7 +89,8 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter a title for this meeting recording. It will be stored safely in your device vault and queued for cloud AI sync.'),
+            const Text(
+                'Enter a title for this meeting recording. It will be stored safely in your device vault and queued for cloud AI sync.'),
             const SizedBox(height: 12),
             TextField(
               controller: titleController,
@@ -107,16 +109,17 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              final model = await _recordingService.stopRecording(title: titleController.text.trim());
+              final model = await _recordingService.stopRecording(
+                  title: titleController.text.trim());
               if (model != null) {
                 await ref.read(vaultProvider.notifier).saveNewRecording(
-                  id: model.id,
-                  title: model.title,
-                  filePath: model.filePath,
-                  fileSizeBytes: model.fileSizeBytes,
-                  durationSeconds: model.durationSeconds,
-                  sha256Checksum: model.sha256Checksum,
-                );
+                      id: model.id,
+                      title: model.title,
+                      filePath: model.filePath,
+                      fileSizeBytes: model.fileSizeBytes,
+                      durationSeconds: model.durationSeconds,
+                      sha256Checksum: model.sha256Checksum,
+                    );
                 setState(() {
                   _isRecording = false;
                   _isPaused = false;
@@ -125,7 +128,8 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Recording safely saved in Offline Vault! AI processing queued.'),
+                      content: Text(
+                          'Recording safely saved in Offline Vault! AI processing queued.'),
                       backgroundColor: AppColors.success,
                     ),
                   );
@@ -176,10 +180,13 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
               children: [
                 // Top Indicator Card
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   decoration: BoxDecoration(
                     color: _isRecording
-                        ? (_isPaused ? AppColors.warning.withValues(alpha: 0.15) : AppColors.error.withValues(alpha: 0.15))
+                        ? (_isPaused
+                            ? AppColors.warning.withValues(alpha: 0.15)
+                            : AppColors.error.withValues(alpha: 0.15))
                         : AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -192,20 +199,26 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _isRecording
-                              ? (_isPaused ? AppColors.warning : AppColors.error)
+                              ? (_isPaused
+                                  ? AppColors.warning
+                                  : AppColors.error)
                               : Colors.grey,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _isRecording
-                            ? (_isPaused ? AppStrings.get('recording_paused', lang) : AppStrings.get('recording_active', lang))
+                            ? (_isPaused
+                                ? AppStrings.get('recording_paused', lang)
+                                : AppStrings.get('recording_active', lang))
                             : 'Ready to Record',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: _isRecording
-                              ? (_isPaused ? AppColors.warning : AppColors.error)
+                              ? (_isPaused
+                                  ? AppColors.warning
+                                  : AppColors.error)
                               : Colors.grey.shade700,
                         ),
                       ),
@@ -230,15 +243,20 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: List.generate(24, (index) {
-                      final val = (index < _waveform.length) ? _waveform[index] : 0.2;
+                      final val =
+                          (index < _waveform.length) ? _waveform[index] : 0.2;
                       final h = (val * 90).clamp(8.0, 100.0);
                       return Container(
                         width: 5,
                         height: h,
                         margin: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
-                          gradient: _isRecording && !_isPaused ? AppColors.heroGradient : null,
-                          color: !_isRecording || _isPaused ? Colors.grey.shade400 : null,
+                          gradient: _isRecording && !_isPaused
+                              ? AppColors.heroGradient
+                              : null,
+                          color: !_isRecording || _isPaused
+                              ? Colors.grey.shade400
+                              : null,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
@@ -259,23 +277,26 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
                             _recordingService.bookmarkCurrentMoment();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Moment bookmarked at ${_formatTimer(_seconds)}'),
+                                content: Text(
+                                    'Moment bookmarked at ${_formatTimer(_seconds)}'),
                                 duration: const Duration(seconds: 1),
                               ),
                             );
                           },
                         ),
                       ),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         if (_isRecording)
                           IconButton.filledTonal(
                             iconSize: 32,
-                            icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
+                            icon: Icon(
+                                _isPaused ? Icons.play_arrow : Icons.pause),
                             onPressed: _pauseResume,
-                            tooltip: _isPaused ? AppStrings.get('btn_resume', lang) : AppStrings.get('btn_pause', lang),
+                            tooltip: _isPaused
+                                ? AppStrings.get('btn_resume', lang)
+                                : AppStrings.get('btn_pause', lang),
                           ),
 
                         // Main Big Record Button
@@ -287,11 +308,17 @@ class _RecordingStudioScreenState extends ConsumerState<RecordingStudioScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: _isRecording
-                                  ? const LinearGradient(colors: [AppColors.error, Color(0xFFDC2626)])
+                                  ? const LinearGradient(colors: [
+                                      AppColors.error,
+                                      Color(0xFFDC2626)
+                                    ])
                                   : AppColors.heroGradient,
                               boxShadow: [
                                 BoxShadow(
-                                  color: (_isRecording ? AppColors.error : AppColors.primary).withValues(alpha: 0.4),
+                                  color: (_isRecording
+                                          ? AppColors.error
+                                          : AppColors.primary)
+                                      .withValues(alpha: 0.4),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),

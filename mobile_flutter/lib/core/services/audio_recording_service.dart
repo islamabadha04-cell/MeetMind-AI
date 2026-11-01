@@ -141,3 +141,4 @@ class AudioRecordingService {
     _amplitudeController.close();
   }
 }
+

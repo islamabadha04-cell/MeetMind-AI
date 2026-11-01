@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'api_client.dart';
 import '../../models/meeting_detail_model.dart';
 import '../../models/task_model.dart';
@@ -59,7 +58,9 @@ class MeetingService {
   static Future<List<MeetingDetailModel>> getMeetings() async {
     final response = await ApiClient.get('/meetings');
     if (response is List) {
-      return response.map((e) => MeetingDetailModel.fromJson(e as Map<String, dynamic>)).toList();
+      return response
+          .map((e) => MeetingDetailModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -72,7 +73,9 @@ class MeetingService {
   static Future<List<TaskModel>> getTasks() async {
     final response = await ApiClient.get('/tasks');
     if (response is List) {
-      return response.map((e) => TaskModel.fromJson(e as Map<String, dynamic>)).toList();
+      return response
+          .map((e) => TaskModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -107,7 +110,9 @@ class MeetingService {
     });
     if (response is Map && response['results'] is List) {
       final list = response['results'] as List;
-      return list.map((e) => SearchResultHit.fromJson(e as Map<String, dynamic>)).toList();
+      return list
+          .map((e) => SearchResultHit.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -115,7 +120,9 @@ class MeetingService {
   static Future<List<MemoryItem>> getMemories() async {
     final response = await ApiClient.get('/memory');
     if (response is List) {
-      return response.map((e) => MemoryItem.fromJson(e as Map<String, dynamic>)).toList();
+      return response
+          .map((e) => MemoryItem.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -126,8 +133,10 @@ class MeetingService {
   }) async {
     if (provider == 'ollama') {
       try {
-        final res = await ApiClient.post('/ai/ollama/chat', body: {'prompt': message});
-        return (res is Map ? res['reply'] : res.toString()) ?? 'No reply from Ollama.';
+        final res =
+            await ApiClient.post('/ai/ollama/chat', body: {'prompt': message});
+        return (res is Map ? res['reply'] : res.toString()) ??
+            'No reply from Ollama.';
       } on ApiException catch (e) {
         if (e.statusCode == 402) {
           return '⚠️ Ollama Cloud Notice: Account usage credits are needed at https://ollama.com/plans to call glm-5.3-flash. Falling back to Google Gemini...';
@@ -140,6 +149,7 @@ class MeetingService {
       'message': message,
       'history': [],
     });
-    return (response is Map ? response['response'] : response.toString()) ?? 'I have reviewed your meeting transcripts.';
+    return (response is Map ? response['response'] : response.toString()) ??
+        'I have reviewed your meeting transcripts.';
   }
 }

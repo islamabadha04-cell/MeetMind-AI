@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/colors.dart';
-import '../core/localization/app_strings.dart';
 import '../core/localization/language_provider.dart';
 import '../core/services/background_sync_engine.dart';
 import '../models/vault_recording_model.dart';
@@ -40,7 +39,9 @@ class VaultScreen extends ConsumerWidget {
               onPressed: () {
                 BackgroundSyncEngine().triggerSync(reason: 'Manual sync tap');
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Checking cloud connectivity and synchronizing vault...')),
+                  const SnackBar(
+                      content: Text(
+                          'Checking cloud connectivity and synchronizing vault...')),
                 );
               },
             ),
@@ -53,16 +54,21 @@ class VaultScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
+                        Icon(Icons.inventory_2_outlined,
+                            size: 64, color: Colors.grey.shade400),
                         const SizedBox(height: 16),
                         Text(
                           'Your Offline Vault is empty',
-                          style: TextStyle(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Recordings you take offline will be stored safely here.',
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                          style: TextStyle(
+                              color: Colors.grey.shade500, fontSize: 13),
                         ),
                       ],
                     ),
@@ -79,7 +85,8 @@ class VaultScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildVaultCard(BuildContext context, WidgetRef ref, VaultRecordingModel item, AppLanguage lang) {
+  Widget _buildVaultCard(BuildContext context, WidgetRef ref,
+      VaultRecordingModel item, AppLanguage lang) {
     Color statusColor;
     IconData statusIcon;
     String statusText;
@@ -107,7 +114,6 @@ class VaultScreen extends ConsumerWidget {
         statusText = AppStrings.get('status_failed', lang);
         break;
       case VaultSyncState.localOnly:
-      default:
         statusColor = Colors.blue;
         statusIcon = Icons.phone_android;
         statusText = AppStrings.get('status_local_only', lang);
@@ -127,15 +133,18 @@ class VaultScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     item.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                    border:
+                        Border.all(color: statusColor.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -144,7 +153,10 @@ class VaultScreen extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Text(
                         statusText,
-                        style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: statusColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -158,16 +170,24 @@ class VaultScreen extends ConsumerWidget {
               children: [
                 Icon(Icons.schedule, size: 14, color: Colors.grey.shade500),
                 const SizedBox(width: 4),
-                Text(_formatDuration(item.durationSeconds), style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                Text(_formatDuration(item.durationSeconds),
+                    style:
+                        TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                 const SizedBox(width: 14),
-                Icon(Icons.save_outlined, size: 14, color: Colors.grey.shade500),
+                Icon(Icons.save_outlined,
+                    size: 14, color: Colors.grey.shade500),
                 const SizedBox(width: 4),
-                Text(_formatBytes(item.fileSizeBytes), style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                Text(_formatBytes(item.fileSizeBytes),
+                    style:
+                        TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                 const SizedBox(width: 14),
-                Icon(Icons.verified_outlined, size: 14, color: Colors.grey.shade500),
+                Icon(Icons.verified_outlined,
+                    size: 14, color: Colors.grey.shade500),
                 const SizedBox(width: 4),
                 Text(
-                  item.sha256Checksum.isNotEmpty ? 'SHA: ${item.sha256Checksum.substring(0, 8)}...' : 'Unchecked',
+                  item.sha256Checksum.isNotEmpty
+                      ? 'SHA: ${item.sha256Checksum.substring(0, 8)}...'
+                      : 'Unchecked',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
               ],
@@ -183,12 +203,14 @@ class VaultScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, size: 14, color: AppColors.error),
+                    const Icon(Icons.info_outline,
+                        size: 14, color: AppColors.error),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'Retry count: ${item.retryCount} • ${item.lastError}',
-                        style: const TextStyle(color: AppColors.error, fontSize: 11),
+                        style: const TextStyle(
+                            color: AppColors.error, fontSize: 11),
                       ),
                     ),
                   ],
@@ -203,11 +225,14 @@ class VaultScreen extends ConsumerWidget {
                 if (item.syncState != VaultSyncState.synced)
                   TextButton.icon(
                     icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Retry Upload', style: TextStyle(fontSize: 12)),
-                    onPressed: () => ref.read(vaultProvider.notifier).retryUpload(item.id),
+                    label: const Text('Retry Upload',
+                        style: TextStyle(fontSize: 12)),
+                    onPressed: () =>
+                        ref.read(vaultProvider.notifier).retryUpload(item.id),
                   ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.grey),
+                  icon: const Icon(Icons.delete_outline,
+                      size: 18, color: Colors.grey),
                   tooltip: 'Delete Local Recording',
                   onPressed: () {
                     ref.read(vaultProvider.notifier).deleteRecording(item.id);

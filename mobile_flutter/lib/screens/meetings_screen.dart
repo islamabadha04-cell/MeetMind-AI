@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/colors.dart';
-import '../core/localization/app_strings.dart';
 import '../core/localization/language_provider.dart';
 import '../core/services/meeting_service.dart';
 import '../models/meeting_detail_model.dart';
@@ -48,7 +47,9 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
 
     final filtered = _filter.isEmpty
         ? _meetings
-        : _meetings.where((m) => m.title.toLowerCase().contains(_filter.toLowerCase())).toList();
+        : _meetings
+            .where((m) => m.title.toLowerCase().contains(_filter.toLowerCase()))
+            .toList();
 
     return Directionality(
       textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -99,11 +100,18 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.video_camera_front_outlined, size: 64, color: Colors.grey.shade400),
+                              Icon(Icons.video_camera_front_outlined,
+                                  size: 64, color: Colors.grey.shade400),
                               const SizedBox(height: 12),
-                              const Text('No meetings found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              const Text('No meetings found',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
                               const SizedBox(height: 6),
-                              const Text('Tap below to record or sync your first meeting.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                              const Text(
+                                  'Tap below to record or sync your first meeting.',
+                                  style: TextStyle(
+                                      color: Colors.grey, fontSize: 13)),
                             ],
                           ),
                         )
@@ -119,30 +127,47 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.all(14),
                                   leading: CircleAvatar(
-                                    backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                                    child: const Icon(Icons.groups_outlined, color: AppColors.primary),
+                                    backgroundColor: AppColors.primary
+                                        .withValues(alpha: 0.12),
+                                    child: const Icon(Icons.groups_outlined,
+                                        color: AppColors.primary),
                                   ),
-                                  title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  title: Text(item.title,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(height: 4),
                                       Text(
                                         item.executiveSummary,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                        style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 12),
                                       ),
                                       const SizedBox(height: 8),
                                       Row(
                                         children: [
-                                          Icon(Icons.calendar_today, size: 12, color: Colors.grey.shade500),
+                                          Icon(Icons.calendar_today,
+                                              size: 12,
+                                              color: Colors.grey.shade500),
                                           const SizedBox(width: 4),
-                                          Text(item.meetingDate, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                          Text(item.meetingDate,
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade600)),
                                           const SizedBox(width: 12),
-                                          Icon(Icons.timer_outlined, size: 12, color: Colors.grey.shade500),
+                                          Icon(Icons.timer_outlined,
+                                              size: 12,
+                                              color: Colors.grey.shade500),
                                           const SizedBox(width: 4),
-                                          Text('${item.durationSeconds ~/ 60}m', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                          Text('${item.durationSeconds ~/ 60}m',
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade600)),
                                         ],
                                       ),
                                     ],
@@ -151,7 +176,9 @@ class _MeetingsScreenState extends ConsumerState<MeetingsScreen> {
                                   onTap: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (_) => MeetingDetailScreen(meeting: item)),
+                                      MaterialPageRoute(
+                                          builder: (_) => MeetingDetailScreen(
+                                              meeting: item)),
                                     );
                                   },
                                 ),
