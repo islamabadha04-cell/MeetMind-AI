@@ -31,3 +31,4 @@
 1. **Anti-Bypass Guard:** A user cannot self-activate Pro tier or upgrade entitlements by merely entering an arbitrary Transaction ID or altering frontend `plan` attributes.
 2. **Audit Verification:** All manual upgrades create a `PENDING_VERIFICATION` transaction requiring backend administrative approval.
 3. **Database Integrity:** Entitlements are enforced strictly on the server during API calls (`/api/v1/meetings/transcribe-audio`).
+

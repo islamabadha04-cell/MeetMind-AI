@@ -1,78 +1,156 @@
 {
-  "hosting": {
-    "public": ".",
-    "cleanUrls": false,
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "backend/**",
-      "mobile_flutter/**",
-      "backups/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/app",
-        "destination": "/app.html"
-      },
-      {
-        "source": "/login",
-        "destination": "/login.html"
-      },
-      {
-        "source": "/signup",
-        "destination": "/login.html"
-      },
-      {
-        "source": "/privacy",
-        "destination": "/privacy.html"
-      },
-      {
-        "source": "/privacy.html",
-        "destination": "/privacy.html"
-      },
-      {
-        "source": "/share",
-        "destination": "/share.html"
-      },
-      {
-        "source": "/share.html",
-        "destination": "/share.html"
-      },
-      {
-        "source": "/terms",
-        "destination": "/terms.html"
-      },
-      {
-        "source": "/terms.html",
-        "destination": "/terms.html"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "max-age=3600"
-          }
-        ]
-      },
-      {
-        "source": "sw.js",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "target": "meetmindai",
+      "public": ".",
+      "cleanUrls": false,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "backend/**",
+        "mobile_flutter/**",
+        "backups/**"
+      ],
+      "rewrites": [
+        {
+          "source": "/app",
+          "destination": "/app.html"
+        },
+        {
+          "source": "/login",
+          "destination": "/login.html"
+        },
+        {
+          "source": "/signup",
+          "destination": "/login.html"
+        },
+        {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/privacy.html",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/share",
+          "destination": "/share.html"
+        },
+        {
+          "source": "/share.html",
+          "destination": "/share.html"
+        },
+        {
+          "source": "/terms",
+          "destination": "/terms.html"
+        },
+        {
+          "source": "/terms.html",
+          "destination": "/terms.html"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=3600"
+            }
+          ]
+        },
+        {
+          "source": "sw.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "main",
+      "public": ".",
+      "cleanUrls": false,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "backend/**",
+        "mobile_flutter/**",
+        "backups/**"
+      ],
+      "rewrites": [
+        {
+          "source": "/app",
+          "destination": "/app.html"
+        },
+        {
+          "source": "/login",
+          "destination": "/login.html"
+        },
+        {
+          "source": "/signup",
+          "destination": "/login.html"
+        },
+        {
+          "source": "/privacy",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/privacy.html",
+          "destination": "/privacy.html"
+        },
+        {
+          "source": "/share",
+          "destination": "/share.html"
+        },
+        {
+          "source": "/share.html",
+          "destination": "/share.html"
+        },
+        {
+          "source": "/terms",
+          "destination": "/terms.html"
+        },
+        {
+          "source": "/terms.html",
+          "destination": "/terms.html"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=3600"
+            }
+          ]
+        },
+        {
+          "source": "sw.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "firestore": {
     "rules": "firestore.rules"
   },

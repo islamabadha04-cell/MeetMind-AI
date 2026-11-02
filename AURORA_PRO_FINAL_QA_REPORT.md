@@ -93,3 +93,4 @@ Previously, a free tier user saw conflicting plan metadata in their workspace ov
 - **Channel URL:** [https://meetmind-ai-74519--preview-aurora-pro-v2-1838p2nf.web.app](https://meetmind-ai-74519--preview-aurora-pro-v2-1838p2nf.web.app)
 - **Expiration:** 7 Days (November 9, 2026)
 - **Production Status:** Main branch and production domain remain completely untouched.
+

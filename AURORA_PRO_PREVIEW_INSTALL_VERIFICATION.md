@@ -47,3 +47,4 @@ function updateInstallModalUrls() {
 
 - Replaced ambiguous "Install as a native app" language with **"Install MeetMind AI as a PWA"**.
 - Maintained exact step-by-step guidance for Android Chrome ("Add to Home Screen") and iOS Safari ("Share &rarr; Add to Home Screen").
+

@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "meetmind-ai-74519"
-  }
+  },
+  "targets": {
+    "meetmind-ai-74519": {
+      "hosting": {
+        "meetmindai": [
+          "meetmindai"
+        ],
+        "main": [
+          "meetmind-ai-74519"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
