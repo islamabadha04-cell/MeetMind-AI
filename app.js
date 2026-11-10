@@ -214,14 +214,23 @@ async function checkBackendConnectivity() {
 
   const isDemoUser = (currentUser && (currentUser.isGuest || currentUser.name === 'Demo Reviewer' || currentUser.id === 'demo-guest' || currentUser.email?.includes('demo')));
   if (isDemoUser) {
-    if (healthText) healthText.textContent = 'Local Sandbox Active';
+    // ── P0 FIX: Demo Guest → show green "Demo Sandbox" pill, never "Backend Offline"
+    if (healthText) healthText.textContent = 'Demo Sandbox';
     const healthDot = healthBadge?.querySelector('.health-dot');
     if (healthDot) {
       healthDot.style.background = '#10B981';
       healthDot.style.boxShadow = '0 0 8px #10B981';
+      healthDot.style.animation = 'none';
+    }
+    if (healthBadge) {
+      healthBadge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+      healthBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+      healthBadge.style.color = '#10B981';
+      healthBadge.classList.remove('health-checking');
+      healthBadge.classList.add('health-online');
     }
     if (backendIndicator) {
-      backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #10B981;"></span> Local Sandbox (Active)';
+      backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #10B981;"></span> Demo Sandbox (Active)';
       backendIndicator.style.color = '#10B981';
     }
     return;
@@ -3653,6 +3662,17 @@ function escapeHtml(str) {
 // ==========================================================================
 initUserProfile();
 updateConnectionStatusUI();
+// ── P1 FIX: Auto-seed demo data for Guest on first visit (clears empty-state)
+if (currentUser?.isGuest && meetings.length === 0 && localStorage.getItem('meetmind_demo_seeded') !== 'true') {
+  meetings.unshift(
+    { ...DEMO_COMMERCIAL_MEETING, id: Date.now() + 2 },
+    { ...DEMO_SAMPLE_MEETING,    id: Date.now() + 1 }
+  );
+  tasks.unshift({ ...DEMO_SAMPLE_TASK, id: Date.now() });
+  persistData();
+  localStorage.setItem('meetmind_demo_seeded', 'true');
+}
+
 navigateToPage('dashboard');
 renderMeetings();
 renderMeetingsTable();
@@ -6124,3 +6144,17 @@ window.openPublicShareModal = async function(meetingId) {
     }
   }
 };
+
+// ==========================================================================
+// Global window exports — required by PWA, audit scripts, and deep-links
+// ==========================================================================
+window.switchPage         = (page) => navigateToPage(page);
+window.openUpgradeModal   = () => { if (modalUpgradePro) modalUpgradePro.classList.remove('hidden'); };
+window.closeUpgradeModal  = () => { if (modalUpgradePro) modalUpgradePro.classList.add('hidden'); };
+window.openInstallModal   = () => { if (modalInstallPWA) { updateInstallModalUrls(); modalInstallPWA.classList.remove('hidden'); } };
+window.closeInstallModal  = () => { if (modalInstallPWA) modalInstallPWA.classList.add('hidden'); };
+window.showToast          = showToast;
+window.checkBackend       = checkBackendConnectivity;
+window.getMeetings        = () => meetings;
+window.getTasks           = () => tasks;
+window.getCurrentUser     = () => currentUser;
