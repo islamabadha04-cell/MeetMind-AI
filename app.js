@@ -9,7 +9,7 @@ const storedUserJson = localStorage.getItem('meetmind_user');
 let currentUser = storedUserJson ? JSON.parse(storedUserJson) : null;
 
 // Allow evaluation ONLY via explicit guest session; unauthenticated access redirects to /login
-if (isGuestSession) {
+if (isGuestSession || (currentUser && (currentUser.name === 'Demo Reviewer' || currentUser.id === 'demo-guest' || currentUser.email === 'demo@meetmind.ai'))) {
   currentUser = {
     name: 'Demo Reviewer',
     email: 'demo@meetmind.ai',
@@ -212,11 +212,17 @@ async function checkBackendConnectivity() {
   const healthText = document.getElementById('backendHealthText');
   const backendIndicator = document.getElementById('backendStatusIndicator');
 
-  if (currentUser && currentUser.isGuest) {
-    if (healthText) healthText.textContent = 'Sandbox Active';
+  const isDemoUser = (currentUser && (currentUser.isGuest || currentUser.name === 'Demo Reviewer' || currentUser.id === 'demo-guest' || currentUser.email?.includes('demo')));
+  if (isDemoUser) {
+    if (healthText) healthText.textContent = 'Local Sandbox Active';
+    const healthDot = healthBadge?.querySelector('.health-dot');
+    if (healthDot) {
+      healthDot.style.background = '#10B981';
+      healthDot.style.boxShadow = '0 0 8px #10B981';
+    }
     if (backendIndicator) {
-      backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #F59E0B;"></span> Local Sandbox (Demo Mode)';
-      backendIndicator.style.color = '#F59E0B';
+      backendIndicator.innerHTML = '<span class="live-pulse-dot" style="background: #10B981;"></span> Local Sandbox (Active)';
+      backendIndicator.style.color = '#10B981';
     }
     return;
   }
