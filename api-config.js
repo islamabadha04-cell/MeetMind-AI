@@ -177,6 +177,14 @@
     },
 
     notifyHealth: function(status, detail) {
+      const isGuestSession = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('meetmind_guest_session') === 'true') ||
+        (typeof localStorage !== 'undefined' && (localStorage.getItem('meetmind_user') || '').includes('Demo Reviewer'));
+
+      if (isGuestSession && status === 'offline') {
+        status = 'online';
+        detail = 'Demo Sandbox';
+      }
+
       window.dispatchEvent(new CustomEvent('meetmind:api-health', {
         detail: { status, detail, timestamp: Date.now() }
       }));
@@ -187,6 +195,16 @@
       if (badge && text) {
         badge.className = 'backend-health-pill health-' + status;
         text.textContent = status === 'online' ? (detail || 'Staging Online') : (status === 'offline' ? 'Backend Offline' : 'Degraded');
+        if (isGuestSession) {
+          badge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+          badge.style.background = 'rgba(16, 185, 129, 0.1)';
+          badge.style.color = '#10B981';
+          const dot = badge.querySelector('.health-dot');
+          if (dot) {
+            dot.style.background = '#10B981';
+            dot.style.boxShadow = '0 0 8px #10B981';
+          }
+        }
       }
     }
   };

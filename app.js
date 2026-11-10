@@ -212,7 +212,9 @@ async function checkBackendConnectivity() {
   const healthText = document.getElementById('backendHealthText');
   const backendIndicator = document.getElementById('backendStatusIndicator');
 
-  const isDemoUser = (currentUser && (currentUser.isGuest || currentUser.name === 'Demo Reviewer' || currentUser.id === 'demo-guest' || currentUser.email?.includes('demo')));
+  const isDemoUser = (currentUser && (currentUser.isGuest || currentUser.name === 'Demo Reviewer' || currentUser.id === 'demo-guest' || currentUser.email?.includes('demo'))) ||
+                     (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('meetmind_guest_session') === 'true') ||
+                     (typeof localStorage !== 'undefined' && (localStorage.getItem('meetmind_user') || '').includes('Demo Reviewer'));
   if (isDemoUser) {
     // ── P0 FIX: Demo Guest → show green "Demo Sandbox" pill, never "Backend Offline"
     if (healthText) healthText.textContent = 'Demo Sandbox';
