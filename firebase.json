@@ -10,7 +10,8 @@
         "**/node_modules/**",
         "backend/**",
         "mobile_flutter/**",
-        "backups/**"
+        "backups/**",
+        "scratch/**"
       ],
       "rewrites": [
         {
@@ -85,7 +86,8 @@
         "**/node_modules/**",
         "backend/**",
         "mobile_flutter/**",
-        "backups/**"
+        "backups/**",
+        "scratch/**"
       ],
       "rewrites": [
         {
