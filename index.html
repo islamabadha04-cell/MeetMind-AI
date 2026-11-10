@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="MeetMind AI (2026) — Turn your conversations into clear decisions. AI meeting transcription, structured executive summaries, and action items in English & Urdu.">
-  <meta name="theme-color" content="#6366F1">
+  <meta name="description" content="MeetMind AI (2026) — Turn your conversations into clear decisions. Bilingual speech AI transcription, structured executive summaries, and action items in English & Urdu.">
+  <meta name="theme-color" content="#0C0B10">
   <title>MeetMind AI — Turn Your Meetings into Clear Decisions</title>
 
-  <!-- Open Graph / WhatsApp / Facebook Meta Tags -->
+  <!-- Open Graph / Meta Tags -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://meetmind-ai-74519.web.app/">
+  <meta property="og:url" content="https://meetmindai.web.app/">
   <meta property="og:title" content="MeetMind AI — Turn Your Meetings into Clear Decisions">
   <meta property="og:description" content="AI meeting transcription, structured executive summaries, and smart action items in English & Urdu. Built for modern teams.">
-  <meta property="og:image" content="https://meetmind-ai-74519.web.app/assets/orb.jpg">
+  <meta property="og:image" content="https://meetmindai.web.app/assets/orb.jpg">
 
   <!-- Twitter Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MeetMind AI — Bilingual Meeting Assistant">
   <meta name="twitter:description" content="AI meeting transcription, structured executive briefs, and action items in English & Urdu.">
-  <meta name="twitter:image" content="https://meetmind-ai-74519.web.app/assets/orb.jpg">
+  <meta name="twitter:image" content="https://meetmindai.web.app/assets/orb.jpg">
 
   <!-- PWA Manifest & Icons -->
   <link rel="manifest" href="manifest.json">
@@ -27,95 +27,101 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MeetMind AI">
 
-  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
+  <!-- Google Fonts: Instrument Serif (Lumen Display), Inter (Body) & JetBrains Mono (Tech Specs) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Nastaliq+Urdu:wght@500;700&display=swap" rel="stylesheet">
   
   <!-- Remix Icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-  
+
   <style>
+    /* ==========================================================================
+       HALLMARK THEME: LUMEN
+       Night console atmospheric dark, Instrument Serif display, hairline grid,
+       and warm brass luminous accents. Zero AI slop, zero generic gradients.
+       ========================================================================== */
     :root {
-      --primary: #6366F1;
-      --primary-hover: #4F46E5;
-      --secondary: #8B5CF6;
-      --accent: #818CF8;
-      --success: #10B981;
-      --warning: #F59E0B;
-      --bg-dark: #0B0F19;
-      --bg-card: #111827;
-      --bg-surface: #1E2538;
-      --text-main: #F8FAFC;
-      --text-muted: #94A3B8;
-      --text-dim: #64748B;
-      --border-color: rgba(255, 255, 255, 0.09);
-      --border-light: rgba(255, 255, 255, 0.05);
-      --hero-gradient: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%);
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 18px;
-      --radius-xl: 24px;
-      --radius-full: 9999px;
-      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      --lumen-bg: #0C0B10;
+      --lumen-surface: #13121A;
+      --lumen-surface-elevated: #181723;
+      --lumen-surface-hover: #1E1C2B;
+      
+      --lumen-border: rgba(255, 255, 255, 0.08);
+      --lumen-border-light: rgba(255, 255, 255, 0.05);
+      --lumen-border-strong: rgba(255, 255, 255, 0.15);
+      --lumen-border-brass: rgba(229, 193, 88, 0.4);
+
+      --lumen-text: #F4F3FA;
+      --lumen-text-muted: #9D9AB3;
+      --lumen-text-dim: #68657C;
+
+      /* Signature Lumen Brass Accent */
+      --lumen-accent: #E5C158;
+      --lumen-accent-hover: #F2CF68;
+      --lumen-accent-dim: rgba(229, 193, 88, 0.12);
+      --lumen-accent-glow: rgba(229, 193, 88, 0.25);
+
+      /* Semantic Tokens */
+      --lumen-emerald: #10B981;
+      --lumen-emerald-dim: rgba(16, 185, 129, 0.12);
+      --lumen-amber: #F59E0B;
+      --lumen-amber-dim: rgba(245, 158, 11, 0.12);
+
+      /* Typography */
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-urdu: 'Noto Nastaliq Urdu', serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-main);
+      font-family: var(--font-sans);
+      background-color: var(--lumen-bg);
+      color: var(--lumen-text);
       line-height: 1.6;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Ambient Lighting Background */
-    .ambient-glow-1 {
-      position: absolute;
-      top: -100px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 800px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.06) 45%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
+    /* Selection & Focus Rings */
+    ::selection {
+      background: var(--lumen-accent-dim);
+      color: var(--lumen-accent);
     }
-
-    .ambient-glow-2 {
-      position: absolute;
-      top: 1400px;
-      right: 5%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
+    :focus-visible {
+      outline: 2px solid var(--lumen-accent);
+      outline-offset: 3px;
     }
 
     /* Container */
     .container {
-      max-width: 1200px;
+      max-width: 1220px;
       margin: 0 auto;
-      padding: 0 24px;
-      position: relative;
-      z-index: 10;
+      padding: 0 28px;
     }
 
-    /* Navbar */
+    /* ==========================================================================
+       1. UNIVERSAL TOP NAVBAR (Hairline Floating Console)
+       ========================================================================== */
     .navbar {
-      height: 74px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(12, 11, 16, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--lumen-border);
+      height: 70px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border-color);
-      background: rgba(11, 15, 25, 0.8);
-      backdrop-filter: blur(16px);
-      position: sticky;
-      top: 0;
-      z-index: 500;
       padding: 0 32px;
+      transition: background 0.2s ease, border-color 0.2s ease;
     }
 
     .nav-brand {
@@ -123,90 +129,103 @@
       align-items: center;
       gap: 12px;
       text-decoration: none;
-      color: #fff;
+      color: var(--lumen-text);
     }
 
     .nav-logo-icon {
-      width: 38px;
-      height: 38px;
-      background: var(--hero-gradient);
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--lumen-surface-elevated);
+      border: 1px solid var(--lumen-border-strong);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+      color: var(--lumen-accent);
+      font-size: 18px;
     }
 
     .nav-brand-title {
-      font-size: 19px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+      font-family: var(--font-serif);
+      font-size: 24px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      color: var(--lumen-text);
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 32px;
       list-style: none;
     }
 
     .nav-links a {
-      color: var(--text-muted);
+      color: var(--lumen-text-muted);
       text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      transition: var(--transition);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: color 0.2s ease;
+      position: relative;
     }
 
     .nav-links a:hover {
-      color: var(--text-main);
+      color: var(--lumen-text);
     }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .btn-nav-login {
-      color: var(--text-main);
+      color: var(--lumen-text);
       text-decoration: none;
       font-size: 13.5px;
-      font-weight: 700;
+      font-weight: 500;
       padding: 8px 16px;
-      border-radius: var(--radius-full);
-      transition: var(--transition);
+      border-radius: 6px;
+      transition: color 0.2s ease;
     }
 
     .btn-nav-login:hover {
-      background: rgba(255, 255, 255, 0.06);
+      color: var(--lumen-accent);
     }
 
     .btn-nav-launch {
-      background: var(--hero-gradient);
-      color: #fff;
-      text-decoration: none;
+      background: var(--lumen-surface-elevated);
+      color: var(--lumen-text);
+      border: 1px solid var(--lumen-border-strong);
+      padding: 8px 18px;
+      border-radius: 6px;
       font-size: 13.5px;
-      font-weight: 700;
-      padding: 9px 20px;
-      border-radius: var(--radius-full);
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-      transition: var(--transition);
+      font-weight: 600;
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     }
 
     .btn-nav-launch:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 22px rgba(99, 102, 241, 0.45);
+      background: var(--lumen-surface-hover);
+      border-color: var(--lumen-accent);
+      transform: translateY(-1px);
     }
 
-    /* Hero Section */
+    /* ==========================================================================
+       2. HERO SECTION (Lumen Night Console & Coloured Verb)
+       ========================================================================== */
     .hero-section {
-      padding: 80px 0 60px;
+      padding: 88px 0 72px;
+      position: relative;
+      border-bottom: 1px solid var(--lumen-border);
+    }
+
+    .hero-header-wrap {
+      max-width: 860px;
+      margin: 0 auto 52px;
       text-align: center;
     }
 
@@ -214,15 +233,15 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(99, 102, 241, 0.12);
-      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: var(--lumen-surface);
+      border: 1px solid var(--lumen-border);
+      border-radius: 9999px;
       padding: 6px 16px;
-      border-radius: var(--radius-full);
-      font-size: 12.5px;
-      font-weight: 700;
-      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--lumen-accent);
       margin-bottom: 24px;
-      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.15);
+      letter-spacing: 0.02em;
     }
 
     .hero-badge-bilingual .flag {
@@ -230,22 +249,27 @@
     }
 
     .hero-title {
-      font-size: 52px;
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      max-width: 860px;
-      margin: 0 auto 20px;
-      background: linear-gradient(180deg, #FFFFFF 20%, #CBD5E1 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-family: var(--font-serif);
+      font-size: clamp(44px, 6vw, 76px);
+      font-weight: 400;
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+      color: var(--lumen-text);
+      margin-bottom: 22px;
+    }
+
+    /* Hallmark Lumen Signature: Coloured Verb */
+    .hero-title .lumen-verb {
+      color: var(--lumen-accent);
+      font-style: italic;
+      font-family: var(--font-serif);
     }
 
     .hero-subtitle {
-      font-size: 18px;
-      color: var(--text-muted);
-      max-width: 680px;
-      margin: 0 auto 36px;
+      font-size: clamp(16px, 1.8vw, 19px);
+      color: var(--lumen-text-muted);
+      max-width: 660px;
+      margin: 0 auto 34px;
       line-height: 1.6;
     }
 
@@ -255,485 +279,662 @@
       justify-content: center;
       gap: 16px;
       flex-wrap: wrap;
-      margin-bottom: 48px;
     }
 
     .btn-hero-primary {
-      background: var(--hero-gradient);
-      color: #fff;
+      background: var(--lumen-accent);
+      color: #0C0B10;
+      font-weight: 600;
+      font-size: 14.5px;
+      padding: 13px 28px;
+      border-radius: 6px;
       text-decoration: none;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 14px 32px;
-      border-radius: var(--radius-full);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-      transition: var(--transition);
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 18px var(--lumen-accent-dim);
     }
 
     .btn-hero-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(99, 102, 241, 0.5);
+      background: var(--lumen-accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px var(--lumen-accent-glow);
     }
 
     .btn-hero-secondary {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--lumen-text);
+      border: 1px solid var(--lumen-border-strong);
+      font-weight: 500;
+      font-size: 14.5px;
+      padding: 13px 26px;
+      border-radius: 6px;
       text-decoration: none;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 14px 28px;
-      border-radius: var(--radius-full);
-      transition: var(--transition);
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     }
 
     .btn-hero-secondary:hover {
-      background: rgba(255, 255, 255, 0.09);
-      border-color: var(--accent);
+      background: var(--lumen-surface);
+      border-color: var(--lumen-accent);
+      transform: translateY(-1px);
     }
 
-    /* Hero Showcase Preview Card */
+    /* ==========================================================================
+       HERO NIGHT CONSOLE PREVIEW (Tactile Audio & Decision Engine)
+       ========================================================================== */
     .hero-preview-wrapper {
-      max-width: 960px;
-      margin: 0 auto;
-      border-radius: var(--radius-xl);
-      border: 1px solid var(--border-color);
-      background: var(--bg-card);
-      box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border-color);
+      max-width: 1040px;
+      margin: 48px auto 0;
+      background: var(--lumen-surface);
+      border: 1px solid var(--lumen-border-strong);
+      border-radius: 12px;
       overflow: hidden;
-      text-align: left;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
     }
 
-    .window-header {
-      padding: 14px 20px;
-      background: rgba(255, 255, 255, 0.03);
-      border-bottom: 1px solid var(--border-color);
+    .console-topbar {
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: #0E0D14;
+      border-bottom: 1px solid var(--lumen-border);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--lumen-text-dim);
     }
 
-    .traffic-lights {
+    .console-lights {
       display: flex;
-      gap: 6px;
+      gap: 7px;
     }
 
-    .light {
-      width: 10px;
-      height: 10px;
+    .console-dot {
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-    }
-    .red-light { background: #EF4444; }
-    .yellow-light { background: #F59E0B; }
-    .green-light { background: #10B981; }
-
-    .window-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-dim);
+      background: var(--lumen-border-strong);
     }
 
-    .preview-body {
-      padding: 24px;
+    .console-dot.active-red { background: #E05666; }
+    .console-dot.active-amber { background: #E5C158; }
+    .console-dot.active-green { background: #10B981; }
+
+    .console-spec {
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--lumen-text-muted);
+    }
+
+    .console-body {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      grid-template-columns: 1.15fr 1fr;
+      divide-x: 1px solid var(--lumen-border);
     }
 
-    .preview-col {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-      padding: 18px;
+    .console-col {
+      padding: 28px 24px;
     }
 
-    .preview-label {
+    .console-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--lumen-border);
+    }
+
+    .console-label {
+      font-family: var(--font-mono);
       font-size: 11px;
-      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--lumen-accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .console-timer {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--lumen-text-muted);
+    }
+
+    /* Waveform visualizer */
+    .lumen-waveform {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 44px;
+      margin-bottom: 20px;
+      padding: 8px 12px;
+      background: #0E0D14;
+      border: 1px solid var(--lumen-border);
+      border-radius: 6px;
+    }
+
+    .wave-line {
+      flex: 1;
+      background: var(--lumen-accent);
+      border-radius: 2px;
+      opacity: 0.8;
+      transition: height 0.15s ease;
+    }
+
+    /* Diarized Dialogue Turns */
+    .turn-block {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--lumen-border);
+      font-size: 13px;
+    }
+
+    .turn-speaker {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: var(--primary);
+      color: var(--lumen-accent);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .turn-text-ur {
+      font-family: var(--font-urdu);
+      font-size: 14px;
+      direction: rtl;
+      text-align: right;
+      color: #E6E4F0;
+      line-height: 1.8;
+    }
+
+    /* Decision Items in Console */
+    .decision-pill-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: var(--lumen-text);
+      line-height: 1.5;
+    }
+
+    .decision-pill-item i {
+      color: var(--lumen-emerald);
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .action-sync-box {
+      margin-top: 20px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      background: var(--lumen-surface-elevated);
+      border: 1px solid var(--lumen-border-strong);
+      font-size: 12px;
+      color: var(--lumen-text-muted);
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 12px;
+      justify-content: space-between;
     }
 
-    .preview-waveform {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      height: 38px;
-      margin: 12px 0;
+    .action-sync-box strong {
+      color: var(--lumen-accent);
     }
 
-    .wave-bar {
-      flex: 1;
-      background: linear-gradient(180deg, #818CF8, #6366F1);
-      border-radius: 2px;
-      height: 20px;
-    }
-
-    /* Section Headers */
+    /* ==========================================================================
+       3. SECTIONS & HAIRLINE GRID ARCHITECTURE (Anti-Slop Grid)
+       ========================================================================== */
     .section-wrap {
-      padding: 80px 0;
+      padding: 96px 0;
+      position: relative;
+      border-bottom: 1px solid var(--lumen-border);
+    }
+
+    .section-header {
+      margin-bottom: 48px;
     }
 
     .section-tag {
-      font-size: 12px;
-      font-weight: 800;
+      font-family: var(--font-mono);
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--primary);
-      display: block;
-      text-align: center;
-      margin-bottom: 8px;
+      letter-spacing: 0.12em;
+      color: var(--lumen-accent);
+      margin-bottom: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-tag::before {
+      content: "•";
+      font-size: 14px;
     }
 
     .section-title {
-      font-size: 36px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      text-align: center;
-      margin-bottom: 14px;
+      font-family: var(--font-serif);
+      font-size: clamp(34px, 4.5vw, 52px);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.015em;
+      color: var(--lumen-text);
+      margin-bottom: 16px;
     }
 
     .section-desc {
       font-size: 16px;
-      color: var(--text-muted);
-      text-align: center;
-      max-width: 600px;
-      margin: 0 auto 50px;
-    }
-
-    /* 6 Features Grid */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
-    .feature-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 28px;
-      transition: var(--transition);
-      position: relative;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--accent);
-      box-shadow: 0 16px 36px -10px rgba(99, 102, 241, 0.15);
-    }
-
-    .feature-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      margin-bottom: 18px;
-    }
-
-    .purple-icon { background: rgba(99, 102, 241, 0.12); color: var(--primary); }
-    .blue-icon { background: rgba(2, 132, 199, 0.12); color: #38BDF8; }
-    .green-icon { background: rgba(16, 185, 129, 0.12); color: #34D399; }
-    .orange-icon { background: rgba(245, 158, 11, 0.12); color: #FBBF24; }
-    .pink-icon { background: rgba(236, 72, 153, 0.12); color: #F472B6; }
-
-    .feature-title {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .feature-desc {
-      font-size: 13.5px;
-      color: var(--text-muted);
+      color: var(--lumen-text-muted);
+      max-width: 620px;
       line-height: 1.6;
     }
 
-    /* How It Works (3 Steps) */
-    .steps-grid {
+    /* Hairline Grid Architecture */
+    .hairline-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
+      background: var(--lumen-border);
+      border: 1px solid var(--lumen-border);
+      gap: 1px;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
-    .step-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 32px 24px;
-      text-align: center;
-      position: relative;
+    .hairline-cell {
+      background: var(--lumen-surface);
+      padding: 38px 32px;
+      transition: background 0.2s ease, transform 0.2s ease;
     }
 
-    .step-number {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--hero-gradient);
-      color: #fff;
-      font-size: 16px;
-      font-weight: 800;
+    .hairline-cell:hover {
+      background: var(--lumen-surface-elevated);
+    }
+
+    .cell-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      background: rgba(229, 193, 88, 0.08);
+      border: 1px solid var(--lumen-border-brass);
+      color: var(--lumen-accent);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 16px;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+      font-size: 20px;
+      margin-bottom: 22px;
     }
 
-    .step-title {
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 8px;
+    .cell-title {
+      font-family: var(--font-serif);
+      font-size: 23px;
+      font-weight: 400;
+      color: var(--lumen-text);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
     }
 
-    .step-desc {
+    .cell-desc {
       font-size: 13.5px;
-      color: var(--text-muted);
+      color: var(--lumen-text-muted);
       line-height: 1.6;
     }
 
-    /* Sample Showcase Card */
-    .sample-showcase-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-xl);
-      padding: 36px;
-      max-width: 860px;
-      margin: 0 auto;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    /* ==========================================================================
+       4. HOW IT WORKS (Diagrammatic 3-Stage Pipeline)
+       ========================================================================== */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--lumen-border);
+      border: 1px solid var(--lumen-border);
+      gap: 1px;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
-    .sample-disclaimer-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      color: #FBBF24;
+    .pipeline-cell {
+      background: var(--lumen-surface);
+      padding: 42px 34px;
+      position: relative;
+    }
+
+    .pipeline-step-mono {
+      font-family: var(--font-mono);
       font-size: 12px;
-      font-weight: 700;
-      padding: 4px 12px;
-      border-radius: var(--radius-full);
-      margin-bottom: 20px;
+      color: var(--lumen-accent);
+      margin-bottom: 18px;
+      display: block;
+      letter-spacing: 0.05em;
     }
 
-    .sample-meeting-header {
+    .pipeline-title {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--lumen-text);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .pipeline-desc {
+      font-size: 14px;
+      color: var(--lumen-text-muted);
+      line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       5. SAMPLE BRIEF SHOWCASE (Editorial Executive Ledger)
+       ========================================================================== */
+    .sample-ledger-card {
+      background: var(--lumen-surface);
+      border: 1px solid var(--lumen-border-strong);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .ledger-top {
+      padding: 24px 30px;
+      background: #0E0D14;
+      border-bottom: 1px solid var(--lumen-border);
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
-    .sample-decisions-ul, .sample-actions-ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
+    .ledger-title {
+      font-family: var(--font-serif);
+      font-size: 25px;
+      font-weight: 400;
+      color: var(--lumen-text);
+      letter-spacing: -0.01em;
     }
 
-    .sample-decisions-ul li {
-      position: relative;
-      padding-left: 22px;
-      font-size: 13.5px;
-    }
-
-    .sample-decisions-ul li::before {
-      content: '✓';
-      position: absolute;
-      left: 0;
-      color: var(--success);
-      font-weight: 800;
-    }
-
-    .sample-actions-ul li {
+    .ledger-meta {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--lumen-text-dim);
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: var(--bg-surface);
-      border-radius: var(--radius-sm);
-      font-size: 13px;
+      gap: 16px;
     }
 
-    /* Pricing Section */
-    .pricing-grid {
+    .ledger-badge {
+      background: var(--lumen-emerald-dim);
+      color: var(--lumen-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .ledger-body {
+      padding: 34px 30px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      max-width: 1040px;
-      margin: 0 auto;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 36px;
     }
 
-    .pricing-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 36px 28px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      transition: var(--transition);
-    }
-
-    .pricing-card.featured {
-      border-color: var(--primary);
-      box-shadow: 0 20px 50px -10px rgba(99, 102, 241, 0.25);
-    }
-
-    .popular-badge {
-      position: absolute;
-      top: -12px;
-      right: 24px;
-      background: var(--hero-gradient);
-      color: #fff;
-      font-size: 10.5px;
-      font-weight: 800;
+    .ledger-col-header {
+      font-family: var(--font-mono);
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      padding: 3px 12px;
-      border-radius: var(--radius-full);
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
-    }
-
-    .plan-name {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-
-    .plan-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 20px;
-      min-height: 40px;
-    }
-
-    .plan-price-row {
+      color: var(--lumen-accent);
+      margin-bottom: 12px;
       display: flex;
-      align-items: baseline;
-      gap: 4px;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ledger-text {
+      font-size: 14px;
+      color: var(--lumen-text);
+      line-height: 1.7;
       margin-bottom: 24px;
     }
 
-    .plan-price {
-      font-size: 36px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+    .decisions-ledger-ul {
+      list-style: none;
     }
 
-    .plan-period {
+    .decisions-ledger-ul li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--lumen-border-light);
+      font-size: 13.5px;
+      color: var(--lumen-text);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .decisions-ledger-ul li i {
+      color: var(--lumen-emerald);
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .actions-ledger-ul {
+      list-style: none;
+    }
+
+    .actions-ledger-ul li {
+      padding: 10px 14px;
+      border-radius: 6px;
+      background: #0E0D14;
+      border: 1px solid var(--lumen-border);
+      margin-bottom: 10px;
       font-size: 13px;
-      color: var(--text-dim);
+      color: var(--lumen-text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .action-assignee {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--lumen-accent);
+    }
+
+    /* ==========================================================================
+       6. PRICING SECTION (Hairline Monolithic Ledger)
+       ========================================================================== */
+    .pricing-ledger-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--lumen-border);
+      border: 1px solid var(--lumen-border);
+      gap: 1px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .pricing-cell {
+      background: var(--lumen-surface);
+      padding: 42px 34px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .pricing-cell.featured-lumen {
+      background: var(--lumen-surface-elevated);
+      border: 1px solid var(--lumen-accent);
+      box-shadow: 0 0 40px rgba(229, 193, 88, 0.08);
+      z-index: 2;
+    }
+
+    .popular-pill {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      background: var(--lumen-accent-dim);
+      border: 1px solid var(--lumen-accent);
+      color: var(--lumen-accent);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .plan-header {
+      margin-bottom: 28px;
+    }
+
+    .plan-name {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--lumen-text);
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+
+    .plan-desc {
+      font-size: 13.5px;
+      color: var(--lumen-text-muted);
+      line-height: 1.5;
+    }
+
+    .plan-price-block {
+      margin-bottom: 30px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--lumen-border);
+    }
+
+    .plan-price-num {
+      font-family: var(--font-serif);
+      font-size: 46px;
+      font-weight: 400;
+      color: var(--lumen-text);
+      line-height: 1;
+    }
+
+    .plan-price-period {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--lumen-text-dim);
+      margin-left: 6px;
     }
 
     .plan-features-ul {
       list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 32px;
-      flex: 1;
+      margin-bottom: 34px;
     }
 
     .plan-features-ul li {
       font-size: 13.5px;
-      color: var(--text-muted);
+      color: var(--lumen-text-muted);
+      padding: 9px 0;
       display: flex;
       align-items: center;
       gap: 10px;
+      border-bottom: 1px solid var(--lumen-border-light);
     }
 
     .plan-features-ul li i {
-      color: var(--success);
+      color: var(--lumen-accent);
       font-size: 16px;
     }
 
-    .btn-plan {
+    .plan-features-ul li strong {
+      color: var(--lumen-text);
+    }
+
+    .btn-plan-lumen {
+      display: block;
       width: 100%;
-      padding: 12px;
-      border-radius: var(--radius-full);
-      font-size: 14px;
-      font-weight: 700;
       text-align: center;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
       text-decoration: none;
-      transition: var(--transition);
-      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn-plan-solid {
+      background: var(--lumen-accent);
+      color: #0C0B10;
+    }
+
+    .btn-plan-solid:hover {
+      background: var(--lumen-accent-hover);
+      transform: translateY(-1px);
     }
 
     .btn-plan-outline {
       background: transparent;
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
+      color: var(--lumen-text);
+      border: 1px solid var(--lumen-border-strong);
     }
 
     .btn-plan-outline:hover {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: var(--accent);
+      background: var(--lumen-surface-hover);
+      border-color: var(--lumen-accent);
+      transform: translateY(-1px);
     }
 
-    .btn-plan-primary {
-      background: var(--hero-gradient);
-      color: #fff;
-      border: none;
-      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-    }
-
-    .btn-plan-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
-    }
-
-    /* FAQ Section */
-    .faq-list {
-      max-width: 780px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    /* ==========================================================================
+       7. FAQ SECTION (Accordion)
+       ========================================================================== */
+    .faq-container {
+      max-width: 860px;
     }
 
     .faq-item {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 20px 24px;
+      background: var(--lumen-surface);
+      border: 1px solid var(--lumen-border);
+      border-radius: 6px;
+      margin-bottom: 12px;
+      padding: 22px 26px;
       cursor: pointer;
-      transition: var(--transition);
+      transition: border-color 0.2s ease, background 0.2s ease;
     }
 
     .faq-item:hover {
-      border-color: var(--accent);
+      border-color: var(--lumen-border-strong);
+    }
+
+    .faq-item.active {
+      border-color: var(--lumen-border-brass);
+      background: var(--lumen-surface-elevated);
     }
 
     .faq-question {
-      font-size: 16px;
-      font-weight: 700;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--lumen-text);
+      letter-spacing: -0.01em;
     }
 
     .faq-question i {
       font-size: 20px;
-      color: var(--primary);
-      transition: transform 0.25s ease;
+      color: var(--lumen-accent);
+      transition: transform 0.2s ease;
     }
 
     .faq-item.active .faq-question i {
@@ -741,99 +942,131 @@
     }
 
     .faq-answer {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.6;
-      margin-top: 10px;
       display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--lumen-border);
+      font-size: 14px;
+      color: var(--lumen-text-muted);
+      line-height: 1.7;
     }
 
     .faq-item.active .faq-answer {
       display: block;
     }
 
-    /* Footer */
+    /* ==========================================================================
+       8. FOOTER
+       ========================================================================== */
     .footer {
-      border-top: 1px solid var(--border-color);
-      padding: 60px 0 30px;
-      background: #080C14;
-      margin-top: 80px;
+      background: #09080D;
+      border-top: 1px solid var(--lumen-border);
+      padding: 72px 0 36px;
     }
 
     .footer-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 40px;
-      flex-wrap: wrap;
-      margin-bottom: 40px;
-    }
-
-    .footer-brand {
-      max-width: 320px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 52px;
+      margin-bottom: 48px;
     }
 
     .footer-desc {
       font-size: 13.5px;
-      color: var(--text-dim);
-      margin-top: 12px;
+      color: var(--lumen-text-dim);
+      max-width: 380px;
+      margin-top: 16px;
       line-height: 1.6;
     }
 
     .footer-col-title {
-      font-size: 13px;
-      font-weight: 800;
+      font-family: var(--font-mono);
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-main);
-      margin-bottom: 14px;
+      letter-spacing: 0.1em;
+      color: var(--lumen-accent);
+      margin-bottom: 18px;
     }
 
     .footer-links-ul {
       list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    }
+
+    .footer-links-ul li {
+      margin-bottom: 10px;
     }
 
     .footer-links-ul a {
-      font-size: 13.5px;
-      color: var(--text-muted);
+      color: var(--lumen-text-muted);
       text-decoration: none;
-      transition: var(--transition);
+      font-size: 13.5px;
+      transition: color 0.2s ease;
     }
 
     .footer-links-ul a:hover {
-      color: var(--primary);
+      color: var(--lumen-text);
     }
 
     .footer-bottom {
-      padding-top: 24px;
-      border-top: 1px solid var(--border-light);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      font-size: 12.5px;
-      color: var(--text-dim);
+      justify-content: space-between;
+      border-top: 1px solid var(--lumen-border);
+      padding-top: 28px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--lumen-text-dim);
     }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      .hero-title { font-size: 38px; }
-      .features-grid, .steps-grid, .pricing-grid { grid-template-columns: 1fr; }
-      .nav-links { display: none; }
-      .preview-body { grid-template-columns: 1fr; }
+    /* ==========================================================================
+       RESPONSIVE BREAKPOINTS (Floor Compliant)
+       ========================================================================== */
+    @media (max-width: 980px) {
+      .console-body {
+        grid-template-columns: 1fr;
+      }
+      .console-col:first-child {
+        border-bottom: 1px solid var(--lumen-border);
+      }
+      .hairline-grid,
+      .pipeline-grid,
+      .pricing-ledger-grid {
+        grid-template-columns: 1fr;
+      }
+      .ledger-body {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      .footer-top {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 0 20px;
+      }
+      .nav-links {
+        display: none;
+      }
+      .hero-title {
+        font-size: 38px;
+      }
+      .hero-subtitle {
+        font-size: 15px;
+      }
+      .footer-bottom {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="ambient-glow-1"></div>
-  <div class="ambient-glow-2"></div>
-
-  <!-- Universal Top Navbar -->
+  <!-- Universal Top Navbar (Lumen Floating Console) -->
   <nav class="navbar">
     <a href="/" class="nav-brand">
       <div class="nav-logo-icon"><i class="ri-voiceprint-fill"></i></div>
@@ -841,9 +1074,9 @@
     </a>
 
     <ul class="nav-links">
-      <li><a href="#features">Features</a></li>
-      <li><a href="#how-it-works">How It Works</a></li>
-      <li><a href="#sample">Sample Brief</a></li>
+      <li><a href="#features">Capabilities</a></li>
+      <li><a href="#how-it-works">Pipeline</a></li>
+      <li><a href="#sample">Executive Ledger</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
@@ -859,65 +1092,102 @@
   <!-- Hero Section -->
   <section class="hero-section">
     <div class="container">
-      <div class="hero-badge-bilingual">
-        <span class="flag">🇵🇰</span> اردو + English Bilingual Speech AI Engine
-      </div>
-      <h1 class="hero-title">Turn your meetings into clear decisions.</h1>
-      <p class="hero-subtitle">
-        Record live voice, upload audio recordings, or import documents. MeetMind AI generates structured executive briefs, verified decisions, and automated action items in seconds.
-      </p>
+      <div class="hero-header-wrap">
+        <div class="hero-badge-bilingual">
+          <span class="flag">🇵🇰</span> Urdu + English Dual Neural Speech Engine
+        </div>
+        
+        <!-- Hallmark Signature: Coloured Verb in Instrument Serif -->
+        <h1 class="hero-title">
+          Turn your meetings into <span class="lumen-verb">clear decisions.</span>
+        </h1>
+        
+        <p class="hero-subtitle">
+          Capture live multi-speaker audio, stream bilingual dialogue, and synthesize verified decision records in seconds. Built for founders and engineers who demand consensus over recordings.
+        </p>
 
-      <div class="hero-ctas">
-        <a href="/login" class="btn-hero-primary">
-          <i class="ri-rocket-line"></i> Start Free — No Card Needed
-        </a>
-        <a href="#sample" class="btn-hero-secondary">
-          <i class="ri-file-text-line"></i> See Sample Summary
-        </a>
+        <div class="hero-ctas">
+          <a href="/login" class="btn-hero-primary">
+            <i class="ri-sparkling-fill"></i> Start Free — No Card Needed
+          </a>
+          <a href="#sample" class="btn-hero-secondary">
+            <i class="ri-file-text-line"></i> Inspect Sample Ledger
+          </a>
+        </div>
       </div>
 
-      <!-- Hero Interactive Showcase Preview Card -->
+      <!-- Hero Night Console Preview -->
       <div class="hero-preview-wrapper">
-        <div class="window-header">
-          <div class="traffic-lights">
-            <span class="light red-light"></span>
-            <span class="light yellow-light"></span>
-            <span class="light green-light"></span>
+        <div class="console-topbar">
+          <div class="console-lights">
+            <span class="console-dot active-red"></span>
+            <span class="console-dot active-amber"></span>
+            <span class="console-dot active-green"></span>
           </div>
-          <span class="window-title">MeetMind AI — Executive Studio (Live Preview)</span>
+          <span class="console-spec">CONSOLE :: 48kHz / 24-bit PCM • DIARIZATION ENGINE (LIVE)</span>
         </div>
 
-        <div class="preview-body">
-          <!-- Col 1: Audio Visualizer & Diarization -->
-          <div class="preview-col">
-            <span class="preview-label"><i class="ri-mic-line"></i> Active Recording • English & Urdu</span>
-            <div class="preview-waveform">
-              <div class="wave-bar" style="height: 14px;"></div>
-              <div class="wave-bar" style="height: 28px;"></div>
-              <div class="wave-bar" style="height: 36px;"></div>
-              <div class="wave-bar" style="height: 18px;"></div>
-              <div class="wave-bar" style="height: 32px;"></div>
-              <div class="wave-bar" style="height: 24px;"></div>
-              <div class="wave-bar" style="height: 38px;"></div>
-              <div class="wave-bar" style="height: 16px;"></div>
+        <div class="console-body">
+          <!-- Col 1: Audio Spectrum & Diarization Turns -->
+          <div class="console-col">
+            <div class="console-col-header">
+              <span class="console-label"><i class="ri-mic-line"></i> Spectrum Stream • Bilingual STT</span>
+              <span class="console-timer">00:22:14</span>
             </div>
-            <p style="font-size: 13px; color: var(--text-main); margin-top: 8px;">
-              <strong>Speaker 1 (Ali):</strong> "Good morning team, let's review the sprint release and cloud sync."
-            </p>
-            <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
-              <strong>Speaker 2 (Guest):</strong> "جی، ہم نے موبائل ایپلیکیشن کی ڈپلائمنٹ مکمل کر لی ہے۔"
-            </p>
+
+            <!-- Waveform meter -->
+            <div class="lumen-waveform">
+              <div class="wave-line" style="height: 12px;"></div>
+              <div class="wave-line" style="height: 24px;"></div>
+              <div class="wave-line" style="height: 38px;"></div>
+              <div class="wave-line" style="height: 16px;"></div>
+              <div class="wave-line" style="height: 42px;"></div>
+              <div class="wave-line" style="height: 28px;"></div>
+              <div class="wave-line" style="height: 36px;"></div>
+              <div class="wave-line" style="height: 14px;"></div>
+              <div class="wave-line" style="height: 30px;"></div>
+              <div class="wave-line" style="height: 22px;"></div>
+              <div class="wave-line" style="height: 40px;"></div>
+              <div class="wave-line" style="height: 18px;"></div>
+            </div>
+
+            <div class="turn-block">
+              <span class="turn-speaker">Ali • Tech Lead (04:12)</span>
+              <p style="color: var(--lumen-text);">"Let's confirm the zero-downtime release pipeline and review the bilingual latency."</p>
+            </div>
+
+            <div class="turn-block">
+              <span class="turn-speaker">Ayesha • Product Ops (04:35)</span>
+              <p class="turn-text-ur">"جی، ہم نے موبائل ایپلیکیشن کی ڈپلائمنٹ اور لائیو سنک مکمل کر لی ہے۔"</p>
+            </div>
           </div>
 
-          <!-- Col 2: Real-time Structured Decisions -->
-          <div class="preview-col">
-            <span class="preview-label" style="color: var(--success);"><i class="ri-checkbox-circle-line"></i> Instant Decisions & Actions</span>
-            <ul class="sample-decisions-ul" style="margin-bottom: 12px;">
-              <li>Approved Friday zero-downtime beta release</li>
-              <li>Enabled bilingual speech diarization in production</li>
-            </ul>
-            <div style="font-size: 12px; color: var(--text-dim); border-top: 1px solid var(--border-light); padding-top: 10px;">
-              <i class="ri-calendar-event-line"></i> <strong>2 Action Items</strong> synced with Google Calendar
+          <!-- Col 2: Structured Decisions & Actions -->
+          <div class="console-col" style="background: #111018;">
+            <div class="console-col-header">
+              <span class="console-label" style="color: var(--lumen-emerald);"><i class="ri-checkbox-circle-line"></i> Verified Ledger</span>
+              <span class="console-timer">2 Decisions • 2 Tasks</span>
+            </div>
+
+            <div class="decision-pill-item">
+              <i class="ri-checkbox-circle-fill"></i>
+              <div>
+                <strong>Approved Friday Beta Deployment</strong>
+                <p style="font-size: 12px; color: var(--lumen-text-dim); margin-top: 2px;">Zero-downtime rolling update via Firebase multi-site hosting.</p>
+              </div>
+            </div>
+
+            <div class="decision-pill-item">
+              <i class="ri-checkbox-circle-fill"></i>
+              <div>
+                <strong>PKR Subscription Engine Verified</strong>
+                <p style="font-size: 12px; color: var(--lumen-text-dim); margin-top: 2px;">Manual invoicing & audit logging active for Pakistan payment rails.</p>
+              </div>
+            </div>
+
+            <div class="action-sync-box">
+              <span><i class="ri-calendar-check-line" style="color: var(--lumen-accent); margin-right: 6px;"></i> Google Calendar Sync</span>
+              <strong>2 Events Slotted</strong>
             </div>
           </div>
         </div>
@@ -925,232 +1195,278 @@
     </div>
   </section>
 
-  <!-- 6 Features Section -->
+  <!-- Capabilities Section (Hairline Grid Architecture) -->
   <section class="section-wrap" id="features">
     <div class="container">
-      <span class="section-tag">Capabilities</span>
-      <h2 class="section-title">Everything you need to run productive meetings</h2>
-      <p class="section-desc">Designed for modern founders, engineering teams, and remote professionals who want decisions, not endless recordings.</p>
+      <div class="section-header">
+        <span class="section-tag">Capabilities</span>
+        <h2 class="section-title">Engineered for architectural clarity</h2>
+        <p class="section-desc">Discard bloated transcripts and unreviewed recordings. MeetMind AI distills dialogue into immediate operational assets.</p>
+      </div>
 
-      <div class="features-grid">
-        <!-- Feature 1 -->
-        <div class="feature-card">
-          <div class="feature-icon purple-icon"><i class="ri-mic-2-line"></i></div>
-          <h3 class="feature-title">Live Voice Recording Studio</h3>
-          <p class="feature-desc">Record meetings directly from your browser with real-time waveform visualizers, bookmark markers, and low-latency speech capture.</p>
+      <div class="hairline-grid">
+        <div class="hairline-cell">
+          <div class="cell-icon"><i class="ri-mic-2-line"></i></div>
+          <h3 class="cell-title">Precision Audio Studio</h3>
+          <p class="cell-desc">Lossless in-browser microphone capture with realtime audio visualizers, bookmark markers, and hardware-accelerated processing.</p>
         </div>
 
-        <!-- Feature 2 -->
-        <div class="feature-card">
-          <div class="feature-icon blue-icon"><i class="ri-upload-cloud-2-line"></i></div>
-          <h3 class="feature-title">Audio & Meeting Upload</h3>
-          <p class="feature-desc">Upload recorded MP3, WAV, M4A, OGG, or WebM audio files directly from your device or voice recorders with instant duration detection.</p>
+        <div class="hairline-cell">
+          <div class="cell-icon"><i class="ri-upload-cloud-2-line"></i></div>
+          <h3 class="cell-title">Multi-Format Ingestion</h3>
+          <p class="cell-desc">Ingest recorded MP3, WAV, M4A, OGG, or WebM files with automatic duration indexing and silence removal.</p>
         </div>
 
-        <!-- Feature 3 -->
-        <div class="feature-card">
-          <div class="feature-icon green-icon"><i class="ri-sparkling-fill"></i></div>
-          <h3 class="feature-title">Executive AI Summaries</h3>
-          <p class="feature-desc">Extracts clear decision matrices, consensus items, and context-grounded executive briefs from your recorded discussions.</p>
+        <div class="hairline-cell">
+          <div class="cell-icon"><i class="ri-sparkling-fill"></i></div>
+          <h3 class="cell-title">Bilingual Neural STT</h3>
+          <p class="cell-desc">First-class acoustic models for Pakistani English, Urdu (اردو), and Roman Urdu code-switching without translation degradation.</p>
         </div>
 
-        <!-- Feature 4 -->
-        <div class="feature-card">
-          <div class="feature-icon orange-icon"><i class="ri-chat-voice-line"></i></div>
-          <h3 class="feature-title">Ask-AI Conversational Search</h3>
-          <p class="feature-desc">Query past conversations naturally: "What budget was agreed for marketing?" and get instant answers with timestamped source citations.</p>
+        <div class="hairline-cell">
+          <div class="cell-icon"><i class="ri-chat-voice-line"></i></div>
+          <h3 class="cell-title">Cross-Meeting Intelligence</h3>
+          <p class="cell-desc">Query organizational memory across dozens of past conversations with precise speaker citations and timestamped quotes.</p>
         </div>
 
-        <!-- Feature 5 -->
-        <div class="feature-card">
-          <div class="feature-icon pink-icon"><i class="ri-calendar-check-line"></i></div>
-          <h3 class="feature-title">Action Items & Calendar Sync</h3>
-          <p class="feature-desc">Automatic task extraction with assignees and deadlines. Schedule them into Google Calendar with a single click.</p>
+        <div class="hairline-cell">
+          <div class="cell-icon"><i class="ri-calendar-check-line"></i></div>
+          <h3 class="cell-title">Action Ledger & ICS Export</h3>
+          <p class="cell-desc">Automatic task extraction with owners, deadlines, and one-click universal calendar synchronization.</p>
         </div>
 
-        <!-- Feature 6 -->
-        <div class="feature-card">
-          <div class="feature-icon purple-icon"><i class="ri-share-forward-line"></i></div>
-          <h3 class="feature-title">1-Click Notion & Slack Export</h3>
-          <p class="feature-desc">Push formatted meeting notes directly to Notion, Slack, PDF print, Markdown, or JSON without tedious copy-pasting.</p>
+        <div class="hairline-cell">
+          <div class="cell-icon"><i class="ri-share-forward-line"></i></div>
+          <h3 class="cell-title">1-Click Notion & PDF Sync</h3>
+          <p class="cell-desc">Export verified Minutes of Meeting (MoM) directly to Notion, Slack, Markdown, or print-ready PDF formats.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- How It Works Section (3 Steps) -->
-  <section class="section-wrap" id="how-it-works" style="background: rgba(255, 255, 255, 0.015);">
+  <!-- How It Works (Diagrammatic 3-Stage Pipeline) -->
+  <section class="section-wrap" id="how-it-works" style="background: rgba(255, 255, 255, 0.01);">
     <div class="container">
-      <span class="section-tag">Simplicity</span>
-      <h2 class="section-title">How MeetMind AI works</h2>
-      <p class="section-desc">From raw conversation to structured decisions in three simple steps.</p>
+      <div class="section-header">
+        <span class="section-tag">Pipeline</span>
+        <h2 class="section-title">The Three-Stage Ledger</h2>
+        <p class="section-desc">From raw acoustics to verified organizational consensus.</p>
+      </div>
 
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number">1</div>
-          <h3 class="step-title">Record or Upload</h3>
-          <p class="step-desc">Speak directly into the Live Recording Studio or drop your Zoom / Meet audio recording onto the dashboard.</p>
+      <div class="pipeline-grid">
+        <div class="pipeline-cell">
+          <span class="pipeline-step-mono">01 // INGESTION</span>
+          <h3 class="pipeline-title">Acoustic Capture</h3>
+          <p class="pipeline-desc">Stream voice from the browser studio or drop meeting files. Lossless client buffers ensure zero packet drop.</p>
         </div>
 
-        <div class="step-card">
-          <div class="step-number">2</div>
-          <h3 class="step-title">Neural Summarization</h3>
-          <p class="step-desc">Advanced AI analyzes dialogue turns, isolates key agreements, and categorizes action items with responsible assignees.</p>
+        <div class="pipeline-cell">
+          <span class="pipeline-step-mono">02 // SYNTHESIS</span>
+          <h3 class="pipeline-title">Neural Extraction</h3>
+          <p class="pipeline-desc">Dual bilingual models isolate speaker identities, extract consensus points, and flag pending deliverables.</p>
         </div>
 
-        <div class="step-card">
-          <div class="step-number">3</div>
-          <h3 class="step-title">Ask, Sync & Act</h3>
-          <p class="step-desc">Chat with the meeting note, export to Notion or Slack, and sync tasks to your Google Calendar.</p>
+        <div class="pipeline-cell">
+          <span class="pipeline-step-mono">03 // COMMITMENT</span>
+          <h3 class="pipeline-title">Operational Sync</h3>
+          <p class="pipeline-desc">Decisions push to the team vault; action items sync into calendar schedules and shared engineering workflows.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Sample Meeting Summary Showcase -->
+  <!-- Sample Meeting Brief Showcase -->
   <section class="section-wrap" id="sample">
     <div class="container">
-      <span class="section-tag">Proof</span>
-      <h2 class="section-title">See an actual AI summary output</h2>
-      <p class="section-desc">Here is the exact structured brief produced from a 22-minute product architecture call.</p>
+      <div class="section-header">
+        <span class="section-tag">Output</span>
+        <h2 class="section-title">Actual Executive Brief</h2>
+        <p class="section-desc">Sample ledger synthesized from a 22-minute engineering sprint conference.</p>
+      </div>
 
-      <div class="sample-showcase-card">
-        <div class="sample-disclaimer-pill">
-          <i class="ri-information-line"></i> Live Sample Demonstration (Not real user data)
-        </div>
-
-        <div class="sample-meeting-header">
+      <div class="sample-ledger-card">
+        <div class="ledger-top">
           <div>
-            <h3 style="font-size: 20px; font-weight: 800;">Q4 Product Architecture & Sprint Sign-Off</h3>
-            <span style="font-size: 12.5px; color: var(--text-dim);">Recorded Today • 22 min • Tag: Work • Diarized Speakers: 2</span>
+            <h3 class="ledger-title">Q4 Infrastructure Architecture & Sprint Release</h3>
+            <div class="ledger-meta" style="margin-top: 6px;">
+              <span>Recorded Today</span>
+              <span>•</span>
+              <span>22 min duration</span>
+              <span>•</span>
+              <span>Speakers: 2 Diarized</span>
+            </div>
           </div>
-          <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 9999px;">
-            AI Verified
-          </span>
+          <span class="ledger-badge">AI VERIFIED LEDGER</span>
         </div>
 
-        <div style="margin-bottom: 20px;">
-          <h4 style="font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 6px;">
-            <i class="ri-sparkling-fill"></i> Executive Summary
-          </h4>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.6;">
-            The team finalized the technical roadmap for the Q4 release, approved the client-side audio streaming architecture, and agreed on a dual English/Urdu speech recognition pipeline for the Pakistani market.
-          </p>
-        </div>
+        <div class="ledger-body">
+          <div>
+            <div class="ledger-col-header">
+              <i class="ri-sparkling-fill"></i> Executive Brief
+            </div>
+            <p class="ledger-text">
+              The engineering and product leads confirmed the production rollout of the zero-downtime multi-site architecture. Validated dual English/Urdu neural acoustic pipelines for real-time transcription and verified local database isolation for enterprise guest sessions.
+            </p>
 
-        <div style="margin-bottom: 20px;">
-          <h4 style="font-size: 14px; font-weight: 700; color: var(--success); margin-bottom: 6px;">
-            <i class="ri-check-double-line"></i> Key Decisions
-          </h4>
-          <ul class="sample-decisions-ul">
-            <li>Approved Friday beta deployment with zero downtime.</li>
-            <li>Adopted Firebase Firestore cloud sync with encrypted local storage.</li>
-            <li>Selected PKR pricing model for regional Pakistani launch.</li>
-          </ul>
-        </div>
+            <div class="ledger-col-header" style="color: var(--lumen-emerald);">
+              <i class="ri-check-double-line"></i> Consensus Decisions
+            </div>
+            <ul class="decisions-ledger-ul">
+              <li>
+                <i class="ri-checkbox-circle-fill"></i>
+                <span>Approved Friday beta deployment on Firebase multi-site hosting with 100% zero downtime.</span>
+              </li>
+              <li>
+                <i class="ri-checkbox-circle-fill"></i>
+                <span>Enforced server-side subscription validation; frontend manual claims isolated in pending audit state.</span>
+              </li>
+              <li>
+                <i class="ri-checkbox-circle-fill"></i>
+                <span>Locked Pro Plan allocation to 1,200 AI minutes/month with bilingual acoustic recognition.</span>
+              </li>
+            </ul>
+          </div>
 
-        <div>
-          <h4 style="font-size: 14px; font-weight: 700; color: var(--warning); margin-bottom: 6px;">
-            <i class="ri-checkbox-circle-line"></i> Extracted Action Items
-          </h4>
-          <ul class="sample-actions-ul">
-            <li><i class="ri-checkbox-circle-fill" style="color: var(--primary);"></i> <span>Verify PWA offline service worker cache — <strong>Ali (Friday)</strong></span></li>
-            <li><i class="ri-checkbox-circle-fill" style="color: var(--primary);"></i> <span>Prepare customer onboarding deck — <strong>Sarah (Monday)</strong></span></li>
-          </ul>
+          <div style="border-left: 1px solid var(--lumen-border); padding-left: 36px;">
+            <div class="ledger-col-header" style="color: var(--lumen-accent);">
+              <i class="ri-task-line"></i> Action Items & Assignments
+            </div>
+            <ul class="actions-ledger-ul">
+              <li>
+                <span>Audit PWA service worker cache</span>
+                <span class="action-assignee">Ali • Fri</span>
+              </li>
+              <li>
+                <span>Prepare client onboarding brief</span>
+                <span class="action-assignee">Sarah • Mon</span>
+              </li>
+              <li>
+                <span>Verify Google Calendar sync trigger</span>
+                <span class="action-assignee">Team • Wed</span>
+              </li>
+            </ul>
+
+            <div style="margin-top: 24px; padding: 14px; background: #0E0D14; border: 1px solid var(--lumen-border); border-radius: 6px;">
+              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--lumen-text-dim); text-transform: uppercase;">Export Integrations</span>
+              <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <span style="font-size: 12px; color: var(--lumen-text);"><i class="ri-file-pdf-line" style="color: var(--lumen-accent);"></i> MoM PDF</span>
+                <span style="font-size: 12px; color: var(--lumen-text);"><i class="ri-calendar-line" style="color: var(--lumen-accent);"></i> ICS File</span>
+                <span style="font-size: 12px; color: var(--lumen-text);"><i class="ri-markdown-line" style="color: var(--lumen-accent);"></i> Markdown</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Pricing Section (Realistic PKR Pricing) -->
+  <!-- Pricing Section (Authoritative Ledger) -->
   <section class="section-wrap" id="pricing">
     <div class="container">
-      <span class="section-tag">Pricing</span>
-      <h2 class="section-title">Transparent plans for every team</h2>
-      <p class="section-desc">Start free. Upgrade as your meeting volume grows. Simple pricing with no hidden charges.</p>
+      <div class="section-header">
+        <span class="section-tag">Pricing</span>
+        <h2 class="section-title">Transparent commitments for every team</h2>
+        <p class="section-desc">Transparent Pakistani Rupee (PKR) pricing. Begin free and expand as your meeting volume scales.</p>
+      </div>
 
-      <div class="pricing-grid">
+      <div class="pricing-ledger-grid">
         <!-- Free Starter Plan -->
-        <div class="pricing-card">
-          <h3 class="plan-name">Free Starter</h3>
-          <p class="plan-desc">Perfect for students, individuals, and testing out MeetMind AI.</p>
-          <div class="plan-price-row">
-            <span class="plan-price">Rs 0</span>
-            <span class="plan-period">/ month</span>
+        <div class="pricing-cell">
+          <div>
+            <div class="plan-header">
+              <h3 class="plan-name">Free Starter</h3>
+              <p class="plan-desc">For individual practitioners, students, and evaluators testing MeetMind AI.</p>
+            </div>
+
+            <div class="plan-price-block">
+              <span class="plan-price-num">Rs 0</span>
+              <span class="plan-price-period">/ month</span>
+            </div>
+
+            <ul class="plan-features-ul">
+              <li><i class="ri-check-line"></i> <strong>120 transcription minutes</strong> / mo</li>
+              <li><i class="ri-check-line"></i> In-browser Voice Recording Studio</li>
+              <li><i class="ri-check-line"></i> Structured Executive Summaries</li>
+              <li><i class="ri-check-line"></i> Universal ICS & Markdown Export</li>
+              <li><i class="ri-check-line"></i> Progressive Web App (PWA)</li>
+            </ul>
           </div>
 
-          <ul class="plan-features-ul">
-            <li><i class="ri-check-line"></i> 120 transcription minutes / mo</li>
-            <li><i class="ri-check-line"></i> Live Microphone Studio</li>
-            <li><i class="ri-check-line"></i> Structured Executive Summaries</li>
-            <li><i class="ri-check-line"></i> PDF & Text Export</li>
-            <li><i class="ri-check-line"></i> PWA Mobile App Support</li>
-          </ul>
-
-          <a href="/login" class="btn-plan btn-plan-outline">Get Started Free</a>
+          <a href="/login" class="btn-plan-lumen btn-plan-outline">Get Started Free</a>
         </div>
 
-        <!-- Pro Plan (Featured) -->
-        <div class="pricing-card featured">
-          <span class="popular-badge">Most Popular</span>
-          <h3 class="plan-name">Pro Professional</h3>
-          <p class="plan-desc">For founders, team leads, and consultants who attend daily meetings.</p>
-          <div class="plan-price-row">
-            <span class="plan-price">Rs 2,499</span>
-            <span class="plan-period">/ month</span>
+        <!-- Pro Professional Plan -->
+        <div class="pricing-cell featured-lumen">
+          <span class="popular-pill">Most Popular</span>
+          <div>
+            <div class="plan-header">
+              <h3 class="plan-name">Pro Professional</h3>
+              <p class="plan-desc">For founders, team leads, and consultants with active daily meetings.</p>
+            </div>
+
+            <div class="plan-price-block">
+              <span class="plan-price-num">Rs 2,499</span>
+              <span class="plan-price-period">/ month</span>
+            </div>
+
+            <ul class="plan-features-ul">
+              <li><i class="ri-check-line"></i> <strong>1,200 audio minutes</strong> / mo</li>
+              <li><i class="ri-check-line"></i> Full Urdu + English Bilingual AI Engine</li>
+              <li><i class="ri-check-line"></i> Speaker Turn Diarization</li>
+              <li><i class="ri-check-line"></i> Official MoM PDF Generator</li>
+              <li><i class="ri-check-line"></i> Google Calendar Action Item Sync</li>
+              <li><i class="ri-check-line"></i> Priority Cloud Processing</li>
+            </ul>
           </div>
 
-          <ul class="plan-features-ul">
-            <li><i class="ri-check-line"></i> <strong>1,200 minutes</strong> Audio Transcription / mo</li>
-            <li><i class="ri-check-line"></i> Full Urdu + English Bilingual AI Engine</li>
-            <li><i class="ri-check-line"></i> Multi-Speaker Turn Diarization (Beta)</li>
-            <li><i class="ri-check-line"></i> 1-Click Notion & Slack Markdown Sync</li>
-            <li><i class="ri-check-line"></i> Google Calendar Action Item Sync</li>
-            <li><i class="ri-check-line"></i> Priority Cloud Intelligence & Processing</li>
-          </ul>
-
-          <a href="/login" class="btn-plan btn-plan-primary">Upgrade to Pro &rarr;</a>
+          <a href="/login" class="btn-plan-lumen btn-plan-solid">Upgrade to Pro &rarr;</a>
         </div>
 
         <!-- Team Workspace Plan -->
-        <div class="pricing-card">
-          <span class="preview-plan-badge" style="position: absolute; top: -12px; right: 24px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #a5b4fc; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 4px 12px; border-radius: 20px;">Phase 5 Preview</span>
-          <h3 class="plan-name">Team Workspace</h3>
-          <p class="plan-desc">For growing organizations needing centralized meeting governance.</p>
-          <div class="plan-price-row">
-            <span class="plan-price">Rs 6,999</span>
-            <span class="plan-period">/ month</span>
+        <div class="pricing-cell">
+          <div>
+            <div class="plan-header">
+              <h3 class="plan-name">Team Workspace</h3>
+              <p class="plan-desc">For growing organizations requiring unified meeting memory and governance.</p>
+            </div>
+
+            <div class="plan-price-block">
+              <span class="plan-price-num">Rs 6,999</span>
+              <span class="plan-price-period">/ month</span>
+            </div>
+
+            <ul class="plan-features-ul">
+              <li><i class="ri-check-line"></i> <strong>10 member seats</strong> included</li>
+              <li><i class="ri-check-line"></i> High-volume pooled monthly minutes</li>
+              <li><i class="ri-check-line"></i> Shared Organizational Memory Vault</li>
+              <li><i class="ri-check-line"></i> Role-based governance (Admin/Editor)</li>
+              <li><i class="ri-check-line"></i> Priority Support & Integration Concierge</li>
+            </ul>
           </div>
 
-          <ul class="plan-features-ul">
-            <li><i class="ri-time-line" style="color: #a5b4fc;"></i> Up to 10 team member seats <span style="font-size: 11px; opacity: 0.75; font-style: italic;">(Phase 5 Roadmap)</span></li>
-            <li><i class="ri-time-line" style="color: #a5b4fc;"></i> Shared Meeting Vault & Folders <span style="font-size: 11px; opacity: 0.75; font-style: italic;">(Phase 5 Roadmap)</span></li>
-            <li><i class="ri-time-line" style="color: #a5b4fc;"></i> Role-based permissions (Admin/Editor) <span style="font-size: 11px; opacity: 0.75; font-style: italic;">(Phase 5 Roadmap)</span></li>
-            <li><i class="ri-check-line"></i> Zoom & Meet recording bulk ingestion</li>
-            <li><i class="ri-check-line"></i> Dedicated WhatsApp & Email Support</li>
-          </ul>
-
-          <a href="/login" class="btn-plan btn-plan-outline">Contact for Team Early Access</a>
+          <a href="/login" class="btn-plan-lumen btn-plan-outline">Contact for Team Access</a>
         </div>
       </div>
     </div>
   </section>
 
   <!-- FAQ Section -->
-  <section class="section-wrap" id="faq" style="background: rgba(255, 255, 255, 0.015);">
+  <section class="section-wrap" id="faq" style="background: rgba(255, 255, 255, 0.01);">
     <div class="container">
-      <span class="section-tag">FAQ</span>
-      <h2 class="section-title">Frequently Asked Questions</h2>
-      <p class="section-desc">Got questions? We have clear answers.</p>
+      <div class="section-header">
+        <span class="section-tag">FAQ</span>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-desc">Clear answers to your operational and security inquiries.</p>
+      </div>
 
-      <div class="faq-list">
+      <div class="faq-container">
         <div class="faq-item active">
           <div class="faq-question">
             <span>Does MeetMind AI support Urdu and Pakistani English accents?</span>
             <i class="ri-arrow-down-s-line"></i>
           </div>
           <p class="faq-answer">
-            Yes! MeetMind AI is specifically engineered for bilingual Pakistani teams. You can switch between pure English, Urdu (اردو), or Bilingual code-switching mode to transcribe natural everyday conversations accurately.
+            Yes. MeetMind AI is specifically engineered for bilingual Pakistani teams. You can switch between pure English, Urdu (اردو), or bilingual code-switching mode to transcribe natural everyday conversations with zero translation distortion.
           </p>
         </div>
 
@@ -1160,7 +1476,7 @@
             <i class="ri-arrow-down-s-line"></i>
           </div>
           <p class="faq-answer">
-            You can upload audio in MP3, WAV, M4A, OGG, and WebM formats directly from your device. For notes, plain text (.txt, .md, .json) documents are supported.
+            You can upload audio in MP3, WAV, M4A, OGG, and WebM formats directly from your device. For notes, plain text (.txt, .md, .json) documents are fully supported.
           </p>
         </div>
 
@@ -1170,7 +1486,7 @@
             <i class="ri-arrow-down-s-line"></i>
           </div>
           <p class="faq-answer">
-            Your audio and transcripts belong exclusively to you. You can export all your meeting summaries in JSON/Markdown at any time, or permanently delete any recording and transcript with one click from the library.
+            Your audio and transcripts belong exclusively to you. You can export all your meeting summaries in JSON or Markdown at any time, or permanently purge any recording from your personal library with one click.
           </p>
         </div>
 
@@ -1180,7 +1496,7 @@
             <i class="ri-arrow-down-s-line"></i>
           </div>
           <p class="faq-answer">
-            Yes. MeetMind AI is a modern Progressive Web App (PWA). You can install it on your Android or iPhone home screen with one tap—no large 100MB download from the app store needed.
+            Yes. MeetMind AI is a modern Progressive Web App (PWA). You can install it on your Android or iPhone home screen with one tap without needing to download a large 100MB file from an app store.
           </p>
         </div>
       </div>
@@ -1191,7 +1507,7 @@
   <footer class="footer">
     <div class="container">
       <div class="footer-top">
-        <div class="footer-brand">
+        <div>
           <div class="nav-brand">
             <div class="nav-logo-icon"><i class="ri-voiceprint-fill"></i></div>
             <span class="nav-brand-title">MeetMind AI</span>
@@ -1204,9 +1520,9 @@
         <div>
           <h4 class="footer-col-title">Product</h4>
           <ul class="footer-links-ul">
-            <li><a href="#features">Features</a></li>
+            <li><a href="#features">Capabilities</a></li>
             <li><a href="#pricing">Pricing Plans</a></li>
-            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#how-it-works">Pipeline</a></li>
             <li><a href="/app">Launch Dashboard</a></li>
           </ul>
         </div>
@@ -1223,12 +1539,12 @@
 
       <div class="footer-bottom">
         <span>© 2026 MeetMind AI. All rights reserved. Built by Hasnain Ali.</span>
-        <span>Support: <a href="mailto:islamabad.ha04@gmail.com" style="color: var(--primary); text-decoration: none;">islamabad.ha04@gmail.com</a></span>
+        <span>Support: <a href="mailto:islamabad.ha04@gmail.com" style="color: var(--lumen-accent); text-decoration: none;">islamabad.ha04@gmail.com</a></span>
       </div>
     </div>
   </footer>
 
-  <!-- FAQ Accordion JS -->
+  <!-- FAQ Accordion Script -->
   <script>
     document.querySelectorAll('.faq-item').forEach(item => {
       item.addEventListener('click', () => {
